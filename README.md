@@ -1,0 +1,2 @@
+# MG-MAMPOSSt
+MG-MAMPOSSt is a FORTRAN code that extended the MAMPOSSt algorithm of G. Mamon, A. Biviano and G. Boué, that performs Bayesian fits of models of mass and velocity anisotropy profiles to the distribution of tracers in projected phase space, to handle modified gravity models and constrain its parameters. The new version implements two distinct types of gravity modifications, namely general chameleon (including $f(\mathcal{R})$ models) and beyond Horndeski gravity (Vainshtein screening).
