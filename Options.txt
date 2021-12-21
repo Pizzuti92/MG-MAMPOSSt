@@ -1,0 +1,75 @@
+***** switches to control the parameter space exploration **************	
+***** Switches should be BINARY NUMBERS 0/1 EXCEPT FOR #2 #4, #5) ****** 
+
+CHANGE ONLY THE NUMERICAL VALUES IN THIS FILE!
+
+#1) grid exploration (0) or MCMC Metropolis-Hastings algorithm (1)?
+nmcmc = 0
+
+#2) Number of points in the MCMC run sampling
+Nsample = 100000
+
+#*************** LENSING PARAMETERS ************************************
+#3) Forecasts with additional (lensing) information for rs and r200
+add a lensing probability distribution to the likelihood  (only NFW)    
+#NOTE: for Vainshtein screening, it computes the full tangential shear profile
+nlens = 1
+
+  
+#4) r200t,rst: "true" values for the parameters in the lensing likelihood 
+r200t = 1.41
+rst = 0.33
+
+#5) sigma(r_s)/r_s, sigma(r200)/r200, correlation of lensing priors for 
+the case of Chameleon screening and linear Horndeski. 
+# Sigma_ell, sigma_lss, ngal for Vainsthein lensing simulation.
+delta1 = 0.25
+delta2 = 0.005
+delta3 = 30.0
+
+#**********************parameters limit (priors)************************
+
+#6) kpro: if required, the parameter search is made between given intervals
+kpro = 1
+  
+#**************************** JOINT ANALYSIS ***************************   
+
+#7)You can read several cluster data at the same time and compute directly 
+the cumulative likelihood at each point. How many clusters (Nclust) do you want?
+Nclust = 1              #NOTE: it should be \le than the number of files in the data directory
+
+#8) If required, you can compute the likelihood
+over Nclust copies of the same cluster data-set (Y/N)
+nsingle = 0
+
+#*************************** ADDITIONAL OPTIONS ************************
+#9) If desired, the program stops if the likelihoods and the best 
+fit parameters found by the optimization are not 
+close to the guess values Y/N=1/0
+
+istop = 0  #NOTE: THIS WORKS ONLY IF THE OPTIMIZATION PARAMETER IS DIFFERENT FROM -1
+
+#tolerance for relative difference between expected and fitted values:             
+teps = 0.1 0.1 0.1 0.1 0.1 0.1
+delik = 2*0.15  #treshold for the delta log likelihood to stop
+
+
+#10) In the case of grid exploration, set the starting grid values to
+ the guess value (skip optimization results) Y/N=1/0 
+nskip = 0
+
+#11) For grid exploration, run over a finer grid  Y/N=1/0  
+nres = 0 
+      
+#12) For grid search over different clusters, run always on the same values of the parameters  Y/N=1/0
+nequ = 0  
+
+#13) Compute the likelihoods on the input values of the parameters, given from a file Y/N=1/0
+nsame = 0 
+
+
+
+ 
+
+
+
