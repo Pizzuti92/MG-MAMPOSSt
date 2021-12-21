@@ -25,7 +25,7 @@ To install and run MG-MAMPOSSt execute the following scripts in this order:
 type -h for help 
 Default compiler is "f95", default directory is "$PWD". If you want to set your own path, be sure to put a backslash at the end of the path, e.g.:
 ```bash
-./script/script_Lib.sh -f <compiler_name> -d /home/pizzuti/test/
+./script/script_Lib.sh -f <compiler_name> -d /home/pizzuti/MG-MAMPOSSt/
 ```
 
 ### Input parameters
