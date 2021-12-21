@@ -1,0 +1,462 @@
+c   imsl routine name   - dcadre
+c
+c-----------------------------------------------------------------------
+c
+c   computer            - vax/double
+c
+c   latest revision     - june 1, 1982
+c
+c   purpose             - numerical integration of a function using
+c                           cautious adaptive romberg extrapolation
+c
+c   usage               - function dcadre (f,a,b,aerr,rerr,error,ier)
+c
+c   arguments    dcadre - estimate of the integral of f(x) from a to b.
+c                           (output).
+c                f      - a single-argument real function subprogram
+c                           supplied by the user. (input)
+c                           f must be declared external in the
+c                           calling program.
+c                a,b    - the two endpoints of the interval of
+c                           integration. (input)
+c                aerr   - desired absolute error in the answer. (input)
+c                rerr   - desired relative error in the answer. (input)
+c                error  - estimated bound on the absolute error of
+c                           the output number, dcadre. (output)
+c                ier    - error parameter. (output)
+c                         warning error(with fix)
+c                           ier = 65 implies that one or more
+c                             singularities were successfully handled.  
+c                           ier = 66 implies that, in some
+c                             subinterval(s), the estimate of the
+c                             integral was accepted merely because the
+c                             estimated error was small, even though no
+c                             regular behavior was recognized.
+c                         terminal error
+c                           ier = 131 indicates failure due to
+c                             insufficient internal working storage.
+c                           ier = 132 indicates failure due to
+c                             too much noise in the function (relative
+c                             to the given error requirements) or
+c                             due to an ill-behaved integrand.
+c                           ier = 133 indicates that rerr is greater
+c                             than 0.1, or rerr is less than 0.0, or
+c                             rerr is too small for the precision of
+c                             the machine.
+c
+c   precision/hardware  - single and double/h32                         
+c                       - single/h36,h48,h60                            
+c
+c   reqd. imsl routines - uertst,ugetio
+c
+c   notation            - information on special notation and
+c                           conventions is available in the manual
+c                           introduction or through imsl routine uhelp
+c
+c   remarks  1.  dcadre can, in many cases, handle jump                 
+c                discontinuities. see document reference for full
+c                details.
+c            2.  the relative error parameter rerr must be in the
+c                interval (0.0,0.1) inclusively. for example,
+c                rerr = 0.1 indicates that the estimate of the
+c                integral is to be correct to one digit, whereas
+c                rerr = .0001 calls for four digits of accuracy.
+c                if dcadre determines that the relative accuracy
+c                requirements cannot be satisfied, ier is set to
+c                133 (rerr should be large enough that, when added
+c                to 100.0, the result is a number greater than
+c                100.0).
+c            3.  the absolute error parameter, aerr, should be non-
+c                negative. in order to give a reasonable value for
+c                aerr, the user must know the approximate magnitude
+c                of the integral being computed. in many cases it is
+c                satisfactory to use aerr = 0.0. in this case, only
+c                the relative error requirement is satisfied in the
+c                computation.
+c            4.  even when ier is not equal to 0, dcadre returns the
+c                best estimate that has been computed.                  
+c                quoting from the document reference- a very cautious
+c                man would accept dcadre only if ier is 0 or 65. the
+c                merely reasonable man would keep the faith even if
+c                ier is 66. the adventurous man is quite often right
+c                in accepting dcadre even if ier is 131 or 132.
+c            5.  dcadre may return wrong answers if f has a periodic    
+c                factor with high frequency and the interval (a,b)      
+c                contains an integral number of periods. in this case
+c                the easiest fix is to divide the interval into two
+c                subintervals (a,c) and (c,b) such that neither
+c                contains an integral number of periods (pick c at
+c                random), and call dcadre to integrate over each
+c                subinterval.
+c
+c   copyright           - 1978 by imsl, inc. all rights reserved.
+c
+c   warranty            - imsl warrants only that imsl testing has been 
+c                           applied to this code. no other warranty,
+c                           expressed or implied, is applicable.
+c
+c-----------------------------------------------------------------------
+c
+      double precision function dcadre (f,a,b,aerr,rerr,error,ier)
+c                                  specifications for arguments
+      integer            ier
+      double precision   f,a,b,aerr,rerr,error
+c                                  specifications for local variables
+      integer            ibegs(30),maxts,maxtbl,mxstge,ibeg,ii,nnleft
+      integer            i,n2,iii,istep2,iend,istep,l,lm1,it,istage,n
+      double precision   t(10,10),r(10),ait(10),dif(10),rn(4),ts(2049)
+      double precision   begin(30),finis(30),est(30)
+      double precision   h2tol,aittol,length,jumptl,zero,p1,half,one    
+      double precision   two,four,fourp5,ten,hun,cadre,aitlow           
+      double precision   stepmn,stepnm,stage,curest,fnsize,hrerr        
+      double precision   prever,beg,fbeg,edn,fend,step,astep,tabs,hovn  
+      double precision   fn,sum,sumabs,vint,tabtlm,ergl,ergoal
+      double precision   erra,errr,fextrp,errer,diff,sing,fextm1
+      double precision   h2next,singnx,slope,fbeg2,erret,h2tfex,fi      
+      logical            h2conv,aitken,right,reglar,reglsv(30)          
+      data               aitlow,h2tol,aittol,jumptl,maxts,maxtbl,mxstge 
+     1                   /1.1d0,.15d0,.1d0,.01d0,2049,10,30/
+      data               rn(1),rn(2),rn(3),rn(4)/
+     1                   .7142005d0,.3466282d0,.843751d0,.1263305d0/
+      data               zero,p1,half,one,two,four,fourp5,ten,hun       
+     1                   /0.0d0,0.1d0,0.5d0,1.0d0,2.0d0,4.0d0,
+     2                   4.5d0,10.0d0,100.0d0/
+c                                  first executable statement
+      ier = 0
+      cadre = zero
+      error = zero
+      curest = zero
+      vint = zero
+      length = dabs(b-a)
+      if (length .eq. zero) go to 215
+      if (rerr .gt. p1 .or. rerr .lt. zero) go to 210
+      hrerr = rerr+hun                                                  
+      if (aerr .eq. zero .and. hrerr .le. hun) go to 210                
+      errr = rerr
+      erra = dabs(aerr)
+      stepmn = length/(two**mxstge)
+      stepnm = dmax1(length,dabs(a),dabs(b))*ten
+      stage = half                                                      
+      istage = 1
+      fnsize = zero
+      prever = zero
+      reglar = .false.
+c                                  the given interval of integration
+c                                    is the first interval considered.
+      beg = a
+      fbeg = f(beg)*half                                                
+      ts(1) = fbeg
+      ibeg = 1
+      edn = b
+      fend = f(edn)*half                                                
+      ts(2) = fend
+      iend = 2
+    5 right = .false.
+c                                  investigation of a particular
+c                                    subinterval begins at this point.
+   10 step = edn - beg
+      astep =  dabs(step)
+      if (astep .lt. stepmn) go to 205
+      hrerr = stepnm+astep                                              
+      if (hrerr .eq. stepnm) go to 205                                  
+      t(1,1) = fbeg + fend
+      tabs = dabs(fbeg) + dabs(fend)
+      l = 1
+      n = 1
+      h2conv = .false.                                                  
+      aitken = .false.
+   15 lm1 = l
+      l = l + 1
+c                                  calculate the next trapezoid sum,
+c                                    t(l,1), which is based on *n2* + 1
+c                                    equispaced points. here,           
+c                                    n2 = n*2 = 2**(l-1).
+      n2 = n+n
+      fn = n2
+      istep = (iend - ibeg)/n
+      if (istep .gt. 1) go to 25
+      ii = iend
+      iend = iend + n
+      if (iend .gt. maxts) go to 200
+      hovn = step/fn                                                    
+      iii = iend
+      fi = one
+      do 20 i=1,n2,2
+         ts(iii) = ts(ii)
+         ts(iii-1) = f(edn - fi * hovn)                                 
+         fi = fi+two
+         iii = iii-2
+         ii = ii-1
+   20 continue
+      istep = 2
+   25 istep2 = ibeg + istep/2
+      sum = zero
+      sumabs = zero
+      do 30 i=istep2,iend,istep
+         sum = sum + ts(i)
+         sumabs = sumabs + dabs(ts(i))
+   30 continue
+      t(l,1) = t(l-1,1)*half+sum/fn                                     
+      tabs = tabs*half+sumabs/fn                                        
+      n = n2
+c                                  get preliminary value for *vint*
+c                                    from last trapezoid sum and update
+c                                    the error requirement *ergoal*
+c                                    for this subinterval.
+      it = 1
+      vint = step*t(l,1)
+      tabtlm = tabs*ten
+      fnsize = dmax1(fnsize,dabs(t(l,1)))
+      ergl = astep*fnsize*ten
+      ergoal = stage*dmax1(erra,errr*dabs(curest+vint))
+c                                  complete row l and column l of *t*
+c                                    array.
+      fextrp = one
+      do 35 i=1,lm1
+         fextrp = fextrp*four
+         t(i,l) = t(l,i) - t(l-1,i)
+         t(l,i+1) = t(l,i) + t(i,l)/(fextrp-one)
+   35 continue
+      errer = astep*dabs(t(1,l))
+c                                  preliminary decision procedure
+c                                    if l = 2 and t(2,1) = t(1,1),
+c                                    go to 135 to follow up the
+c                                    impression that intergrand is
+c                                    straight line.
+      if (l .gt. 2) go to 40
+      hrerr = tabs+p1*dabs(t(1,2))                                      
+      if (hrerr .eq. tabs) go to 135                                    
+      go to 15
+c                                  caculate next ratios for
+c                                    columns 1,...,l-2 of t-table
+c                                    ratio is set to zero if difference
+c                                    in last two entries of column is
+c                                    about zero
+   40 do 45 i=2,lm1
+         diff = zero
+         hrerr = tabtlm+dabs(t(i-1,l))                                  
+         if (hrerr .ne. tabtlm) diff = t(i-1,lm1)/t(i-1,l)              
+         t(i-1,lm1) = diff
+   45 continue
+      if (dabs(four-t(1,lm1)) .le. h2tol) go to 60                      
+      if (t(1,lm1) .eq. zero) go to 55
+      if (dabs(two-dabs(t(1,lm1))) .lt. jumptl) go to 130
+      if (l .eq. 3) go to 15
+      h2conv = .false.                                                  
+      if (dabs((t(1,lm1)-t(1,l-2))/t(1,lm1)) .le. aittol) go to 75
+   50 if (reglar) go to 55
+      if (l .eq. 4) go to 15
+      hrerr = ergl+errer                                                
+   55 if (errer .gt. ergoal .and. hrerr .ne. ergl) go to 175            
+      go to 145
+c                                  cautious romberg extrapolation
+   60 if (h2conv) go to 65                                              
+      aitken = .false.
+      h2conv = .true.                                                   
+   65 fextrp = four
+   70 it = it + 1
+      vint = step*t(l,it)
+      errer = dabs(step/(fextrp-one)*t(it-1,l))
+      if (errer .le. ergoal) go to 160
+      hrerr = ergl+errer                                                
+      if (hrerr .eq. ergl) go to 160                                    
+      if (it .eq. lm1) go to 125
+      if (t(it,lm1) .eq. zero) go to 70
+      if (t(it,lm1) .le. fextrp) go to 125
+      if (dabs(t(it,lm1)/four-fextrp)/fextrp .lt. aittol)
+     1       fextrp = fextrp*four
+      go to 70
+c                                  integrand may have x**alpha type     
+c                                    singularity
+c                                    resulting in a ratio of *sing*  =
+c                                    2**(alpha + 1)
+   75 if (t(1,lm1) .lt. aitlow) go to 175
+      if (aitken) go to 80
+      h2conv = .false.                                                  
+      aitken = .true.
+   80 fextrp = t(l-2,lm1)
+      if (fextrp .gt. fourp5) go to 65
+      if (fextrp .lt. aitlow) go to 175
+      if (dabs(fextrp-t(l-3,lm1))/t(1,lm1) .gt. h2tol) go to 175        
+      sing = fextrp
+      fextm1 = one/(fextrp - one)
+      ait(1) = zero
+      do 85 i=2,l
+         ait(i) = t(i,1) + (t(i,1)-t(i-1,1))*fextm1
+         r(i) = t(1,i-1)
+         dif(i) = ait(i) - ait(i-1)
+   85 continue
+      it = 2
+   90 vint = step*ait(l)
+      errer = errer*fextm1
+      hrerr = ergl+errer                                                
+      if (errer .gt. ergoal .and. hrerr .ne. ergl) go to 95             
+      ier = max0(ier,65)
+      go to 160
+   95 it = it + 1
+      if (it .eq. lm1) go to 125
+      if (it .gt. 3) go to 100
+      h2next = four                                                     
+      singnx = sing+sing
+  100 if (h2next .lt. singnx) go to 105                                 
+      fextrp = singnx
+      singnx = singnx+singnx
+      go to 110
+  105 fextrp = h2next                                                   
+      h2next = four*h2next                                              
+  110 do 115 i=it,lm1
+         r(i+1) = zero
+         hrerr = tabtlm+dabs(dif(i+1))                                  
+         if (hrerr .ne. tabtlm) r(i+1) = dif(i)/dif(i+1)                
+  115 continue
+      h2tfex = -h2tol*fextrp                                            
+      if (r(l) - fextrp .lt. h2tfex) go to 125                          
+      if (r(l-1)-fextrp .lt. h2tfex) go to 125                          
+      errer = astep*dabs(dif(l))
+      fextm1 = one/(fextrp - one)
+      do 120 i=it,l
+         ait(i) = ait(i) + dif(i)*fextm1
+         dif(i) = ait(i) - ait(i-1)
+  120 continue
+      go to 90
+c                                  current trapezoid sum and resulting
+c                                    extrapolated values did not give
+c                                    a small enough *errer*.
+c                                    note -- having prever .lt. errer   
+c                                    is an almost certain sign of
+c                                    beginning trouble with in the func-
+c                                    tion values. hence, a watch for,   
+c                                    and control of, noise should
+c                                    begin here.                        
+  125 fextrp = dmax1(prever/errer,aitlow)
+      prever = errer
+      if (l .lt. 5) go to 15
+      if (l-it .gt. 2 .and. istage .lt. mxstge) go to 170
+      erret = errer/(fextrp**(maxtbl-l))
+      hrerr = ergl+erret                                                
+      if (erret .gt. ergoal .and. hrerr .ne. ergl) go to 170            
+      go to 15
+c                                  integrand has jump (see notes)       
+  130 hrerr = ergl+errer                                                
+      if (errer .gt. ergoal .and. hrerr .ne. ergl) go to 170            
+c                                  note that  2*fn = 2**l
+      diff = dabs(t(1,l))*(fn+fn)
+      go to 160
+c                                  integrand is straight line
+c                                    test this assumption by comparing
+c                                    the value of the integrand at
+c                                    four *randomly chosen* points with
+c                                    the value of the straight line
+c                                    interpolating the integrand at the
+c                                    two end points of the sub-interval.
+c                                    if test is passed, accept *vint*
+  135 slope = (fend-fbeg)*two
+      fbeg2 = fbeg+fbeg
+      do 140 i=1,4
+         diff = dabs(f(beg+rn(i)*step) - fbeg2-rn(i)*slope)
+         hrerr = tabtlm+diff                                            
+         if(hrerr .ne. tabtlm) go to 155                                
+  140 continue
+      go to 160
+c                                  noise may be dominant feature
+c                                    estimate noise level by comparing
+c                                    the value of the integrand at
+c                                    four *randomly chosen* points with
+c                                    the value of the straight line
+c                                    interpolating the integrand at the
+c                                    two endpoints. if small enough,
+c                                    accept *vint*
+  145 slope = (fend-fbeg)*two
+      fbeg2 = fbeg+fbeg
+      i = 1
+  150 diff = dabs(f(beg+rn(i)*step) - fbeg2-rn(i)*slope)
+  155 errer = dmax1(errer,astep*diff)
+      hrerr = ergl+errer                                                
+      if (errer .gt. ergoal .and. hrerr .ne. ergl) go to 175            
+      i = i+1
+      if (i .le. 4) go to 150
+      ier = 66
+c                                  intergration over current sub-
+c                                    interval successful
+c                                    add *vint* to *dcadre* and *errer*
+c                                    to *error*, then set up next sub-
+c                                    interval, if any.
+  160 cadre = cadre + vint
+      error = error + errer
+      if (right) go to 165
+      istage = istage - 1
+      if (istage .eq. 0) go to 220
+      reglar = reglsv(istage)
+      beg = begin(istage)
+      edn = finis(istage)
+      curest = curest - est(istage+1) + vint
+      iend = ibeg - 1
+      fend = ts(iend)
+      ibeg = ibegs(istage)
+      go to 180
+  165 curest = curest + vint
+      stage = stage+stage
+      iend = ibeg
+      ibeg = ibegs(istage)
+      edn = beg
+      beg = begin(istage)
+      fend = fbeg
+      fbeg = ts(ibeg)
+      go to 5
+c                                  integration over current subinterval
+c                                    is unsuccessful. mark subinterval
+c                                    for further subdivision. set up
+c                                    next subinterval.
+  170 reglar = .true.
+  175 if (istage .eq. mxstge) go to 205
+      if (right) go to 185
+      reglsv(istage+1) = reglar
+      begin(istage) = beg
+      ibegs(istage) = ibeg
+      stage = stage*half                                                
+  180 right = .true.
+      beg = (beg+edn)*half                                              
+      ibeg = (ibeg+iend)/2
+      ts(ibeg) = ts(ibeg)*half                                          
+      fbeg = ts(ibeg)
+      go to 10
+  185 nnleft = ibeg - ibegs(istage)
+      if (iend+nnleft .ge. maxts) go to 200
+      iii = ibegs(istage)
+      ii = iend
+      do 190 i=iii,ibeg
+         ii = ii + 1
+         ts(ii) = ts(i)
+  190 continue
+      do 195 i=ibeg,ii
+         ts(iii) = ts(i)
+         iii = iii + 1
+  195 continue
+      iend = iend + 1
+      ibeg = iend - nnleft
+      fend = fbeg
+      fbeg = ts(ibeg)
+      finis(istage) = edn
+      edn = beg
+      beg = begin(istage)
+      begin(istage) = edn
+      reglsv(istage) = reglar
+      istage = istage + 1
+      reglar = reglsv(istage)
+      est(istage) = vint
+      curest = curest + est(istage)
+      go to 5
+c                                  failure to handle given integra-     
+c                                    tion problem
+  200 ier = 131
+      go to 215
+  205 ier = 132
+      go to 215
+  210 ier = 133
+  215 cadre = curest + vint
+  220 dcadre = cadre
+ 9000 continue
+      if (ier .ne. 0) call uertst (ier,6hdcadre)                        
+ 9005 return
+      end
+
