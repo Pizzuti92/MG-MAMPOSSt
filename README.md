@@ -18,12 +18,20 @@ namely general chameleon (including $f(\mathcal{R})$ models) and beyond Horndesk
 
 To install and run MG-MAMPOSSt execute the following scripts in this order:
 ```bash
+./script/script_Lib.sh 
+./script/script_compile.sh
+./script/script_runmam.sh  
+```
+Note that. you should change the permissions of the scripts to make them executable. Otherwise, one can simply use the ```bash sh ``` environment
+type -h for help 
+Default compiler is "f95", default directory is "$PWD". If you want to change compiler or set your own path, use the -f and -d options:
+```bash
 ./script/script_Lib.sh -f <compiler_name> -d <directory_path> 
 ./script/script_compile.sh -f <compiler_name> 
 ./script/script_runmam.sh  
 ```
-type -h for help 
-Default compiler is "f95", default directory is "$PWD". If you want to set your own path, be sure to put a backslash at the end of the path, e.g.:
+
+be sure to put a backslash at the end of the path, e.g.:
 ```bash
 ./script/script_Lib.sh -f <compiler_name> -d /home/pizzuti/MG-MAMPOSSt/
 ```
