@@ -16,12 +16,16 @@ namely general chameleon (including $f(\mathcal{R})$ models) and beyond Horndesk
 
 ### Install
 
-To install and run MG-MAMPOSSt execute the following scripts in this order:
+To install and run MG-MAMPOSSt on your Linux terminal, download the .zip file which contains all the dependencies. Notice that the main source code gomamposstoptS.f requires additional routines which are stored in the various folders shipped within the code. Some routines are taken from free libraries available on the web. Credits to the developers are given as comments in the source files of these routines.
+
+Execute the following scripts in this order:
 ```bash
 ./script/script_Lib.sh 
 ./script/script_compile.sh
 ./script/script_runmam.sh  
 ```
+The first script creates the libraries and should be run only once. The second script compiles the main code while the third execute the MG-MAMPOSSt method further producing the additional outputs.
+
 Note that. you should change the permissions of the scripts to make them executable. Otherwise, one can simply use the ```bash sh ``` environment.
 
 Type -h for help.
