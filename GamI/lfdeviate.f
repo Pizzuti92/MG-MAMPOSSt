@@ -1,36 +1,37 @@
-	real*8 function lfdeviate(alpha,xmin,seed)
+        real*8 function lfdeviate(alpha,xmin,seed)
 c
 c LFDEVIATE generates random x = L/L* from Schechter LF
 c from xmin L* to 10 L*.
 c
 c compile with -lnr
 c
-	implicit none
-	integer seed
-	real*8 alpha, xmin
-	real*8 xmax, alpha1, q, ran2
+        implicit none
+        integer seed
+        real*8 alpha, xmin
+        real*8 xmax, alpha1, q, ran2
+        real ( kind = 8 ) r_uniform_01
 c
-	if (alpha .eq. -1.d0) then
-		print *,' LFDEVIATE: alpha must not equal -1'
-		stop
-	endif
-	alpha1 = 1.d0 + alpha
-	xmax = 10.d0
+        if (alpha .eq. -1.d0) then
+            print *,' LFDEVIATE: alpha must not equal -1'
+            stop
+        endif
+        alpha1 = 1.d0 + alpha
+        xmax = 10.d0
 
-	lfdeviate = -1.d0
-	do while (lfdeviate .lt. 0.d0)
-		q = r_uniform_01(seed)
-		lfdeviate = (q*(xmax**alpha1-xmin**alpha1) 
+        lfdeviate = -1.d0
+        do while (lfdeviate .lt. 0.d0)
+            q = r_uniform_01(seed)
+            lfdeviate = (q*(xmax**alpha1-xmin**alpha1) 
      &		 + xmin**alpha1)**(1.d0/alpha1)
 c
-		q = r_uniform_01(seed)
-		if (q .gt. exp(-lfdeviate)) then
-			lfdeviate = -1.d0
-		endif
-	enddo
+            q = r_uniform_01(seed)
+            if (q .gt. exp(-lfdeviate)) then
+                lfdeviate = -1.d0
+            endif
+        enddo
 c
-	return
-	end
+        return
+        end
 c
 c
 c

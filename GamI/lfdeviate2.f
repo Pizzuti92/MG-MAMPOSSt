@@ -9,6 +9,7 @@ c
         integer seed
         real*8 alpha, xmin, xmax
         real*8 alpha1, q, ran2
+        real ( kind = 8 ) r_uniform_01
 c
         if (alpha .eq. -1.d0) then
             print *,' LFDEVIATE: alpha must not equal -1'
