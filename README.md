@@ -35,7 +35,7 @@ All the required information about the structure of these files can be found in 
 
 ### Output
 Output files can be found in the Output folder. Main is MaxLik_test.dat, 
-which stores the tabulated $-\ln\matchal{L}$, where $matchal{L}$ is the 
+which stores the tabulated $-\ln\mathcal{L}$, where $mathcal{L}$ is the 
 likelihood/posterior, as a function of the model parameters.
 
 
