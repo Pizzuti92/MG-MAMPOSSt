@@ -22,8 +22,10 @@ To install and run MG-MAMPOSSt execute the following scripts in this order:
 ./script/script_compile.sh
 ./script/script_runmam.sh  
 ```
-Note that. you should change the permissions of the scripts to make them executable. Otherwise, one can simply use the ```bash sh ``` environment
-type -h for help 
+Note that. you should change the permissions of the scripts to make them executable. Otherwise, one can simply use the ```bash sh ``` environment.
+
+Type -h for help.
+
 Default compiler is "f95", default directory is "$PWD". If you want to change compiler or set your own path, use the -f and -d options:
 ```bash
 ./script/script_Lib.sh -f <compiler_name> -d <directory_path> 
