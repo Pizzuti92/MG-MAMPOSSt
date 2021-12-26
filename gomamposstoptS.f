@@ -377,7 +377,8 @@ c
          stop
       endif
       
-      !PROVA
+      
+      
       kgas=0
       kdata=0
       if (kdata.eq.1) then
@@ -433,7 +434,7 @@ c     errors are in km/s
       j0=-1
       dimin=1.e12
  222  continue
-      read(10,*,end=111) dkpc,vkms,evkms,wei !to put in the case of four columns
+      read(10,*,end=111) dkpc,vkms,evkms !,wei !to put in the case of four columns
       j=j+1
       di(j)=dkpc/1.e3
       ve(j)=vkms
