@@ -4088,7 +4088,7 @@ c                write(*,*) 'Screening radius found at ', screen
          endif
 !        read all the files for 
  9        format(a)
-          filename='data/datphys_600_z'
+          filename='data/datphys_'
           dat='.dat'
           do irun=2,Nrun
            if(irun.lt.10) then
@@ -4100,9 +4100,6 @@ c                write(*,*) 'Screening radius found at ', screen
             WRITE(ARR2,"(I2)") irun
             open (12, FILE=filename//arr2//dat, STATUS='OLD')
            endif
-               read(12,9) line
-               read(12,9) line
-               read(12,9) line
                read(12,9) line
                read(12,9) line
                j=0
@@ -5082,9 +5079,9 @@ c+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    !if nsingle=1 abort the cycle over Nrun different clusters             
                 Nrun=1 
               endif
-!        read all the files for 
+!        read all the files for joint likelihood computation 
  901            format(a)
-              filename='data/datphys_600_z'
+              filename='data/datphys_'
               dat='.dat'
               do irun=2+nstar,Nrun+nstar
                if(irun.lt.10) then
