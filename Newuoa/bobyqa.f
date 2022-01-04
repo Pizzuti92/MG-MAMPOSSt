@@ -1589,7 +1589,7 @@ C
       IF (XPT(KPT,I) .EQ. SU(I)) WB(I)=XU(I)
   290 CONTINUE
       NF=NF+1
-      CALL CALFUN (N,W,F)
+      CALL CALFUN (N,WB,F)
       IF (IPRINT .EQ. 3) THEN
           PRINT 300, NF,F,(WB(I),I=1,N)
   300     FORMAT (/4X,'Function number',I6,'    F =',1PD18.10,
