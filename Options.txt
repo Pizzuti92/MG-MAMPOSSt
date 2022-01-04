@@ -4,7 +4,7 @@
 CHANGE ONLY THE NUMERICAL VALUES IN THIS FILE!
 
 #1) grid exploration (0) or MCMC Metropolis-Hastings algorithm (1)?
-nmcmc = 0
+nmcmc = 1
 
 #2) Number of points in the MCMC run sampling
 Nsample = 100000
