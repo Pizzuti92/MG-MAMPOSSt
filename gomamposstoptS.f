@@ -3343,7 +3343,7 @@ c     switches to control the grid search *****************
                 read(buffer, *, iostat=ios) nmcmc
                 if (ios.eq.-1) then
                     ios=0
-                    nmcmc=0
+                    nmcmc=1
                 endif  
                 write(*,"('  Read nmcmc:   ',i10)") nmcmc
                 if (nmcmc.gt.4.or.nmcmc.lt.0) nmcmc=0
