@@ -26,7 +26,7 @@ Execute the following scripts in this order:
 ```
 The first script creates the libraries and should be run only once. The second script compiles the main code while the third execute the MG-MAMPOSSt method further producing the additional outputs.
 
-Note that. you should change the permissions of the scripts to make them executable. Otherwise, one can simply use the ```bash sh ``` environment.
+Note that you should change the permissions of the scripts to make them executable. Otherwise, one can simply use the ```bash sh ``` environment.
 
 Type -h for help.
 
@@ -45,7 +45,8 @@ be sure to put a backslash at the end of the path, e.g.:
 ### Input parameters
 Input parameters are stored in the file Input_pars/pars_all_N_O_spec_DS.
 Additional options are in Options.txt.
-All the required information about the structure of these files can be found in the pdf user manual 
+All the required information about the structure of these files can be found in the pdf user manual available  
+[(here)](https://arxiv.org/abs/2201.07194)
 
 ### Output
 Output files can be found in the Output folder. Main is MaxLik_test.dat, 
