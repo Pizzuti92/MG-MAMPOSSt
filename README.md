@@ -10,7 +10,7 @@ MG-MAMPOSSt is a FORTRAN code that extended the MAMPOSSt algorithm of G. Mamon, 
 which performs Bayesian fits of models of mass and velocity anisotropy profiles to the distribution of tracers in projected phase space -
 to handle modified gravity models and constrain their parameter space. The new version implements two distinct types of gravity modifications, 
 namely general chameleon (including $f(\mathcal{R})$ models) and beyond Horndeski gravity (Vainshtein screening). MG-MAMPOSSt efficently explores the parameter space either by computing the likelihood over a multi-dimensional grid of points or by performing a simple Metropolis-Hastings MCMC. 
-The code requires a Fortran90 compiler or higher and makes use of the Python3 [@getdist package](https://github.com/cmbant/getdist) of Antony Lewis to plot the marginalized distributions in the MCMC mode.
+The code requires a Fortran90 compiler or higher and makes use of the Python3 [getdist package](https://github.com/cmbant/getdist) of Antony Lewis to plot the marginalized distributions in the MCMC mode.
 
 ### Documentation
 
