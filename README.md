@@ -38,26 +38,33 @@ To run and test the code, execute:
 ```bash
 $ gomamposst < gomamposst_x.inp
 ```
+which produces the main outputs, or
+```bash
+$ ./script/script_runmam.sh  
+```
+which produces additional plots if the MCMC mode is selected (see below).
+Note that to run the above script, permissions should be changed to make it executable. Otherwise, one can simply use the ```bash sh ``` environment.
 
 ### Install and run with bash scripts
 
+An alternative installation can be made by using bash script to generate the libraries and compile the source code.
 Execute the following scripts in this order:
 ```bash
-./script/script_Lib.sh 
-./script/script_compile.sh
-./script/script_runmam.sh  
+$ ./script/script_Lib.sh 
+$ ./script/script_compile.sh
+$ ./script/script_runmam.sh  
 ```
 The first script creates the libraries and should be run only once. The second script compiles the main code while the third execute the MG-MAMPOSSt method further producing the additional outputs.
 
-Note that you should change the permissions of the scripts to make them executable. Otherwise, one can simply use the ```bash sh ``` environment.
+As before, one should change either the permissions of the scripts or run the ```bash sh ``` command.
 
 Type -h for help.
 
 Default compiler is "f95", default directory is "$PWD". If you want to change compiler or set your own path, use the -f and -d options:
 ```bash
-./script/script_Lib.sh -f <compiler_name> -d <directory_path> 
-./script/script_compile.sh -f <compiler_name> 
-./script/script_runmam.sh  
+$ ./script/script_Lib.sh -f <compiler_name> -d <directory_path> 
+$ ./script/script_compile.sh -f <compiler_name> 
+$ ./script/script_runmam.sh  
 ```
 
 be sure to put a backslash at the end of the path, e.g.:
