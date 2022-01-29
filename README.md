@@ -1,10 +1,10 @@
 <a name="top"></a>
 
-# MG-MAMPOSSt 
+# MG-MAMPOSSt, a code to test gravity with the mass profiles of galaxy clusters 
 
 [(Main page)](https://github.com/Pizzuti92/MG-MAMPOSSt)
 
-## MG-MAMPOSSt, a code to test gravity with the mass profiles of galaxy clusters
+## Introduction
 
 MG-MAMPOSSt is a FORTRAN code that extended the MAMPOSSt algorithm of G. Mamon, A. Biviano and G. Boué - 
 which performs Bayesian fits of models of mass and velocity anisotropy profiles to the distribution of tracers in projected phase space -
@@ -25,17 +25,21 @@ The configuration and installation requires at least CMake 3.17.1.  Unzip the MG
 $ unzip MG-MAMPOSSt-main.zip
 $ cd MG-MAMPOSSt-main/
 ```
-Proceed to the configuration through the following commands:
+Proceed to configure and install the code through the following commands:
 ```bash
 $ mkdir build
 $ cd build/
 $ cmake ..
-```
-Finally, run
-```bash
 $ cmake --build .
 $ sudo cmake --install .
+$ cd ..
 ```
+To run and test the code, execute:
+```bash
+$ gomamposst < gomamposst_x.inp
+```
+
+### Install and run with bash scripts
 
 Execute the following scripts in this order:
 ```bash
