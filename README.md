@@ -48,7 +48,7 @@ which only produces the main outputs, or
 $ ./script/script_runmam.sh  
 ```
 which also generates additional plots if the MCMC mode is selected (see below).
-Note that to run the above script, permissions should be changed to make it executable. Otherwise, one can simply use the ```bash sh ``` environment.
+Note that to run the above script, permissions should be changed to make it executable. Otherwise, one can simply use the ``` sh ``` environment.
 
 ### Install and run with bash scripts
 
@@ -61,7 +61,7 @@ $ ./script/script_runmam.sh
 ```
 The first script creates the libraries and should be run only once. The second script compiles the main code while the third execute the MG-MAMPOSSt method further producing the additional outputs.
 
-As before, one should change either the permissions of the scripts or run the ```bash sh ``` command.
+As before, one should change either the permissions of the scripts or run the ``` sh ``` command.
 
 Type -h for help.
 
