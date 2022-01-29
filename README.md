@@ -14,23 +14,19 @@ The code requires a Fortran90 compiler or higher and makes use of the Python3 [g
 
 ### Documentation
 
-A full description of the code functionalities, input parameters and output files is given in [the user manual](https://arxiv.org/abs/2201.07194)
+A full description of the code functionalities, input parameters and output files is given in the pdf user manual available [here](https://arxiv.org/abs/2201.07194).
 
 
 ---
 
 ## Install
 
-To install and run MG-MAMPOSSt on a Linux terminal, download the .zip file which contains all the dependencies. Notice that the main source code gomamposstoptS.f requires additional routines which are stored in the various folders shipped within the code. Some routines are taken from free libraries available on the web. Credits to the developers are given as comments in the source files of these routines.
+To install and run MG-MAMPOSSt on a Linux terminal, download the .zip file which contains all the dependencies. Notice that the main source code gomamposstoptS.f requires additional routines which are stored in the various folders shipped within the code. Some routines are taken from free FORTRAN libraries available on the web. Credits to the developers are given in the header of the source files of these routines.
 
 ### Install with CMake
 
-The configuration and installation requires at least CMake 3.17.1.  Unzip the MG-MAMPOSSt folder and navigate to the working directory, e.g.
-```bash
-$ unzip MG-MAMPOSSt-main.zip
-$ cd MG-MAMPOSSt-main/
-```
-Proceed to configure and install the code through the following commands:
+The configuration and installation requires at least CMake 3.17.1. 
+Execute the following commands:
 ```bash
 $ mkdir build
 $ cd build/
