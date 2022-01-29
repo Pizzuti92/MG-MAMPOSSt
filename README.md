@@ -21,7 +21,7 @@ A full description of the code functionalities, input parameters and output file
 
 ## Install
 
-To install and run MG-MAMPOSSt on a Linux terminal, download the .zip file which contains all the dependencies. Notice that the main source code gomamposstoptS.f requires additional routines which are stored in the various folders shipped within the code. Some routines are taken from free FORTRAN libraries available on the web. Credits to the developers are given in the header of the source files of these routines.
+To install and run MG-MAMPOSSt on a Linux terminal, download the .zip file which contains all the dependencies. Note that the main source code gomamposstoptS.f requires additional routines which are stored in the various folders shipped within the code. Some routines are taken from free FORTRAN libraries available on the web. Credits to the developers are given in the header of the source files of these routines.
 
 ### Install with CMake
 
@@ -39,39 +39,13 @@ To run and test the code, execute:
 ```bash
 $ gomamposst < gomamposst_x.inp
 ```
-which only produces the main outputs, or
+which produces the main outputs, or
 ```bash
 $ ./script/script_runmam.sh  
 ```
 which also generates additional plots if the MCMC mode is selected (see below).
 Note that to run the above script, permissions should be changed to make it executable. Otherwise, one can simply use the ``` sh ``` environment.
 
-### Install and run with bash scripts
-
-An alternative installation can be made by using bash script to generate the libraries and compile the source code.
-Execute the following scripts in this order:
-```bash
-$ ./script/script_Lib.sh 
-$ ./script/script_compile.sh
-$ ./script/script_runmam.sh  
-```
-The first script creates the libraries and should be run only once. The second script compiles the main code while the third execute the MG-MAMPOSSt method further producing the additional outputs.
-
-As before, one should change either the permissions of the scripts or run the ``` sh ``` command.
-
-Type -h for help.
-
-Default compiler is "f95", default directory is "$PWD". If you want to change compiler or set your own path, use the -f and -d options:
-```bash
-$ ./script/script_Lib.sh -f <compiler_name> -d <directory_path> 
-$ ./script/script_compile.sh -f <compiler_name> 
-$ ./script/script_runmam.sh  
-```
-
-be sure to put a backslash at the end of the path, e.g.:
-```bash
-./script/script_Lib.sh -f <compiler_name> -d /home/pizzuti/MG-MAMPOSSt/
-```
 
 ### Input parameters
 Input parameters are stored in the file Input_pars/pars_all_N_O_spec_DS.
