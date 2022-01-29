@@ -4,19 +4,38 @@
 
 [(Main page)](https://github.com/Pizzuti92/MG-MAMPOSSt)
 
-### MG-MAMPOSSt, a code to test gravity with the mass profiles of galaxy clusters
+## MG-MAMPOSSt, a code to test gravity with the mass profiles of galaxy clusters
 
-MG-MAMPOSSt is a FORTRAN code that extended the MAMPOSSt algorithm of G. Mamon, A. Biviano and G. Boué, 
-that performs Bayesian fits of models of mass and velocity anisotropy profiles to the distribution of tracers in projected phase space, 
-to handle modified gravity models and constrain its parameters. The new version implements two distinct types of gravity modifications, 
+MG-MAMPOSSt is a FORTRAN code that extended the MAMPOSSt algorithm of G. Mamon, A. Biviano and G. Boué - 
+which performs Bayesian fits of models of mass and velocity anisotropy profiles to the distribution of tracers in projected phase space -
+to handle modified gravity models and constrain their parameter space. The new version implements two distinct types of gravity modifications, 
 namely general chameleon (including $f(\mathcal{R})$ models) and beyond Horndeski gravity (Vainshtein screening).
 
 
 ---
 
-### Install
+## Install
 
-To install and run MG-MAMPOSSt on your Linux terminal, download the .zip file which contains all the dependencies. Notice that the main source code gomamposstoptS.f requires additional routines which are stored in the various folders shipped within the code. Some routines are taken from free libraries available on the web. Credits to the developers are given as comments in the source files of these routines.
+To install and run MG-MAMPOSSt on a Linux terminal, download the .zip file which contains all the dependencies. Notice that the main source code gomamposstoptS.f requires additional routines which are stored in the various folders shipped within the code. Some routines are taken from free libraries available on the web. Credits to the developers are given as comments in the source files of these routines.
+
+### Install with CMake
+
+The configuration and installation requires at least CMake 3.17.1.  Unzip the MG-MAMPOSSt folder and navigate to the working directory, e.g.
+```bash
+$ unzip MG-MAMPOSSt-main.zip
+$ cd MG-MAMPOSSt-main/
+```
+Proceed to the configuration through the following commands:
+```bash
+$ mkdir build
+$ cd build/
+$ cmake ..
+```
+Finally, run
+```bash
+$ cmake --build .
+$ sudo cmake --install .
+```
 
 Execute the following scripts in this order:
 ```bash
