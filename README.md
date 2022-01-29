@@ -14,7 +14,7 @@ The code requires a Fortran90 compiler or higher and makes use of the Python3 [@
 
 ### Documentation
 
-A full description of the code functionalities, input parameters and output files is given in [(the user manual)](https://arxiv.org/abs/2201.07194)
+A full description of the code functionalities, input parameters and output files is given in [the user manual](https://arxiv.org/abs/2201.07194)
 
 
 ---
@@ -80,7 +80,7 @@ be sure to put a backslash at the end of the path, e.g.:
 ### Input parameters
 Input parameters are stored in the file Input_pars/pars_all_N_O_spec_DS.
 Additional options are in Options.txt where one can customized the mode 
-All the required information about the structure of these files can be found in the [(pdf user manual)](https://arxiv.org/abs/2201.07194)
+All the required information about the structure of these files can be found in the [pdf user manual](https://arxiv.org/abs/2201.07194)
 
 
 ### Output
