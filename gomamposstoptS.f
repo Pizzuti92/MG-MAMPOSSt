@@ -3214,7 +3214,7 @@ c     The MAMPOSSt procedure
       dimension freepar(6),freelow(5),freeup(5),wpar(5000),xi(5,5)
       CHARACTER(len= 1) ARR1
       character(len= 2) arr2
-      character(len = 18) :: filename
+      character(len = 13) :: filename
       character(len=4) :: dat
       character(len=300) :: buffer, label
       integer :: pos, pos1, pos2, posl1, posl2, posl
