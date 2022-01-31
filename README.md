@@ -53,7 +53,7 @@ Here we summarize all the necessary information to perform a complete run of the
 ### Dataset
 
 The directory data/ stores the datafiles of projected phase spaces (p.p.s) that serve as input to the MG-MAMPOSSt procedure. The files are structured as a table where the number of rows coincides with the number of data points. The first column is the projected radius in units of ```kpc```, the second and thirds columns represent the l.o.s. velocities and the associated errors in units of ```km/s```. Note that data points should be given in the rest frame of the cluster.
-The first two lines are considered as comment lines when \textsc{MG-MAMPOSSt} read the data.
+The first two lines are considered as comment lines when MG-MAMPOSSt read the data.
 
 ### Input parameters
 Input parameters are stored in the file Input_pars/pars_all_N_O_spec_DS. 
