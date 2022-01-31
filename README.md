@@ -58,10 +58,10 @@ The first two lines are considered as comment lines when MG-MAMPOSSt read the da
 ### Input parameters
 Input parameters are stored in the file Input_pars/pars_all_N_O_spec_DS. Different parameters go on different rows and must be written starting by the first column. They are all mandatory and are divided in four main groups:
 
-    * Number of iterations (lines 1-6), 
-    * Guess values (lines  8-13), 
-    * Model options (lines 15-27), 
-    * Parameter limits (lines 29-40).
+* Number of iterations (lines 1-6), 
+* Guess values (lines  8-13), 
+* Model options (lines 15-27), 
+* Parameter limits (lines 29-40).
     
     
 Additional options are in Options.txt where one can customized the mode 
