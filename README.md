@@ -9,7 +9,7 @@
 MG-MAMPOSSt is a FORTRAN code that extended the MAMPOSSt algorithm of G. Mamon, A. Biviano and G. Boué - 
 which performs Bayesian fits of models of mass and velocity anisotropy profiles to the distribution of tracers in projected phase space -
 to handle modified gravity models and constrain their parameter space. The new version implements two distinct types of gravity modifications, 
-namely general chameleon (including $f(\mathcal{R})$ models) and beyond Horndeski gravity (Vainshtein screening). MG-MAMPOSSt efficently explores the parameter space either by computing the likelihood over a multi-dimensional grid of points or by performing a simple Metropolis-Hastings MCMC. 
+namely general chameleon (including $`f(\mathcal{R})`$ models) and beyond Horndeski gravity (Vainshtein screening). MG-MAMPOSSt efficently explores the parameter space either by computing the likelihood over a multi-dimensional grid of points or by performing a simple Metropolis-Hastings MCMC. 
 The code requires a Fortran90 compiler or higher and makes use of the Python3 [getdist package](https://github.com/cmbant/getdist) of Antony Lewis to plot the marginalized distributions in the MCMC mode.
 
 ### Documentation
@@ -52,7 +52,7 @@ Here we summarize all the necessary information to perform a complete run of the
 
 ### Dataset
 
-The directory data/ stores the datafiles of projected phase spaces (p.p.s) that serve as input to the MG-MAMPOSSt procedure. The files are structured as a table where the number of rows coincides with the number of data points. The first column is the projected radius in units of $\text{kpc}$, the second and thirds columns represent the l.o.s. velocities and the associated errors in units of $\text{km/s}$. Note that data points should be given in the rest frame of the cluster.
+The directory data/ stores the datafiles of projected phase spaces (p.p.s) that serve as input to the MG-MAMPOSSt procedure. The files are structured as a table where the number of rows coincides with the number of data points. The first column is the projected radius in units of $`\text{kpc}`$, the second and thirds columns represent the l.o.s. velocities and the associated errors in units of $`\text{km/s}`$. Note that data points should be given in the rest frame of the cluster.
 The first two lines are considered as comment lines when \textsc{MG-MAMPOSSt} read the data.
 
 ### Input parameters
@@ -63,7 +63,7 @@ All the required information about the structure of these files can be found in 
 
 ### Output
 Output files can be found in the Output folder. Main is MaxLik_test.dat, 
-which stores the tabulated $-\ln\mathcal{L}$, where $mathcal{L}$ is the 
+which stores the tabulated $`-\ln\mathcal{L}`$, where $`mathcal{L}`$ is the 
 likelihood/posterior, as a function of the model parameters.
 
 
