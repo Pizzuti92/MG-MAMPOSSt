@@ -46,9 +46,17 @@ $ ./script/script_runmam.sh
 which also generates additional plots if the MCMC mode is selected (see below).
 Note that to run the above script, permissions should be changed to make it executable. Otherwise, one can simply use the ``` sh ``` environment.
 
+## Overview of usage
+
+Here we summarize all the necessary information to perform a complete run of the code.
+
+### Dataset
+
+The directory data/ stores the datafiles of projected phase spaces (p.p.s) that serve as input to the MG-MAMPOSSt procedure. The files are structured as a table where the number of rows coincides with the number of data points. The first column is the projected radius in units of $\text{kpc}$, the second and thirds columns represent the l.o.s. velocities and the associated errors in units of $\text{km/s}$. Note that data points should be given in the rest frame of the cluster.
+The first two lines are considered as comment lines when \textsc{MG-MAMPOSSt} read the data.
 
 ### Input parameters
-Input parameters are stored in the file Input_pars/pars_all_N_O_spec_DS.
+Input parameters are stored in the file Input_pars/pars_all_N_O_spec_DS. 
 Additional options are in Options.txt where one can customized the mode 
 All the required information about the structure of these files can be found in the [pdf user manual](https://arxiv.org/abs/2201.07194)
 
