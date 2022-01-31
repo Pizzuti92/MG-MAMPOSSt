@@ -58,8 +58,8 @@ The first two lines are considered as comment lines when MG-MAMPOSSt read the da
 ### Input parameters
 Input parameters are stored in the file Input_pars/pars_all_N_O_spec_DS. Different parameters go on different rows and must be written starting by the first column. They are all mandatory and are divided in four main groups:
 
-* Number of iterations (lines 1-6), 
-* Guess values (lines  8-13), 
+* Number of iterations (lines 1-6): for the grid search mode, they represent the number of points in each free parameter over which the likelihood is computed. If set to 0 or 1, the parameter is fixed to its guess value, except for specific cases. When MG-MAMPOSSt is in MCMC mode, if ```number of iterations``` is different from zero, then the corresponding parameters are optimized within the chain. Otherwise the parameters are fixed to the guess value. 
+* Guess values (lines 8-13)
 * Model options (lines 15-27), 
 * Parameter limits (lines 29-40).
     
