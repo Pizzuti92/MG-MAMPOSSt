@@ -81,6 +81,14 @@ Input parameters are stored in the file Input_pars/pars_all_N_O_spec_DS. Differe
     * **A_2**: Initial guess for the second modified gravity parameter.
   
 * **Model options (lines 15-27, reals/integers):** this family of values allow to select cosmological environment such as the value of the  Hubble parameter and the average redshift of the cluster, the mass or number density profiles, the velocity anisotropy profiles, as well as the optimization algorithm choices.
+   * **H0 (real):** The value of the Hubble parameter evaluated at redshift z=0, measured in units of km/s/Mpc.
+   * **z (real):** Average redshift of the cluster's center of mass.
+   * **Omega_Lambda (real):** Value of the Omega_Lambda density parameter today.
+   * **Omega_m (real):** Value of the Omega_m density parameter today.
+   * **R_low (real):** Inner projected radius, defining the minimum projected radius from the cluster center (given in Mpc) at which galaxies should be considered in the MG-MAMPOSSt fit.
+    
+   * **R_up (real):** Outer projected radius, defining the maximum projected radius from the cluster center (given in Mpc) at which galaxies should be considered in the MG-MAMPOSSt fit.
+     
 * **Parameter limits (lines 29-40, reals):** limits in the parameter space exploration. It works only if the option **kpro=1** in the file Option.txt
     
     
