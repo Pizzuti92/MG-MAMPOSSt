@@ -20,7 +20,7 @@ nlens = 1
 r200t = 1.41
 rst = 0.33
 
-#5) sigma(r_s)/r_s, sigma(r200)/r200, correlation of lensing priors for 
+#5) sigma(r200)/r200, sigma(r_s)/r_s, correlation of lensing priors for 
 the case of Chameleon screening and linear Horndeski. 
 # Sigma_ell, sigma_lss, ngal for Vainsthein lensing simulation.
 delta1 = 0.25
