@@ -68,6 +68,18 @@ Input parameters are stored in the file Input_pars/pars_all_N_O_spec_DS. Differe
    - **nA2**: Number of iteration for the second MG parameter. For the case of general chameleon gravity, A_2 corresponds to the coupling constant **Q**. If **nA2=-1** it forces the case of $f(R)$ gravity (Q=1/\sqrt{6}).
    
 * **Guess values (lines 8-13, reals):** they serve as an initial guess for the MG-MAMPOSSt fit both in grid and MCMC mode. If the corresponding number of iterations is set to zero, or one when in the grid-search option, the parameter guess is kept fixed within the code.
+   * **r_200**: guess starting value of the characteristic "virial" radius for the mass profile, measured in units of Mpc. 
+
+    * **r_nu**: guess starting vaule for the scale radius of the number density profile,  units of Mpc. 
+    
+    * **r_s**: guess starting value for the scale radius of the mass profile, in  units of Mpc. 
+
+    * **beta**: starting guess for the velocity anisotropy profile parameter. If the selected model is "constant", "Tiret" or "Modified Tiret", the parameter is dimensionless, otherwise it should be given in units of Mpc.
+    
+    * **A_1**: Initial guess for the first modified gravity parameter. For the case of gNFW model **kmp=10**, **A_1=gamma** is the free exponent which characterizes the profile.
+    
+    * **A_2**: Initial guess for the second modified gravity parameter.
+  
 * **Model options (lines 15-27, reals/integers):** this family of values allow to select cosmological environment such as the value of the  Hubble parameter and the average redshift of the cluster, the mass or number density profiles, the velocity anisotropy profiles, as well as the optimization algorithm choices.
 * **Parameter limits (lines 29-40, reals):** limits in the parameter space exploration. It works only if the option **kpro=1** in the file Option.txt
     
