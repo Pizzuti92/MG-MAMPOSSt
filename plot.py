@@ -248,8 +248,6 @@ elif total==4:
     print(samples.getTable().tableTex())
     
 elif total==5:
-    if (massmodel==7 or massmodel==9):
-        data[:,4]=np.log10(data[:,4])
     first=data[:,il[0]]
     second=data[:,il[1]]
     third=data[:,il[2]]
