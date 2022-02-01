@@ -296,7 +296,7 @@ c     analytical approximation of Lombriser+12.
                             
       !if kscr=3 then the modified gravity contribution assumes the form of
       !general hordenski gravity with coupling Q=Screen  
-     
+
 c***********************************************************************
       if(r200g.gt.r2up.or.r200g.lt.r2low) then
          Stop('ERROR: GUESS VALUE r200 EXCEEDES PARAMETER LIMITS')
@@ -3928,7 +3928,7 @@ c      call CPU_TIME(astar)
     
         fmlb=f
         if (kopt.lt.0) then
-          if (kmp.eq.9.and.nhone.lt.1) scrnew=1./sqrt(6.0d0)
+          if (kmp.eq.9.and.nhone.eq.-1) scrnew=1./sqrt(6.0d0)
           rs=rsnew
           cbe=cbnew
           rc=rcnew
@@ -4095,7 +4095,8 @@ c                write(*,*) 'Screening radius found at ', screen
            if(irun.lt.10) then
             ARR1 = ''
             WRITE(ARR1,"(I1)") irun
-            open (12, FILE=filename//arr1//dat, STATUS='OLD')
+
+            open (12, FILE=filename//ARR1//dat, STATUS='OLD')
            else
             ARR2 = ' '
             WRITE(ARR2,"(I2)") irun
@@ -4195,11 +4196,11 @@ c  trial accepted: update the temporary parameters *********************
           cbt=cbn
           tmt=tmassn
           scrt=scrn  
-          if(kmp.eq.9.and.nhone.gt.0) then 
-            scprova=scrn/(1+scrn) 
-          else
+c          if(kmp.eq.9.and.nhone.gt.0) then 
+c            scprova=scrn/(1+scrn) 
+c          else
             scprova=scrt
-          endif
+c          endif
           fmlb=fml2
           write(iu60,674) r2t,rct,rsst,cbt,tmt,scprova,fml2,kani
           
@@ -6592,7 +6593,7 @@ c     compute the effective mass due to chameleon field
        if(kmp.eq.9.and.nhone.gt.0) then
          bcoup=screen !the modified parameter of the screening becomes
                       !the coupling constant in the genneric chameleon run
-c         write(*,*) bcoup
+
        else
          bcoup=1./dsqrt(6.0d0)
        endif
@@ -6885,8 +6886,31 @@ c     a MCMC using a gaussian distribution with std sigma(nfreepar)
        !!
         tmassnew=r_normal_ab (tmassnew,sigma(5),neseed)
        else
-        tmassnew=r_normal_ab (dlog10(tmassnew),sigma(5),neseed)
-        tmassnew=10**(tmassnew)
+        if(kmp.eq.7.or.kmp.eq.9) then
+        
+        !case of general chameleon. The parameter space is explored
+        !in terms of the rescaled variables Q_2 phi_2 (see e.g. Terukina
+        !et al., 2014, Pizzuti et al., 2021)
+         if (kmp.eq.9.and.nhone.gt.0) then
+           tmassnew=1-dexp(-tmassnew*0.1)
+           if (tmassnew.lt.0) then
+             tmassnew=dabs(r_normal_ab (0.d0,sigma(5),neseed))
+           else
+             
+             tmassnew=dsqrt(r_normal_ab (tmassnew,sigma(5),neseed)**2)
+             !be sure that tmassnew is smaller than 1
+             if (tmassnew.gt.1) then
+              tmassnew=2.0-tmassnew
+             endif
+
+           endif
+           tmassnew=(-10*dlog(1-tmassnew))
+           
+         else 
+          tmassnew=r_normal_ab (dlog10(tmassnew),sigma(5),neseed)
+          tmassnew=10**(tmassnew)
+         endif
+        endif
        endif
        if(kmp.ne.8) then
        
@@ -6906,6 +6930,11 @@ c     a MCMC using a gaussian distribution with std sigma(nfreepar)
              scrtemp=dabs(r_normal_ab (0.d0,sigma(6),neseed))
            else
              scrtemp=dsqrt(r_normal_ab (scrtemp,sigma(6),neseed)**2)
+             !be sure that it is smaller than 1
+             if (scrtemp.gt.1) then
+              scrtemp=2.0-scrtemp
+             endif
+             
            endif
            scrnew=scrtemp/(1-scrtemp)
         
@@ -6966,7 +6995,7 @@ c     &           tmassnew,scrnew,sigma)
       else
          sigma(5)=0.2
          
-         if(kmp.eq.9) sigma(5)=1
+         if(kmp.eq.9.and.nhone.lt.0) sigma(5)=1
          if(kmp.eq.10) sigma(5)=0.05
         
       endif
