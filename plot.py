@@ -41,6 +41,17 @@ bb=(matrix(titfile)[1])
 titinput=bb[0]
 massmodel=(matrix(titinput)[22])[0]
 massmodel=int(massmodel[0])
+
+#NOTE: In the case of general chameleon the RESCALED VARIABLES Q_2 and \phi_2
+#are plotted (see Pizzuti et al., 2021)
+#fr case
+nhone=(matrix(titinput)[5])[0]
+frcase=0
+try:
+    int(nhone[0])
+except:
+    frcase=1
+
 f = open('Options.txt', 'r')
 for line in map(str.strip,f.read().splitlines()):
     line1 = line.split('=')
@@ -82,12 +93,19 @@ Plabelb=r"P(r_{\beta})"
 if(data[7,0]!=1):
     labelb="\mathcal{A}_\infty"
     Plabelb="P(\mathcal{A}_\infty)"
-    
-labelm1="Log10(\phi/c^2)"
-labelm2="\mathcal{Q}"
 
-Plabelm1=r"$P[Log10(\phi/c^2)]$"
-Plabelm2=r"$P(\mathcal{Q})$"
+labelm1="\phi_2"
+Plabelm1=r"$P(\phi_2)$"
+if (frcase==1):
+    labelm1="Log10(\phi/c^2)"
+labelm2="\mathcal{Q}_2"
+Plabelm2=r"$P(\mathcal{Q}_2)$"
+
+if (frcase==1):
+    labelm1="Log10(\phi/c^2)"
+    Plabelm1=r"$P[Log10(\phi/c^2)]$"
+
+
 if(massmodel==8):
     labelm1="Y_1"
     labelm2="Y_2"
@@ -109,8 +127,13 @@ if (massmodel==7 and np.any(il==5)):
     labelm2=r"Log(Q)"
     Plabelm2=r"P[Log$(Q)$]"
 if(np.any(il==4)):
-    if (massmodel==7 or massmodel==9):
-            data[:,4]=np.log10(data[:,4])
+    if (massmodel==7):
+        data[:,4]=np.log10(data[:,4])
+    if (massmodel==9 and  frcase==1):
+        data[:,4]=np.log10(data[:,4])
+    if (massmodel==9 and frcase==0):
+        data[:,4]=1-np.exp(-data[:,4]*0.1)
+        data[:,5]=data[:,5]/(1+data[:,5])  
   
 label=np.array(["r_{200}\,\,[Mpc]",r"r_{\nu}\,\, [Mpc]",r"r_{s}\,\, [Mpc]",labelb,labelm1,labelm2])
 label1d=np.array([r"$r_{200}$ [Mpc]",r"$r_{\nu}$ [Mpc]",r"$r_{s}$ [Mpc]",labelb,labelm1,labelm2])
@@ -123,9 +146,15 @@ mod1low=float((matrix(titinput)[37])[0])
 
 mod2up=float((matrix(titinput)[40])[0])
 mod2low=float((matrix(titinput)[39])[0])
-if (massmodel==7 or massmodel==9):
+if (massmodel==7 or (massmodel==9 and frcase==1)):
     mod1up=np.log10(mod1up)
     mod1low=np.log10(mod1low)
+if (massmodel==9 and frcase==0):
+    mod1up=1-np.exp(-mod1up*0.1)
+    mod1low=1-np.exp(-mod1low*0.1)
+    mod2up=0.0
+    mod2up=1.1
+
 if (massmodel==7 and np.any(il==5)):
     mod2up=np.log10(mod2up)
     mod2low=np.log10(mod2low)
@@ -280,7 +309,7 @@ elif total==5:
     g = plots.get_subplot_plotter(width_inch=10.5)
     g.settings.axes_fontsize = 20
     g.settings.axes_labelsize=20
-    g.triangle_plot([samples], filled=True, color='red')
+    g.triangle_plot([samples], filled=True, color='red',param_limits={'m2':[mod2low,mod2up]})
     mpl.show()
     print(r"Confidence interval at 2$\sigma$")
     print(samples.getTable().tableTex())
