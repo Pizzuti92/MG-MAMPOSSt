@@ -60,8 +60,8 @@ Input parameters are stored in the file Input_pars/pars_all_N_O_spec_DS. Differe
 
 * **Number of iterations (lines 1-6, integers):** for the grid search mode, they represent the number of points in each free parameter over which the likelihood is computed. If set to 0 or 1, the parameter is fixed to its guess value, except for specific cases. When MG-MAMPOSSt is in MCMC mode, if **number of iterations** is different from zero, then the corresponding parameters are optimized within the chain. Otherwise the parameters are fixed to the guess value. 
 * **Guess values (lines 8-13, reals):** they serve as an initial guess for the MG-MAMPOSSt fit both in grid and MCMC mode. If the corresponding number of iterations is set to zero, or one when in the grid-search option, the parameter guess is kept fixed within the code.
-* Model options (lines 15-27), 
-* Parameter limits (lines 29-40).
+* **Model options (lines 15-27, reals/integers):** this family of values allow to select cosmological environment such as the value of the  Hubble parameter and the average redshift of the cluster, the mass or number density profiles, the velocity anisotropy profiles, as well as the optimization algorithm choices.
+* **Parameter limits (lines 29-40, reals):** limits in the parameter space exploration. It works only if the option **kpro=1** in the file Option.txt
     
     
 Additional options are in Options.txt where one can customized the mode 
