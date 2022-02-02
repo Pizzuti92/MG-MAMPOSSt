@@ -88,6 +88,22 @@ Input parameters are stored in the file Input_pars/pars_all_N_O_spec_DS. Differe
    * **R_low (real):** Inner projected radius, defining the minimum projected radius from the cluster center (given in Mpc) at which galaxies should be considered in the MG-MAMPOSSt fit.
     
    * **R_up (real):** Outer projected radius, defining the maximum projected radius from the cluster center (given in Mpc) at which galaxies should be considered in the MG-MAMPOSSt fit.
+   *  **kn (integer):** Number density profile model. It selects the model for the tracer's projected number density profile. In the current version three possible choices are allowed: projected NFW (kn=1), projected Hernquist (kn=2) and beta-model (kn=3).
+    
+   * **nb (real):** Exponent for beta-model. The beta-model choice requires an additional input exponent which should be negative. The input parameter is ignored otherwise.
+    
+   * **kmp (integer):** Mass profile/gravitational potential model. It selects the allowed parametrisations of the mass profile to be used in the Jeans' equation. For **kmp=1...6** and **kmp=10** GR is assumed, while if **kmp=7,8,9** the mass profile is the effective dynamical (Navarro-Frenk-White) mass obtained in linear Horndeski, Vainshtein screening and general chameleon screening respectively.  Details on each single model are given in the user manual.
+    
+   * **kani (integer):** Anisotropy profile model. It selects the  
+    velocity anisotropy beta(r) in the Jeans' equation. The currently implemented profiles  are: constant anisotropy  **kani=0** , Mamon&Lokas **kani=1** , Osipkov-Merritt **kani=2**, simplified Wojtak **kani=3** , Tiret **kani=4** , modified Tiret **kani=5** .
+    
+    * **rcut (real):** Truncation radius. Value of the truncation radius needed in the pseudo-isothermal elliptical mass distribution (PIEMD), which correspond to kmp=3. It is ignored for other mass profile models.
+    
+    * **kbsp (integer): Fast mode**. If equal to 1, the likelihood is estimated by using a grid of values (default 60 points) in the phase space (R,v_z) of the galaxies and then bispline-interpolating over the data points. 
+    
+    * **kopt (integer): Optimization choice.** If required, an optimization algorithm is launched before the grid/MCMC likelihood computation to find the minimum of $-\ln \mathcal{L}$. Eventually, the resulting best fit parameters are used as guess values for the subsequent parameter space exploration. Currently, three choices are available:  BOBYQA **kopt=0**, NEWUOA **kopt=1** or POWELL **kopt=2** We point out that the POWELL algorithm does not work efficiently in MG mode (kmp=7,8,9) due to round-off errors in the integration routines. If **kopt=-1** the optimization is skipped. 
+    
+    * **kscr (integer): Screening mode** (available only for kmp=7). In linear Horndeski, one can choose to adopt the $f(R)$ sub-case, $k_\text{scr}=0$, where $A_2$ is fixed to $\sqrt{1/6}$. In this framework, there is the possibility to include a model-dependent screened $f(R)$ model with Hu\&Sawicki functional form,implemented by assuming a simple analytical approximation. The transition between the screened and linear regime can be instantaneous ($k_\text{scr}=1$), or smoothed with an additional parameter controlling the sharpness ( $k_\text{scr}=2$). For $k_\text{scr}=-1$, the general linear Horndeski with two free parameters is selected.
      
 * **Parameter limits (lines 29-40, reals):** limits in the parameter space exploration. It works only if the option **kpro=1** in the file Option.txt
     
