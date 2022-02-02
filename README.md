@@ -2,11 +2,11 @@
 
 # MG-MAMPOSSt, a code to test gravity with the mass profiles of galaxy clusters 
 
-- [(Main page)](https://github.com/Pizzuti92/MG-MAMPOSSt)
+- [Go to Main page](https://github.com/Pizzuti92/MG-MAMPOSSt)
 - [Introduction](#Introduction)
 - [Documentation](#Documentation)
 - [Install](#Install)
-   - [Install with CMake](#Install with CMake)  
+- [Overview of usage](#Overview of usage)
 
 ## Introduction
 
