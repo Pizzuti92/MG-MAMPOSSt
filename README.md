@@ -125,8 +125,8 @@ Input parameters are stored in the file Input_pars/pars_all_N_O_spec_DS. Differe
 
 ### Working Opions
 
-The file Option.txt contains various options and switches for the new features in MG-MAMPOSSt. These are mostly related to the numerical analysis and evaluation of the posterior likelihood. Notice that, the input parameters can be **binary integers** (with values $0$ or $1$), **integers*4** or **reals*8**. 
-All the parameters must be given in a format "<label> = <value>". The "<label>"s are mandatory while the "<value>"s, if not given, are set by default. 
+The file Option.txt contains various options and switches for the new features in MG-MAMPOSSt. These are mostly related to the numerical analysis and evaluation of the posterior likelihood. Notice that, the input parameters can be **binary integers** (with values 0 or 1), **integers*4** or **reals*8**. 
+All the parameters must be given in a format <label> = <value>. The "<label>"s are mandatory while the <value>s, if not given, are set by default. 
 * **nmcmc (binary)**. Select between grid-search mode ($= 0$), and MCMC sampling ($ = 1$). The default value is $ = 1$.
 %    \gam{Why not adopt a value of 1 by default for MCMC sampling, which is much faster for a reasonable number of free parameters?}\lp{Agree.}
     
