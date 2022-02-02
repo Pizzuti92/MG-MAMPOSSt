@@ -106,9 +106,22 @@ Input parameters are stored in the file Input_pars/pars_all_N_O_spec_DS. Differe
     * **kscr (integer): Screening mode** (available only for kmp=7). In linear Horndeski, one can choose to adopt the $f(R)$ sub-case, **kscr=0**, where A2 is fixed to 1/sqrt{6}. In this framework, there is the possibility to include a model-dependent screened $f(R)$ model with Hu&Sawicki functional form,implemented by assuming a simple analytical approximation. The transition between the screened and linear regime can be instantaneous (**kscr=1**), or smoothed with an additional parameter controlling the sharpness (**kscr=2**). For **kscr=-1**, the general linear Horndeski with two free parameters is selected.
      
 * **Parameter limits (lines 29-40, reals):** limits in the parameter space exploration. It works only if the option **kpro=1** in the file Option.txt
-    
-    
-Additional options are in Options.txt where one can customized the mode 
+   *  **r200_low:** Lower limit for r200 (in Mpc).
+   *  **r200_up:** Upper limit for r200 (in Mpc).
+   *  **rnu_low:** Lower limit for rnu (in Mpc).
+   *  **rnu_up:** Upper limit for rnu (in Mpc).  
+   *  **rs_low:** Lower limit for rs (in Mpc).
+   *  **rs_up:** Upper limit for rs (in Mpc).  
+   *  **beta_low:** Lower limit for for the anisotropy parameter beta. For kani=1 the unit is Mpc.
+   *  **beta_up:** Upper limit for for the anisotropy parameter beta. For kani=1 the unit is Mpc.
+   *  **A1_low:** Lower limit for the first modified gravity parameter A1. 
+   *  **A1_up:** Upper limit for the first modified gravity parameter A1. 
+   *  **A2_low:** Lower limit for the second modified gravity parameter A2. 
+   *  **A2_up:** Upper limit for the second modified gravity parameter A2. 
+
+### Working Opions
+
+Additional options are in the file Options.txt.  
 All the required information about the structure of these files can be found in the [pdf user manual](https://arxiv.org/abs/2201.07194)
 
 
