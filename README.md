@@ -6,7 +6,7 @@
 - [Introduction](#Introduction)
 - [Documentation](#Documentation)
 - [Install](#Install)
-- [Overview of usage](#Overview of usage)
+- [Overview of usage](#Overview-of-usage)
 
 ## Introduction
 
