@@ -18,7 +18,7 @@ The code requires a Fortran90 compiler or higher and makes use of the Python3 [g
 
 ### Documentation
 
-MG-MAMPOSSt has been developed by L. Pizzuti, I.D. Saltas G. Mamon L. Amendola and A. Biviano from the MAMPOSSt version of A. Biviano. A precious contribution has been given by J. Dvoracek and S. Sartor. A full description of the code functionalities, input parameters and output files is given in the pdf user manual available [here](https://arxiv.org/abs/2201.07194). Details of the original MAMPOSSt method can be found in [Mamon et al., 2013](https://academic.oup.com/mnras/article/429/4/3079/1012297?login=false). The updated version of the (GR) MAMPOSSt code can be downloaded [here](https://gitlab.com/gmamon/MAMPOSSt) 
+MG-MAMPOSSt has been developed by L. Pizzuti, I.D. Saltas G. Mamon L. Amendola and A. Biviano from the MAMPOSSt version of A. Biviano. A precious contribution has been given by J. Dvoracek and S. Sartor. A full description of the code functionalities, input parameters and output files is given in the [pdf user manual](https://arxiv.org/abs/2201.07194). Details of the original MAMPOSSt method can be found in [Mamon et al., 2013](https://academic.oup.com/mnras/article/429/4/3079/1012297?login=false). The updated version of the (GR) MAMPOSSt code can be downloaded [here](https://gitlab.com/gmamon/MAMPOSSt). 
 
 
 ---
