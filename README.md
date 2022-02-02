@@ -130,23 +130,18 @@ All the parameters must be given in a format **"label = "value"**. The "label"s 
 * **nmcmc (binary)**. Select between grid-search mode (= 0), and MCMC sampling (= 1). The default value is 1.
 * **Nsample (integer)**. Number of points in the MCMC run. Default is 400000.
 * **nlens (binary)**. Lensing information: If equal to 1, it adds to the kinematics likelihood, a probability distribution simulating additional information such as provided by a lensing mass profile reconstruction. For each set of values of the parameters, the joint (log) likelihood is then computed as
-    \begin{equation}
-    \ln\mathcal{L}_\text{joint}=\ln\mathcal{L}_\text{dyn}+\ln\mathcal{L}_\text{lens},
-    \end{equation}
-    
-    where $\ln\mathcal{L}_\text{dyn}$ and $\ln\mathcal{L}_\text{lens}$ are the log-likelihoods of the MG-MAMPOSSt procedure and the simulated lensing distribution respectively. 
-    For linear Horndeski and Chameleon screening, where photon propagation is not affected by the new degrees of freedom, the lensing likelihood has the form of a bivariate Gaussian distribution $\mathcal{L}_\text{lens}=P_\text{lens}(r_\text{s},r_{200})$, specified by central values, standard deviations and correlation (see below). In Vainsthein screening, where lensing mass profile is explicitly modified by the MG parameters, the likelihood is computed by simulating a full tangential shear profile, as explained in [Pizzuti et al., 2021](https://inspirehep.net/literature/1834246). The default value is 0.
+
+    **L(joint) =L(dyn)+L(lens),**
+
+    where L(dyn) and L(lens) are the log-likelihoods of the MG-MAMPOSSt procedure and the simulated lensing distribution respectively. 
+    For linear Horndeski and Chameleon screening, where photon propagation is not affected by the new degrees of freedom, the lensing likelihood has the form of a bivariate Gaussian distribution L(lens)=P(lens)(rs,r200), specified by central values, standard deviations and correlation (see below). In Vainsthein screening, where lensing mass profile is explicitly modified by the MG parameters, the likelihood is computed by simulating a full tangential shear profile, as explained in [Pizzuti et al., 2021](https://inspirehep.net/literature/1834246). The default value is 0.
     
  * **r200t (real)**. "True" value of the cluster's virial radius (in unit of Mpc) around which the lensing distribution is centered.
  * **rst (real)**.   "True" value of the cluster's scale radius (in unit of Mpc) around which the lensing distribution is centered.
-    
-    \item \texttt{delta1 (real)}. For Vainshtein screening, it represents the intrinsic ellipticity of galaxies in the (weak) lensing simulations. For Chameleon screening, it is the relative uncertainty on the virial radius in the Gaussian distribution $\sigma_{r_{200}}/r_{200}$.
-    
-    \item \texttt{delta2 (real)}. For Vainshtein screening, it represents the large scale structure contribution to the errors in the (weak) lensing simulations. For Chameleon screening, it is the relative uncertainty on the scale radius in the Gaussian distribution $\sigma_{r_\text{s}}/r_\text{s}$.
-    
-    \item \texttt{delta3 (integer/real)}. For Vainshtein screening, it represents the number of galaxies per arcminute square in the (weak) lensing simulations. For Chameleon screening, it is the correlation $\rho$ in the Gaussian distribution.
-    
-    \item \texttt{kpro (binary)}. If it is equal to 1, the parameter space exploration is made over a given interval $[X^\text{low},X^\text{up}]$, where $X$ indicates a generic free parameter, as mentioned in Section \ref{sec:input1}. Default is $ = 1$. 
+ * **delta1 (real)**. For Vainshtein screening, it represents the intrinsic ellipticity of galaxies in the (weak) lensing simulations. For Chameleon screening, it is the relative uncertainty on the virial radius in the Gaussian distribution sigma(r_{200})/r_{200}.
+ * **delta2 (real)**. For Vainshtein screening, it represents the large scale structure contribution to the errors in the (weak) lensing simulations. For Chameleon screening, it is the relative uncertainty on the scale radius in the Gaussian distribution \sigma(r_s)/r_s.
+ * **delta3 (integer/real)**. For Vainshtein screening, it represents the number of galaxies per arcminute square in the (weak) lensing simulations. For Chameleon screening, it is the correlation in the Gaussian distribution.
+ * **kpro (binary)**. If it is equal to 1, the parameter space exploration is made over a given interval (Xlow,Xup), where X indicates a generic free parameter. Default is 1. 
 
     \item \texttt{Nclust (integer)}. \textsc{MG-MAMPOSSt} allows for efficient statistical forecast analyses of the constraints on the implemented MG models. In particular, it is possible to input \texttt{Nclust} realizations of phase spaces at the same time to compute directly the joint likelihood for a given set of parameters, obtained from the combination of the likelihood from each single data-set.  These data files should be located in "\texttt{/data}" folder and named as \texttt{datphys\textunderscore<i>.dat}, where \texttt{<i>} labels the number of the file in ascending order, starting from 2 (e.g. \texttt{datphys\textunderscore2.dat}, \texttt{datphys\textunderscore3.dat}, ...). The file format is the same as the main input \texttt{datphys.dat} (see Section \ref{sec:generalities}). Default is $ = 1$. Note that in order to obtain meaningful results using this option, all the data files should be a realization of the same cluster (i.e. characterized by the same values of all parameters).
     
