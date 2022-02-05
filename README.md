@@ -152,13 +152,10 @@ All the parameters must be given in a format **"label = "value"**. The "label"s 
  *  **nequ (binary)**. For the grid exploration without fixed bounds (**kpro=0**), if equal to 1, it removes the re-scaling of the grid steps by the number of available tracers.
  *  **nsame (binary)**. If equal to 1, likelihoods are computed on specific values of the parameters, given from an external input file. The name of the file should be **MaxLik_input.dat**, structured as a table with six columns (one for each parameter), following the same order as in the output likelihood **MaxLik.dat**, i.e. r_200, r_nu, r_s, beta, A_1, A_2. This option only works if the MCMC mode (**nmcmc=1**) is selected.
    
-All the required information about the structure of these files can be found in the [pdf user manual](https://arxiv.org/abs/2201.07194)
-
 
 ### Output
-Output files can be found in the Output folder. Main is MaxLik_test.dat, 
-which stores the tabulated $`-\ln\mathcal{L}`$, where $`mathcal{L}`$ is the 
-likelihood/posterior, as a function of the model parameters.
+Output files can be found in the Output folder. The names and the location of those files can be changed by modyfing the file **gomamposst_x.inp**. Main is **MaxLik.dat**, 
+which stores the tabulated ln(L) where L is the  likelihood/posterior, as a function of the model parameters.
 
 
 
