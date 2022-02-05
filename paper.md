@@ -1,5 +1,5 @@
 ---
-title: 'MG-MAMPOSSt, a code to test gravity at galaxy-cluster scales: a technical introduction'
+title: 'MG-MAMPOSSt, a code to test gravity at galaxy-cluster scales'
 tags:
   - Fortran
   - cosmology
@@ -13,8 +13,8 @@ authors:
     affiliation: 2
   - name: Andrea Biviano
     affiliation: "3,4"
-#  - name: Gary Mamon
-#    affiliation: 5
+  - name: Gary Mamon
+    affiliation: 5
 #  - name: Luca Amendola
 #    affiliation: 6
 affiliations:
@@ -26,8 +26,8 @@ affiliations:
    index: 3
  - name:  IFPU, Institute for Fundamental Physics of the Universe, via Beirut 2, 34014 Trieste, Italy
    index: 4
-# - name:  Institut d’Astrophysique de Paris (UMR 7095: CNRS & Sorbonne Université), 98 bis Bd Arago, F-75014 Paris, France
-#   index: 5
+ - name:  Institut d’Astrophysique de Paris (UMR 7095: CNRS & Sorbonne Université), 98 bis Bd Arago #, F-75014 Paris, France
+   index: 5
 # - name:  Institute of Theoretical Physics, Philosophenweg 16, Heidelberg University, 69120, Heidelberg, Germany
 #   index: 6
 date: 05 February 2022
