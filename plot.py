@@ -284,22 +284,18 @@ elif total==5:
     fifth=data[:,il[4]]
     samps=np.column_stack((first,second,third,four,fifth))
     ndim = 5
-    nsamp = 10000
-# Get the getdist MCSamples objects for the samples, specifying same parameter
-# names and labels; if not specified weights are assumed to all be unity
+#    nsamp = 10000
     names = np.array(["x%s"%i for i in range(ndim)])
     labels =  label[il]
-
-    samples = MCSamples(samples=samps,names = names,ranges={'x3':[mod1low,mod1up]},
-    labels = labels)#, weights=weig,loglikes=like)
     if(np.any(il==4)):
         ai,=np.where(il==4)
         names[ai]='m1'
         if(np.any(il==5)): 
             ai2,=np.where(il==5)
             names[ai2]='m2'
+
             samples = MCSamples(samples=samps,names = names, labels = labels, ranges={'m1':[mod1low,mod1up],
-              'm2':[mod2low,mod2up]}) #,weights=1/10**first)#,loglikes=like)
+              'm2':[mod2low,mod2up]})#,loglikes=like)
         else:
             samples = MCSamples(samples=samps,names = names, labels = labels, ranges={'m1':[mod1low,mod1up]})
     elif(np.any(il==5)):
@@ -309,7 +305,7 @@ elif total==5:
     g = plots.get_subplot_plotter(width_inch=10.5)
     g.settings.axes_fontsize = 20
     g.settings.axes_labelsize=20
-    g.triangle_plot([samples], filled=True, color='red',param_limits={'m2':[mod2low,mod2up]})
+    g.triangle_plot([samples], filled=True, color='red')#,param_limits={'m1':[-0.67,8.2]})#,'m2':[mod2low,mod2up]})
     mpl.show()
     print(r"Confidence interval at 2$\sigma$")
     print(samples.getTable().tableTex())
