@@ -8,7 +8,7 @@ tags:
 authors:
   - name: Lorenzo Pizzuti^[corresponding author] # note this makes a footnote saying 'co-first author'
     orcid: 0000-0001-5654-7580
-    affiliation: "1" # (Multiple affiliations must be quoted)
+    affiliation: "1" 
   - name: Ippocratis D. Saltas 
     affiliation: 2
   - name: Andrea Biviano
@@ -22,7 +22,7 @@ affiliations:
    index: 1
  - name: CEICO, Institute of Physics of the Czech Academy of Sciences, Na Slovance 2, 182 21 Praha 8, Czechia
    index: 2
-  - name:  INAF, Osservatorio Astronomico di Trieste, via Tiepolo 11, 34143 Trieste, Italy
+ - name: INAF, Osservatorio Astronomico di Trieste, via Tiepolo 11, 34143 Trieste, Italy
    index: 3
 #  - name:  IFPU, Institute for Fundamental Physics of the Universe, via Beirut 2, 34014 Trieste, Italy
 #   index: 4
