@@ -1,4 +1,3 @@
-MG-MAMPOSSt.md
 ---
 title: 'MG-MAMPOSSt, a code to test gravity at galaxy-cluster scales: a technical introduction'
 tags:
