@@ -15,8 +15,8 @@ authors:
     affiliation: "3,4"
   - name: Gary Mamon
     affiliation: 5
-#  - name: Luca Amendola
-#    affiliation: 6
+  - name: Luca Amendola
+    affiliation: 6
 affiliations:
  - name: Osservatorio Astronomico della Regione Autonoma Valle d'Aosta,  Loc. Lignan 39, I-11020, Nus, Italy
    index: 1
@@ -35,21 +35,12 @@ bibliography: paper.bib
 
 # Optional fields if submitting to a AAS journal too, see this blog post:
 # https://blog.joss.theoj.org/2018/12/a-new-collaboration-with-aas-publishing
-aas-doi: 10.3847/xxxxx <- update this with the DOI from AAS once you know it.
-aas-journal: Astrophysical Journal <- The name of the AAS journal.
+# aas-doi: 10.3847/xxxxx <- update this with the DOI from AAS once you know it.
+# aas-journal: Astrophysical Journal <- The name of the AAS journal.
 ---
 
 # Summary
-
-The forces on stars, galaxies, and dark matter under external gravitational
-fields lead to the dynamical evolution of structures in the universe. The orbits
-of these bodies are therefore key to understanding the formation, history, and
-future state of galaxies. The field of "galactic dynamics," which aims to model
-the gravitating components of galaxies to study their structure and evolution,
-is now well-established, commonly taught, and frequently used in astronomy.
-Aside from toy problems and demonstrations, the majority of problems require
-efficient numerical tools, many of which require the same base code (e.g., for
-performing numerical orbit integration).
+MG-MAMPOSSt is a license-free Fortran95 code that performs tests of General Relativity (GR) through the analyses of kinematical data of galaxy clusters based on the Jeans' equation. The code has been developed starting from the MAMPOSSt method of [@Mamon01], and extends the original code through new parametrisations of the gravitational potential for general families of gravity theories beyond GR, aimed to explain the late-time accelerated expansion of the universe. By using data of projected positions and line-of-sight velocities of cluster's member galaxies, MG-MAMPOSSt reconstructs the cluster mass profile and the velocity anisotropy profile in modified gravity, jointly constraining the full parameter space. The code is further supplemented with a new capability to produce weak lensing forecasts for joint kinematic+lensing analyses, offering a valuable tool for studying the nature of gravity at cluster's scales.
 
 # Statement of need
 
