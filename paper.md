@@ -26,7 +26,7 @@ affiliations:
    index: 3
  - name:  IFPU, Institute for Fundamental Physics of the Universe, via Beirut 2, 34014 Trieste, Italy
    index: 4
- - name:  Institut d'Astrophysique de Paris (UMR 7095: CNRS & Sorbonne Universite'), 98 bis Bd Arago #, F-75014 Paris, France
+ - name:  Institut d'Astrophysique de Paris #(UMR 7095: CNRS & Sorbonne Universite'), 98 bis Bd Arago, F-75014 Paris, France
    index: 5
 # - name:  Institute of Theoretical Physics, Philosophenweg 16, Heidelberg University, 69120, Heidelberg, Germany
 #   index: 6
