@@ -44,25 +44,12 @@ MG-MAMPOSSt is a license-free Fortran95 code that performs tests of General Rela
 
 # Statement of need
 
-`Gala` is an Astropy-affiliated Python package for galactic dynamics. Python
-enables wrapping low-level languages (e.g., C) for speed without losing
-flexibility or ease-of-use in the user-interface. The API for `Gala` was
-designed to provide a class-based and user-friendly interface to fast (C or
-Cython-optimized) implementations of common operations such as gravitational
-potential and force evaluation, orbit integration, dynamical transformations,
-and chaos indicators for nonlinear dynamics. `Gala` also relies heavily on and
-interfaces well with the implementations of physical units and astronomical
-coordinate systems in the `Astropy` package [@astropy] (`astropy.units` and
-`astropy.coordinates`).
+In the last two decades, the interest amongst the communities of cosmology and astrophysics in testing the nature of gravity and dark energy theories at large scales, aiming at explaining the origin of the late-time accelerated expansion of the universe ([@riess98],[@Perlmutter99]), has been growing up. Among the vast range of probes of modified gravity and dark energy models, galaxy clusters offer an interesting field of investigation at those scales where possible departures from General Relativity should become observable (e.g. [@Cataneo19] and references therein). Cluster mass profiles ([@Wilcox:2015kna],[@Sakstein:2016ggl],[@Pizzuti:2016ouw]) and cluster abundance (e.g [@Lombriser:2010mp],[@Cataneo:2016iav]) have been extensively used in the literature to put stringent bounds on some popular classes of non-standard theories. In this context, we developed MG-MAMPOSSt, a FORTRAN95 code capable of performing tests of gravity models with the kinematics of member galaxies in clusters. The code is based upon the original MAMPOSSt method, developed by G. Mamon, A. Biviano and G. Boué ([@Mamon01], hereafter MAM13). A public version of MAMPOSSt by G. Mamon can be found at https://gitlab.com/gmamon/MAMPOSSt}{https://gitlab.com/gmamon/MAMPOSSt}.}.But whereas the original \textsc{MAMPOSSt} code relies on the assumption of a standard Newtonian gravitational potential, \textsc{MG-MAMPOSSt} implements general %\gam{what do you mean by `large'?} \lp{I think Ippocratis meant the sense of "general", am I wrong? In case, I would change to "general and viable"} 
+and viable models of gravity beyond General Relativity (GR), with the aim of placing constraints on their theory space at galaxy-cluster scales, as well as of investigating the essential statistical degeneracy between model parameters. In addition, the code is capable of producing complementary weak-lensing forecasts towards joint kinematics+lensing analyses.\footnote{The original \textsc{MAMPOSSt} has been used in a joint kinematics+lensing analysis by \cite{Verdugo+16}.}
 
-`Gala` was designed to be used by both astronomical researchers and by
-students in courses on gravitational dynamics or astronomy. It has already been
-used in a number of scientific publications [@Pearson:2017] and has also been
-used in graduate courses on Galactic dynamics to, e.g., provide interactive
-visualizations of textbook material [@Binney:2008]. The combination of speed,
-design, and support for Astropy functionality in `Gala` will enable exciting
-scientific explorations of forthcoming data releases from the *Gaia* mission
-[@gaia] by students and experts alike.
+\textsc{MAMPOSSt} (Modelling Anisotropy and Mass Profile of Spherical Observed Systems) determines mass profiles of galaxy clusters (or in general, spherical systems in dynamical equilibrium) by analysing the internal kinematics of the cluster members.\footnote{MAMPOSSt has also been used for elliptical galaxies traced by globular clusters and  dwarf spheroidals traced by their stars \citep{Mamon+15}, and has been recently extended into \textsc{MAMPOSSt-PM} to handle proper motions in star clusters (\citealp{Mamon&Vitral22}, see \citealp{Vitral&Mamon21}).} Given an input of projected positions and line-of-sight (l.o.s) velocities of the member galaxies, and under the assumptions of spherical symmetry and dynamical relaxation, the code solves the Jeans equation to reconstruct the gravitational potential, the velocity anisotropy profile, and (optionally) the projected number density profile. 
+
+\textsc{MG-MAMPOSSt} extends the method to gravity scenarios beyond GR, where the gravitational potential is explicitly modified by the presence of an additional scalar degree of freedom, resulting in effective mass profiles different from GR. The resulting effective mass profile can be confronted against real or synthetic data provided as input to the code. In addition, the code requires a parametric modelling for the profiles of velocity anisotropy, mass and number density, with several available choices which can be tuned as input. The code's main output is a tabulated likelihood as a function of all the free model parameters of gravity and other input physics.
 
 # Mathematics
 
