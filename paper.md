@@ -72,7 +72,7 @@ As shown in [@Pizzuti2021], internal kinematics alone is generally not enough to
 # Functionality and Design
 
 A complete run of the \textsc{MG-MAMPOSSt} code requires several correlated files which stores the input/output information. 
-In particular, the file \texttt{gomamposstopt} _ \texttt{x.inp}
+In particular, the file \texttt{gomamposstopt}_\texttt{x.inp}
 
 
 # Citations
