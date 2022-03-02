@@ -1,5 +1,5 @@
 ---
-title: 'MG-MAMPOSSt, a code to test gravity at galaxy-cluster scales'
+title: 'MG-MAMPOSSt, a Fortran95 code to test gravity at galaxy-cluster scales'
 tags:
   - Fortran
   - cosmology
@@ -40,7 +40,7 @@ bibliography: paper.bib
 ---
 
 # Summary
-MG-MAMPOSSt is a license-free Fortran95 code that performs tests of General Relativity (GR) through the analyses of kinematical data of galaxy clusters based on the Jeans' equation. The code has been developed starting from the MAMPOSSt method of [@Mamon01], and extends it through new parametrisations of the gravitational potential for general families of gravity theories beyond GR aimed to explain the late-time accelerated expansion of the universe. By using input of projected positions and line-of-sight velocities of cluster's member galaxies, MG-MAMPOSSt reconstructs the cluster mass profile and the velocity anisotropy profile in modified gravity, jointly constraining the kinematics (mass and anisotropy profile) and modified gravity parameters. The code is further supplemented with a new capability to produce weak lensing forecasts for joint kinematic+lensing analyses, offering a valuable tool for studying the nature of gravity at cluster's scales.
+\textsc{MG-MAMPOSSt} is a license-free \textsc{Fortran95} code that performs tests of General Relativity (GR) through the analyses of kinematical data of galaxy clusters based on the Jeans' equation. The code has been developed starting from the \textsc{MAMPOSSt} method of [@Mamon01], and extends it through new parametrisations of the gravitational potential for general families of gravity theories beyond GR aimed to explain the late-time accelerated expansion of the universe. By using input of projected positions and line-of-sight velocities of cluster's member galaxies, MG-MAMPOSSt reconstructs the cluster mass profile and the velocity anisotropy profile in modified gravity, jointly constraining the kinematics (mass and anisotropy profile) and modified gravity parameters. The code is further supplemented with a new capability to produce weak lensing forecasts for joint kinematic+lensing analyses, offering a valuable tool for studying the nature of gravity at cluster's scales.
 
 # Statement of need
 
@@ -67,7 +67,7 @@ In the original code of MAM13 there are several possible choices for the modelli
 
 The code is equipped with the two most popular and observationally viable  classes of dark energy models beyond GR based on a single, extra scalar field. These correspond to the so--called chameleon models and Beyond Horndeski/DHOST models. Common ground between the two families of models is the presence of the extra dynamical scalar degree of freedom ($\phi$) which introduces a new gravitational force. However, the structure of the fifth force  in each of them exhibits different characteristics; in particular, the screening mechanism, introduced to recover standard gravity at small scales and high density regions, acts in a different way producing very peculiar imprint on the gravitational potential. Both families are characterized by two free parameters, determining the action of the fifth force, which can be constrained with \textsc{MG-MAMPOSSt}. For a detailed exposition of these models and the associated equations we refer to our main paper [@Pizzuti2021], as well as to the original papers where the models were  first introduced [@Kobayashi:2014ida],[@Crisostomi:2017lbg],[@Dima:2017pwp].
 
-As shown in [@Pizzuti2021], internal kinematics alone is generally not enough to provide stringent bounds on the modified gravity parameters, due to the strong degeneracy between model parameters. For this reason, \textsc{MG-MAMPOSSt} gives the possibility to include a simulated lensing information to your kinematics analysis in modified gravity, a feature which is particularly useful for forecasting the constraining power of the method.
+As shown in [@Pizzuti2021], internal kinematics alone is generally not enough to provide stringent bounds on the modified gravity parameters, due to the strong degeneracy between model parameters. For this reason, \textsc{MG-MAMPOSSt} gives the possibility to include a simulated lensing information to your kinematics analysis in modified gravity, a feature which is particularly useful for forecasting the constraining power of the method. 
 
 
 # Citations
