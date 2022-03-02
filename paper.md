@@ -67,20 +67,24 @@ In the original code of MAM13 there are several possible choices for the modelli
 
 The code is equipped with the two most popular and observationally viable  classes of dark energy models beyond GR based on a single, extra scalar field. These correspond to the so--called chameleon models and Beyond Horndeski/DHOST models. Common ground between the two families of models is the presence of the extra dynamical scalar degree of freedom ($\phi$) which introduces a new gravitational force. However, the structure of the fifth force  in each of them exhibits different characteristics; in particular, the screening mechanism, introduced to recover standard gravity at small scales and high density regions, acts in a different way producing very peculiar imprint on the gravitational potential. Both families are characterized by two free parameters, determining the action of the fifth force, which can be constrained with \textsc{MG-MAMPOSSt}. For a detailed exposition of these models and the associated equations we refer to our main paper [@Pizzuti2021], as well as to the original papers where the models were  first introduced [@Kobayashi:2014ida],[@Crisostomi:2017lbg],[@Dima:2017pwp].
 
-As shown in [@Pizzuti2021], internal kinematics alone is generally not enough to provide stringent bounds on the modified gravity parameters, due to the strong degeneracy between model parameters. For this reason, \textsc{MG-MAMPOSSt} gives the possibility to include a simulated lensing information to your kinematics analysis in modified gravity, a feature which is particularly useful for forecasting the constraining power of the method. 
+As shown in [@Pizzuti2021], internal kinematics alone is generally not enough to provide stringent bounds on the modified gravity parameters, due to the strong degeneracy between model parameters. For this reason, \textsc{MG-MAMPOSSt} gives the possibility to include a simulated lensing information to your kinematics analysis in modified gravity, a feature which is particularly useful for forecasting the constraining power of the method in view of upcoming imaging and spectroscopic surveys such as Euclid or LSST. 
 
 # Functionality and Design
 
-A complete run of the \textsc{MG-MAMPOSSt} code requires several correlated files which stores the input/output information. 
+A complete run of the \textsc{MG-MAMPOSSt} code is based upon several correlated files which store the input/output information. 
 In particular:
 
 -  \texttt{gomamposstopt}_\texttt{x.inp} contains the names and locations of the input data file and of the input parameter file, as well as the names and locations of the output files. Each of them can be customised by the user
 
 -  \texttt{data/datphys.dat} is the input data file, structured as a table where the number of rows coincides with the number of data points. The first column is the projected radius in units of $\text{kpc}$, the second and thirds columns represent the l.o.s. velocities and the associated errors in units of km/s.
 
--  \texttt{pars\textunderscore all\textunderscore N\textunderscore O\textunderscore spec\textunderscore DS} is the input parameters file, where one can select the number of free parameters and their guess values, the models of the various kinematic components (gravitational potential, number density profile and velocity anisotropy profile) and other relevant physical quantities for the \textsc{MG-MAMPOSSt} analysis.
--  \texttt{Options.txt} contain additional options for t
+-  \texttt{input\textunderscore pars/pars\textunderscore all\textunderscore N\textunderscore O\textunderscore spec\textunderscore DS} is the input parameters file, where one can select the number of free parameters and their guess values, the models of the various kinematic components (gravitational potential, number density profile and velocity anisotropy profile) and other relevant physical quantities for the \textsc{MG-MAMPOSSt} analysis.
 
+-  \texttt{Options.txt} contains additional options required by \textsc{MG-MAMPOSSt}, e.g. how to explore the parameter space (fixed grid of values or MCMC) and the details of the lensing simulation in modified gravity.
+
+- \texttt{Output/MaxLik.dat} is the main output. It is organized as a table where each row indicates a set of values of the parameters and the corresponding logarithm of the Likelihood/Posterior.
+
+The \textsc{MG-MAMPOSSt} run further produces additional output files, stored in the \texttt{Output} folder and, optionally, a plot of the marginalized posteriors for the free parameters when the MCMC exploration mode is selected. This additional functionality requires the [getdist package](https://github.com/cmbant/getdist) of [@Lewis:2019xzd]. For a complete description of the code basic usage and functions, see [@Pizzuti22man]. 
 
 # Citations
 
