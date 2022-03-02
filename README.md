@@ -161,11 +161,11 @@ which stores the tabulated ln(L) where L is the  likelihood/posterior, as a func
 ## Test and Tutorial
 
 ### Basic test
-To produce the test example, type
+In order to check that the installation process was successfull and to produce the test example, type:
 ```bash
 $ ./script/script_runmam.sh  
 ```
-after the installation without changing any parameter in the input files. This way, the code should execute a 100000-points MCMC exploration of the parameter space in DHOST gravity sampling the full kinematics+lensing likelihood by using the test data-set included in the data/ folder. The script runs in Fast Mode **kbsp=1** and should provide the complete output in less than half an hour if the execution is performed over an average laptop. 
+without changing any parameter in the input files. This way, the code should execute a 100000-points MCMC exploration of the parameter space in DHOST gravity sampling the full kinematics+lensing likelihood by using the test data-set included in the data/ folder. The script runs in Fast Mode **kbsp=1** and should provide the complete output posterior in Output/MaxLik.dat within less than half an hour if the execution is performed over an average laptop. 
 At the end of the run, if successufull the following text will be printed:
 ```bash
  Best-fit from optimization
