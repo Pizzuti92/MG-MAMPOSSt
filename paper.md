@@ -67,7 +67,7 @@ In the original code of MAM13 there are several possible choices for the modelli
 
 The code is equipped with the two most popular and observationally viable  classes of dark energy models beyond GR based on a single, extra scalar field. These correspond to the so--called chameleon models and Beyond Horndeski/DHOST models. Common ground between the two families of models is the presence of the extra dynamical scalar degree of freedom ($\phi$) which introduces a new gravitational force which modifying the (gradient of the) gravitational potential as:
 \begin{equation}
-\frac{\text{d}\Phi}{\text{d}r}=\frac{G}{r^2}\left[M(r,\bold{\theta}_{DM})+f(r,\blod{\theta}_{DM},\bold{\theta}_\text{MG})\right] .
+\frac{\text{d}\Phi}{\text{d}r}=\frac{G}{r^2}\left[M(r,\bold{\theta}_{DM})+f(r,\bold{\theta}_{DM},\bold{\theta}_\text{MG})\right] .
 \end{equation}
 In the above equation, $M(r,\bold{\theta}_{DM})$ is the total mass profile at radius $r$, as a function of the parameter vector $\bold{\theta}_{DM}$, while $f(r,\blod{\theta}_{DM},\bold{\theta}_\text{MG})$ is the contribution of the fifth force which depends on the parametrisation of the mass density and on the parameters defining the modified gravity models $\bold{\theta}_\text{MG}$.
 Both families are characterized by two free parameters, determining the action of the fifth force, which can be constrained with \textsc{MG-MAMPOSSt}. For a detailed exposition of these models and the associated equations we refer to our main paper [@Pizzuti2021], as well as to the original papers where the models were  first introduced [@Kobayashi:2014ida],[@Crisostomi:2017lbg],[@Dima:2017pwp].
