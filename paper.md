@@ -82,9 +82,9 @@ In particular:
 
 -  \texttt{Options.txt} contains additional options required by \textsc{MG-MAMPOSSt}, e.g. how to explore the parameter space (fixed grid of values or MCMC) and the details of the lensing simulation in modified gravity.
 
-- \texttt{Output/MaxLik.dat} is the main output. It is organized as a table where each row indicates a set of values of the parameters and the corresponding logarithm of the Likelihood/Posterior.
+- \texttt{Output/MaxLik.dat} is the main output. It is organized as a table where each row indicates the values of the parameters for a given point in the six-dimensional parameter space and the corresponding value of the logarithm of the Likelihood/Posterior.
 
-The \textsc{MG-MAMPOSSt} run further produces additional output files, stored in the \texttt{Output} folder and, optionally, a plot of the marginalized posteriors for the free parameters when the MCMC exploration mode is selected. This additional functionality requires the [getdist package](https://github.com/cmbant/getdist) of [@Lewis:2019xzd]. For a complete description of the code basic usage and functions, see [@Pizzuti22man]. 
+The \textsc{MG-MAMPOSSt} run further produces additional output files, stored in the \texttt{Output} folder and, optionally, a plot of the marginalized posteriors for the free parameters when the MCMC exploration mode is selected. The plots generation requires the Python [getdist package](https://github.com/cmbant/getdist) of [@Lewis:2019xzd]. For a complete description of the code basic usage and functionalities, see [@Pizzuti22man]. 
 
 # Citations
 
