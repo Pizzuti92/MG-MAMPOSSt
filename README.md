@@ -7,7 +7,7 @@
 - [Documentation](#Documentation)
 - [Install](#Install)
 - [Overview of usage](#Overview-of-usage)
-
+- [Test and Tutorial](#Test-and-Tutorial)
 ## Introduction
 
 MG-MAMPOSSt is a FORTRAN code that extended the MAMPOSSt algorithm of G. Mamon, A. Biviano and G. Boué - 
