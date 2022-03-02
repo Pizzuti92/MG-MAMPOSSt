@@ -76,7 +76,7 @@ In particular:
 
 -  \texttt{gomamposstopt}_\texttt{x.inp} contains the names and locations of the input data file and of the input parameter file, as well as the names and locations of the output files. Each of them can be customised by the user
 
--  \texttt{data/datphys.dat} is the input data file, structured as a table where the number of rows coincides with the number of data points. The first column is the projected radius in units of $\text{kpc}$, the second and thirds columns represent the l.o.s. velocities and the associated errors in units of $\text{km/s}$.
+-  \texttt{data/datphys.dat} is the input data file, structured as a table where the number of rows coincides with the number of data points. The first column is the projected radius in units of $\text{kpc}$, the second and thirds columns represent the l.o.s. velocities and the associated errors in units of km/s.
 
 
 -  \texttt{input_pars/pars} _ \texttt{all}_\texttt{N}_\texttt{O}_\texttt{spec}_\texttt{DS}
