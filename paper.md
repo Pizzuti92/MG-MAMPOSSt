@@ -72,7 +72,10 @@ As shown in [@Pizzuti2021], internal kinematics alone is generally not enough to
 # Functionality and Design
 
 A complete run of the \textsc{MG-MAMPOSSt} code requires several correlated files which stores the input/output information. 
-In particular, the file \texttt{gomamposstopt}_\texttt{x.inp}
+In particular:
+-  \texttt{gomamposstopt}_\texttt{x.inp} contains the names and locations of the input data file and of the input parameter file, as well as the names and locations of the output files. Each of them can be customised by the user
+-  \texttt{data/datphys.dat} is the input data file, structured as a table where the number of rows coincides with the number of data points. The first column is the projected radius in units of $\text{kpc}$, the second and thirds columns represent the l.o.s. velocities and the associated errors in units of $\text{km/s}$.
+-  \texttt{input_pars/pars\textunderscore all\textunderscore N\textunderscore O\textunderscore spec\textunderscore DS}
 
 
 # Citations
