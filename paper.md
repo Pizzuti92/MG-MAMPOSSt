@@ -69,6 +69,11 @@ The code is equipped with the two most popular and observationally viable  class
 
 As shown in [@Pizzuti2021], internal kinematics alone is generally not enough to provide stringent bounds on the modified gravity parameters, due to the strong degeneracy between model parameters. For this reason, \textsc{MG-MAMPOSSt} gives the possibility to include a simulated lensing information to your kinematics analysis in modified gravity, a feature which is particularly useful for forecasting the constraining power of the method. 
 
+# Functionality and Design
+
+A complete run of the \textsc{MG-MAMPOSSt} code requires several correlated files which stores the input/output information. 
+In particular, the file \textttt{gomamposstopt} _ \texttt{x.inp}
+
 
 # Citations
 
