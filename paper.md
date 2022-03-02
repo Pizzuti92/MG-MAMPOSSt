@@ -63,22 +63,12 @@ projected in the phase space. The above equation captures the main necessary inp
 
 The current version of the code can handle up to a six-dimensional parameter space, with two parameters defining the mass profile, one parameter for the velocity anisotropy profile, one for the number density profile, and finally, two parameters related to the modified gravity framework. Each parameter can be either treated as free in the fitting procedure, or it can be assigned pre-defined values. 
 
-In the original code of MAM13 there are several possible choices for the modelling of the dark matter mass profile in the $\Lambda$CDM scenario. \textsc{MG-MAMPOSSt} adds new parametrizations to handle popular modifications of gravity. At the moment, all the implemented non-standard profiles rely on the Navarro-Frenk-White (NFW, [@navarro97]) mass density profile to model the matter density distribution, which has been shown to provide a good description for simulated and observed galaxy clusters, both in GR and in modified gravity (see e.g. [@Umetsu_2020,Peirani17,Wilcox:2016guw]). Nevertheless, other mass models are going to be included in the code with upcoming versions. Since the mass profile, or equivalently, the gravitational potentials, enters only in the expression of the radial velocity dispersion eq. \autoref{eq:sigmajeans}, the implementation of new models can be performed directly by the user, modifying the subroutines where the above equation is involved in the main source code. In particular, the functions \texttt{sr2int(alr)} and \texttt{fa(tlog)} are the only parts of the \textsc{MG-MAMPOSSt} code where parametrizations for the mass profile appear. 
+In the original code of MAM13 there are several possible choices for the modelling of the dark matter mass profile in the $\Lambda$CDM scenario. \textsc{MG-MAMPOSSt} adds new parametrizations to handle popular modifications of gravity. At the moment, all the implemented non-standard profiles rely on the Navarro-Frenk-White (NFW, [@navarro97]) mass density profile to model the matter density distribution, which has been shown to provide a good description for simulated and observed galaxy clusters, both in GR and in modified gravity (see e.g. [@Umetsu_2020], [@Peirani17],[@Wilcox:2016guw]). Nevertheless, other mass models are going to be included in the code with upcoming versions. Since the mass profile, or equivalently, the gravitational potentials, enters only in the expression of the radial velocity dispersion, \autoref{eq:sigmajeans}, the implementation of new models can be performed directly by the user, modifying the subroutines where the above equation is involved in the main source code. In particular, the functions \texttt{sr2int(alr)} and \texttt{fa(tlog)}, which appear in the main source file, are the only parts of the \textsc{MG-MAMPOSSt} code where parametrizations for the mass profile appear. 
 
-Single dollars ($) are required for inline mathematics e.g. $f(x) = e^{\pi/x}$
+The code is equipped with the two most popular and observationally viable  classes of dark energy models beyond GR based on a single, extra scalar field. These correspond to the so--called chameleon models (``{\bf Models I}") and Beyond Horndeski/DHOST models (``{\bf Models II}"). Common ground between the two families of models is the presence of the extra dynamical scalar degree of freedom ($\phi$) which introduces a new gravitational force. However, the structure of the fifth force  in each of them exhibits different characteristics; in particular, the screening mechanism, introduced to recover standard gravity at small scales and high density regions, acts in a different way producing very peculiar imprint on the gravitational potential. Both families are characterized by two free parameters, determining the action of the fifth force, which can be constrained with \textsc{MG-MAMPOSSt}. For a detailed exposition of these models and the associated equations we refer to our main paper \citep{Pizzuti2021}, as well as to the original papers where the models were  first introduced [@Kobayashi:2014ida],[@Crisostomi:2017lbg],[@Dima:2017pwp].
 
-Double dollars make self-standing equations:
+As shown in [@Pizzuti2021], internal kinematics alone is generally not enough to provide stringent bounds on the modified gravity parameters, due to the strong degeneracy between model parameters. For this reason, \textsc{MG-MAMPOSSt} gives the possibility to include a simulated lensing information to your kinematics analysis in modified gravity, a feature which is particularly useful for forecasting the constraining power of the method.
 
-$$\Theta(x) = \left\{\begin{array}{l}
-0\textrm{ if } x < 0\cr
-1\textrm{ else}
-\end{array}\right.$$
-
-You can also use plain \LaTeX for equations
-\begin{equation}\label{eq:fourier}
-\hat f(\omega) = \int_{-\infty}^{\infty} f(x) e^{i\omega x} dx
-\end{equation}
-and refer to \autoref{eq:fourier} from text.
 
 # Citations
 
