@@ -91,7 +91,7 @@ In particular:
 
 The \textsc{MG-MAMPOSSt} run further produces additional output files, stored in the \texttt{Output} folder and, optionally, a plot of the marginalized posteriors for the free parameters when the MCMC exploration mode is selected. The plots generation requires the Python [getdist package](https://github.com/cmbant/getdist) of [@Lewis:2019xzd]. In \autoref{fig:example} an example of a typical output plot is shown for a MCMC sampling in the case of DHOST model of gravity with five free parameters. The run has been performed by using the sample data-set shipped together with the code; the test of execution described in the documentation should produce in the same Figure. For a complete description of the code basic usage and functionalities, see [@Pizzuti22man]. 
 
-![Example of the marginalized distribution for the free parameters of the DHOST modified gravity model implemented .\label{fig:example}](plot_example.png){ width=40% }
+![Example of the marginalized distribution for the free parameters of the DHOST modified gravity model implemented in \textsc{MG-MAMPOSSt}, obtained by using the test data-set provided in the code repository. The MCMC sampling has been performed over $10^5$ points in the parameter space. Dark blue and light blue areas corresponds  .\label{fig:example}](plot_example.png){ width=60% }
 
 
 # Acknowledgements
