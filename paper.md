@@ -1,5 +1,5 @@
 ---
-title: 'MG-MAMPOSSt, a Fortran95 code to test gravity at galaxy-cluster scales'
+title: 'MG-MAMPOSSt, a Fortran code to test gravity at galaxy-cluster scales'
 tags:
   - Fortran
   - cosmology
@@ -40,7 +40,7 @@ bibliography: paper.bib
 ---
 
 # Summary
-\textsc{MG-MAMPOSSt} is a license-free \textsc{Fortran95} code that performs tests of General Relativity (GR) through the analyses of kinematical data of galaxy clusters based on the Jeans' equation. The code has been developed starting from the \textsc{MAMPOSSt} method of [@Mamon01], and extends it through new parametrisations of the gravitational potential for general families of gravity theories beyond GR aimed to explain the late-time accelerated expansion of the universe. By using input of projected positions and line-of-sight velocities of cluster's member galaxies, MG-MAMPOSSt reconstructs the cluster mass profile and the velocity anisotropy profile in modified gravity, jointly constraining the kinematics (mass and anisotropy profile) and modified gravity parameters. The code is further supplemented with a new capability to produce weak lensing forecasts for joint kinematic+lensing analyses, offering a valuable tool for studying the nature of gravity at cluster's scales.
+\textsc{MG-MAMPOSSt} is a license-free \textsc{Fortran95} code that performs tests of General Relativity (GR) through the analyses of kinematical data of galaxy clusters based on the Jeans' equation. The code has been developed starting from the \textsc{MAMPOSSt} method of [@Mamon01], and extends it through new parametrisations of the gravitational potential for general families of gravity theories beyond GR aimed to explain the late-time accelerated expansion of the universe. By using input of projected positions and line-of-sight velocities of cluster's member galaxies, \textsc{MG-MAMPOSSt} reconstructs the cluster mass profile and the velocity anisotropy profile in modified gravity, jointly constraining the kinematics (mass and anisotropy profile) and modified gravity parameters. The code is further supplemented with a new capability to produce weak lensing forecasts for joint kinematic+lensing analyses, offering a valuable tool for studying the nature of gravity at cluster's scales.
 
 # Statement of need
 
@@ -52,7 +52,7 @@ In addition to the modified mass profile, the code requires a parametric modelli
 
 # Mathematics
 
-MG-MAMPOSSt operates relying on the input of the projected phase space $(R,v_\text{z})$ of the cluster member galaxies. Here, $R$ is the projected distance from the cluster center at which a galaxy is seen by the observer, and  $v_\text{z}$ the velocity measured along the l.o.s. in the rest frame of the cluster. As mentioned before, the current version of the code assumes parametric expressions for the various kinematical quantities. Moreover, the 3-dimensional velocity distribution is taken to be a Gaussian. The latter assumption has been well-tested through cosmological simulations, as explained in the original MAMPOSSt paper (MAM13). 
+\textsc{MG-MAMPOSSt} operates relying on the input of the projected phase space $(R,v_\text{z})$ of the cluster member galaxies. Here, $R$ is the projected distance from the cluster center at which a galaxy is seen by the observer, and  $v_\text{z}$ the velocity measured along the l.o.s. in the rest frame of the cluster. As mentioned before, the current version of the code assumes parametric expressions for the various kinematical quantities. Moreover, the 3-dimensional velocity distribution is taken to be a Gaussian. The latter assumption has been well-tested through cosmological simulations, as explained in the original MAMPOSSt paper (MAM13). 
 
 The output likelihood is computed by comparing data of galaxies in projected phase space $(R,v_\text{z})$ to the theoretical radial velocity dispersion of the cluster member galaxies, obtained for a given set of models and parameters as a solution of the spherical Jeans' equation (see e.g. [@MamLok05]),
 \begin{equation}
@@ -76,14 +76,6 @@ Citations to entries in paper.bib should be in
 [rMarkdown](http://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html)
 format.
 
-If you want to cite a software repository URL (e.g. something on GitHub without a preferred
-citation) then you can do it with the example BibTeX entry below for @fidgit.
-
-For a quick reference, the following citation commands can be used:
-- `@author:2001`  ->  "Author et al. (2001)"
-- `[@author:2001]` -> "(Author et al., 2001)"
-- `[@author1:2001; @author2:2001]` -> "(Author1 et al., 2001; Author2 et al., 2002)"
-
 # Figures
 
 Figures can be included like this:
@@ -95,7 +87,7 @@ Figure sizes can be customized by adding an optional second parameter:
 
 # Acknowledgements
 
-We acknowledge contributions from Brigitta Sipocz, Syrtis Major, and Semyeong
-Oh, and support from Kathryn Johnston during the genesis of this project.
+LP is partially supported by a 2019 "Research and Education" grant from Fondazione CRT. The OAVdA is managed by the Fondazione Cle\'ment Fillietroz-ONLUS, which is supported by the Regional Government of the Aosta Valley, the Town Municipality of Nus and the "Unite\' des Communes valdotaines Mont-E\'milius.
+I. D. Saltas is supported by the Grant Agency of the Czech Republic (GAČR), under the grant number 21-16583M. The authors further acknowledge all the developers of the free FORTRAN routines used in \textsc{MG-MAMPOSSt}. Credits are given in the header of each routine.
 
 # References
