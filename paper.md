@@ -52,9 +52,7 @@ In addition to the modified mass profile, the code requires a parametric modelli
 
 # Mathematics
 
-\textsc{MG-MAMPOSSt} operates relying on the input of the projected phase space $(R,v_\text{z})$ of the cluster member galaxies. Here, $R$ is the projected distance from the cluster center at which a galaxy is seen by the observer, and  $v_\text{z}$ the velocity measured along the l.o.s. in the rest frame of the cluster. #As mentioned before, the current version of the code assumes parametric expressions for the various kinematical quantities. Moreover, the 3-dimensional velocity distribution is taken to be a Gaussian. The latter assumption has been well-tested through cosmological simulations, as explained in the original MAMPOSSt paper (MAM13). 
-
-The output likelihood is computed by comparing data of galaxies in projected phase space $(R,v_\text{z})$ to the theoretical radial velocity dispersion of the cluster member galaxies, obtained for a given set of models and parameters as the solution of the spherical Jeans' equation (see e.g. [@MamLok05]),
+\textsc{MG-MAMPOSSt} operates relying on the input of the projected phase space $(R,v_\text{z})$ of the cluster member galaxies. Here, $R$ is the projected distance from the cluster center at which a galaxy is seen by the observer, and  $v_\text{z}$ the velocity measured along the l.o.s. in the rest frame of the cluster. The output likelihood is computed by comparing data of galaxies in projected phase space $(R,v_\text{z})$ to the theoretical radial velocity dispersion of the cluster member galaxies, obtained for a given set of models and parameters as the solution of the spherical Jeans' equation (see e.g. [@MamLok05]),
 \begin{equation}
 \label{eq:sigmajeans}
 \sigma^2_r(r)=\frac{1}{\nu(r)}\int_r^{\infty}{\exp\left[2\int_r^s{\frac{\beta(t)}{t}\text{d}t}\right]\nu(s)\frac{\text{d}\Phi}{\text{d}s}\text{d}s},
