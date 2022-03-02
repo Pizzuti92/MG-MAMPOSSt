@@ -78,7 +78,7 @@ In particular:
 
 -  \texttt{data/datphys.dat} is the input data file, structured as a table where the number of rows coincides with the number of data points. The first column is the projected radius in units of $\text{kpc}$, the second and thirds columns represent the l.o.s. velocities and the associated errors in units of km/s.
 
--  \texttt{input}_\texttt{pars/pars}_\texttt{all}_\texttt{N}_\texttt{O}_\texttt{spec}_\texttt{DS} is the input parameters file, where one can select the number of free parameters and their guess values, the models of the various kinematic components (gravitational potential, number density profile and velocity anisotropy profile) and other relevant physical quantities for the \textsc{MG-MAMPOSSt} analysis.
+-  \texttt{pars\textunderscore all\textunderscore N\textunderscore O\textunderscore spec\textunderscore DS} is the input parameters file, where one can select the number of free parameters and their guess values, the models of the various kinematic components (gravitational potential, number density profile and velocity anisotropy profile) and other relevant physical quantities for the \textsc{MG-MAMPOSSt} analysis.
 -  \texttt{Options.txt} contain additional options for t
 
 
