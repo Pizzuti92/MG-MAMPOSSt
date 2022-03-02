@@ -158,6 +158,24 @@ Output files can be found in the Output folder. The names and the location of th
 which stores the tabulated ln(L) where L is the  likelihood/posterior, as a function of the model parameters.
 
 
+### Tutorial and Test
 
-Go to [Top](#top)
+To produce the test example, type
+```bash
+$ ./script/script_runmam.sh  
+```
+after the installation without changing any parameter in the input files. This way, the code should execute a 100000-points MCMC exploration of the parameter space in DHOST gravity sampling the full kinematics+lensing likelihood by using the test data-set included in the data/ folder. The script runs in Fast Mode **kbsp=1** and should provide the complete output in less than half an hour if the execution is performed over an average laptop. 
+At the end of a successfull run, the following text should be printed:
+```bash
+ Best-fit from optimization
+   r_200    =  1.404
+   r_tracer =  0.330 (c_tracer=    4.25)
+   r_mass   =  0.348 (c_mass=      4.03)
+   Anisotropy parameter =   1.4554
+   First MG parameter = -0.0679
+   Second MG parameter = -0.0350
+ Likelihood =   5893.62526
+ ```
+ 
+Go to [Top](#top
 
