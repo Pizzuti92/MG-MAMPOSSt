@@ -38,6 +38,8 @@ output:
     citation_package: natbib
   bookdown::pdf_book:
     citation_package: biblatex
+biblio-style: "apalike"
+link-citations: true
 
 # Optional fields if submitting to a AAS journal too, see this blog post:
 # https://blog.joss.theoj.org/2018/12/a-new-collaboration-with-aas-publishing
