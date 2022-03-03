@@ -3400,7 +3400,7 @@ c     switches to control the grid search *****************
                 if (ios.eq.-1) then
                     ios=0
                     wr2=0.1
-                    if (kmp.eq.9) wr2=0.3 
+                    if (kmp.eq.8) wr2=0.3 
                 endif
                 write(*,"('  Read delta1:   ',f10.2)")  wr2
             case ('delta2')
@@ -3408,7 +3408,7 @@ c     switches to control the grid search *****************
                 if (ios.eq.-1) then
                     ios=0
                     wr=0.3
-                    if (kmp.eq.9) wr=0.005 
+                    if (kmp.eq.8) wr=0.005 
                 endif
                 write(*,"('  Read delta2:   ',f10.2)")  wr
             case ('delta3')
@@ -3416,7 +3416,7 @@ c     switches to control the grid search *****************
                 if (ios.eq.-1) then
                     ios=0
                     wx=0.5
-                    if (kmp.eq.9) wx=30 
+                    if (kmp.eq.8) wx=30 
                 endif
                 write(*,"('  Read delta3:   ',f10.2)")  wx
                 
