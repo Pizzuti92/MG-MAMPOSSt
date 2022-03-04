@@ -6572,7 +6572,7 @@ c     compute the chameleon field in semianalitical approximation
         return
        end 
        
-      function dphidr(x) 
+       function dphidr(x) 
 c     compute the effective mass due to chameleon field
        
        implicit real*8 (a-h,o-z)
@@ -6580,15 +6580,14 @@ c     compute the effective mass due to chameleon field
 
        parameter (pig=3.1415926535d0, ampl=2.43e27, ah0=1.48e-33,
      & ampc=1.57e29,rhoc=3.88e-11, clight=2.99792458d5)
-     
-       include 'paramsoptS.i'
        
-       grav=1/(8*pig*ampl**2)
-       hz=h0*(1+za)**3
+       parameter (grav=4.302e-9)
+       include 'paramsoptS.i'
+
+       hz=h0*dsqrt(Omegam*(1+za)**3+Olam)
        c200=r200/rs
-       phinf=tmass*1e-5
+       phinf=tmass*1e-5 !in realtà è phinf/Mpl in unità di 1e-5clight**2
        fac200=1./(dlog(1.d0+r200/rs)-(r200/rs)/(1.d0+r200/rs))
-       rhozero=200/3*c200**3*rhoc*fac200
 
        if(kmp.eq.9.and.nhone.gt.0) then
          bcoup=screen !the modified parameter of the screening becomes
@@ -6597,8 +6596,10 @@ c     compute the effective mass due to chameleon field
        else
          bcoup=1./dsqrt(6.0d0)
        endif
-c        
-       B=bcoup*rhozero*(rs*ampc)**2/ampl**2
+       !this factor is rho_s*Q*rs**2/Mpl**2. In unit of clight**2
+       B=bcoup*200*c200**3*fac200*hz**2*rs**2/clight**2
+
+       
        xczero=(B/phinf-1)
        
        Czero=-B*dlog(1+xczero)+phinf*xczero
