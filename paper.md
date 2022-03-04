@@ -38,7 +38,7 @@ output:
     citation_package: natbib
   bookdown::pdf_book:
     citation_package: biblatex
-biblio-style: "apalike"
+biblio-style: "mnras"
 link-citations: true
 
 # Optional fields if submitting to a AAS journal too, see this blog post:
@@ -48,7 +48,7 @@ link-citations: true
 ---
 
 # Summary
-\textsc{MG-MAMPOSSt} is a license-free \textsc{Fortran90} code that performs tests of General Relativity (GR) through the analyses of kinematical data of galaxy clusters based on the Jeans' equation. The code has been developed starting from the \textsc{MAMPOSSt} method of [@Mamon01], and extends it through new parametrisations of the gravitational potential for general families of gravity theories beyond GR aimed to explain the late-time accelerated expansion of the universe. By using input of projected positions and line-of-sight velocities of cluster's member galaxies, \textsc{MG-MAMPOSSt} reconstructs the cluster mass profile and the velocity anisotropy profile in modified gravity, jointly constraining the kinematics (mass and anisotropy profile) and modified gravity parameters. The code is further supplemented with a new capability to produce weak lensing forecasts for joint kinematic+lensing analyses, offering a valuable tool for studying the nature of gravity at cluster's scales.
+\textsc{MG-MAMPOSSt} is a license-free \textsc{Fortran90} code to perform tests of General Relativity (GR) through the analyses of kinematical data of galaxy clusters. The code solves the Jeans equation, relying on the \textsc{MAMPOSSt} method of [@Mamon01]. It extends the latter method through new parametrisations of the gravitational potential for general families of gravity theories beyond GR aimed to explain the late-time accelerated expansion of the universe (@riess98, @Perlmutter99).Through appropriate input of projected positions and line-of-sight velocities of cluster's member galaxies, \textsc{MG-MAMPOSSt} reconstructs the cluster mass profile and the velocity anisotropy profile in modified gravity, jointly constraining the kinematics (mass and anisotropy profile) and modified gravity parameters. The code is further supplemented with a new capability to produce weak lensing forecasts for joint kinematic+lensing analyses, offering a valuable tool for studying the nature of gravity at cluster's scales.
 
 # Statement of need
 
