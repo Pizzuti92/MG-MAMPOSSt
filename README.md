@@ -69,7 +69,7 @@ Input parameters are stored in the file Input_pars/pars_all_N_O_spec_DS. Differe
    - **nrs**: Number of iteration for the mass profile scale radius.  For **nrs-1**  assumes that r_s is equal to the scale radius of the number density profile r_nu in the fit (option: "Mass Follows Light"). If **nrs=-2** the mass scale radius is computed by using the theoretical relation of Macciò et al., 2008 (LambdaCDM option).
    - **nbeta**: Number of iteration for the anisotropy parameter. If **nbeta=-1** the anisotropy profile is forced to be a Mamon&Lokas profile with beta=r_beta=r_s. If **nbeta=-2** the Hansen-Moore model is assumed (beta(r) related to the matter density rho_m(r)).
    - **nA1**: Number of iteration for the first MG parameter.
-   - **nA2**: Number of iteration for the second MG parameter. For the case of general chameleon gravity, A_2 corresponds to the coupling constant **Q**. If **nA2=-1** it forces the case of $f(R)$ gravity (Q=1/\sqrt{6}).
+   - **nA2**: Number of iteration for the second MG parameter. For the case of general chameleon gravity (**kmp=9**, see below), A_2 corresponds to the coupling constant **Q**. In this case, if **nA2=-1** it forces the case of $f(R)$ gravity (Q=1/\sqrt{6}).
    
 * **Guess values (lines 8-13, reals):** they serve as an initial guess for the MG-MAMPOSSt fit both in grid and MCMC mode. If the corresponding number of iterations is set to zero, or one when in the grid-search option, the parameter guess is kept fixed within the code.
    * **r_200**: guess starting value of the characteristic "virial" radius for the mass profile, measured in units of Mpc. 
