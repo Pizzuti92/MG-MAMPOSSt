@@ -249,8 +249,6 @@ c     read file with parameters for MAMPOSSt
       
 
       rs=rsg                !set scale radius to guess value  
-
-      screen=screeg         !set screening to guess value
       
       write(*,346) nr200,nrc,nrs,nbs,ntmass,nhone
  346  format(' Grid steps in r200, rtr, rs, anis, mod1, mod2: ',6(i5))
@@ -323,11 +321,21 @@ c***********************************************************************
       tmass=tmassg          !set the mass to the guess value
       
 
-c Chameleon screening allowed only for linear f(R)
+c General chameleon screening: sub-case f(R)
+      if (kmp.eq.9.and.nhone.lt.0) screeg=1./dsqrt(6.0d0)
+      
+      screen=screeg         !set screening to guess value
+
+
+
+
+
+c Screening approximation allowed only for linear f(R)
       if (kmp.ne.7) then
         write(*,*) 'Option kscr not used in this model'
         kscr=0
       endif
+
 
 c       
       if (kmp.eq.7.or.kmp.eq.9) then
@@ -341,6 +349,7 @@ c exponent for f(R) Hu&Sawicki model (to be set manually)
       nhs=2
 c Coupling constant for f(R)
       aQ=1./6
+      
       if (kscr.ne.-1) then
          if (kscr.eq.1) then
 	  write(*,811) nhs
@@ -1825,7 +1834,7 @@ c     Ninterp points logarithmically spaced between 0.001 and 20
 
       irule=2
       errabs=0.d0
-      errrel=0.005d0
+      errrel=0.001d0
       rismin=1.d-190
       rismax=1.d190
       rinfinity=25.0d0
@@ -1929,7 +1938,7 @@ c
 c
 c
                umax = dacosh(rinfinity/rj)
-               errrel=0.005d0
+               errrel=0.001d0
                
                call dgaus8 (gwenu,0.d0,umax,errrel,gdgau, IERR) 
                g= rj*gdgau
@@ -1950,7 +1959,7 @@ c
                   xmin=rlow/r200
                   xmax=rup/r200
                   errabs=0.d0
-                  errrel=0.005d0
+                  errrel=0.001d0
 
                   call dgaus8 (sdint,xmin,xmax, errrel, 
      &                xinteg, IERR)  
@@ -2046,7 +2055,7 @@ c     check the limits of the integral
      
 c     compute the integral of gwen, yielding g(R,vz)
                umax = dacosh(rinfinity/rj)
-	       errrel=0.005d0
+	       errrel=0.001d0
             call dgaus8 (gwenu,0.d0,umax,errrel,gdgau, IERR) 
                g= rj*gdgau
 c               g = rj*dcadre(gwenu,0.d0,umax,errabs,errrel,errest,ier)
@@ -2073,7 +2082,7 @@ c     Add interloper contribution if requested
                   xmin=rlow/r200
                   xmax=rup/r200
                   errabs=0.d0
-                  errrel=0.005d0
+                  errrel=0.001d0
 c                  xinteg=dcadre(sdint,xmin,xmax,errabs,
 c     &                 errrel,errest,ier)
                   call dgaus8 (sdint,xmin,xmax, errrel, 
@@ -2194,7 +2203,7 @@ c     Ninterp points logarithmically spaced between 0.001 and 20
 
       irule=2
       errabs=0.d0
-      errrel=0.005d0
+      errrel=0.001d0
       rismin=1.d-190
       rismax=1.d190
       rinfinity=25.0d0
@@ -3211,7 +3220,7 @@ c     The MAMPOSSt procedure
      &     xfv(2), sigma(6) 
       dimension dpp(25000),vpp(25000),epp(25000),wpp(25000), !aggiunti per prova
      &     did(25000),viv(25000),eie(25000),wiw(25000)
-      dimension freepar(6),freelow(5),freeup(5),wpar(5000),xi(5,5)
+      dimension freepar(6),freelow(6),freeup(6),wpar(5000),xi(6,6)
       CHARACTER(len= 1) ARR1
       character(len= 2) arr2
       character(len = 13) :: filename
@@ -3619,6 +3628,10 @@ c     define free parameters
       if (ntmass.gt.0) then   ! modified grav parameter
          ip=ip+1
          freepar(ip)=dlog10(facguess*tmassg)
+         if (kmp.eq.9) then !explore from 0 to 1 the range of parameter
+         ! in the case of CS 
+            freepar(ip)=(1-dexp(-facguess*tmassg*0.1))
+         endif
 	     if (tmassg.lt.0) freepar(ip)=(facguess*(tmassg)) !For BH gravity Y can be negative
       else
          ipar(5)=0
@@ -3626,6 +3639,9 @@ c     define free parameters
       if (nhone.gt.0) then   ! screening parameter
          ip=ip+1
          freepar(ip)=dlog10(facguess*screeg)
+         if(kmp.eq.9) then
+          freepar(ip)=facguess*screeg/(facguess*screeg+1)
+         endif
       else
 
          ipar(6)=0
@@ -3729,7 +3745,7 @@ cc 294        inew=inew+1
          else
 
             ftol=1.d-4          ! desired fractional tolerance in function to be minimized
-            npars=4  ! max number of free params
+            npars=6  ! max number of free params
             nfreefunc=nfreepar  ! passed through a common to function func
 
             do ixi=1,npars
@@ -3738,11 +3754,10 @@ cc 294        inew=inew+1
                   if (ixi.eq.jxi) xi(ixi,jxi)=1.d0
                enddo
             enddo
-
+            
             write(*,*) ' '
             write(*,*) ' Running optimization algorithm POWELL'
             write(*,*) ' '
-
             call POWELL(freepar,xi,nfreepar,npars,ftol,iter,fret)
 
             if (freepar(1).ne.freepar(1).and.inew.lt.10) then
@@ -3759,7 +3774,7 @@ cc 294        inew=inew+1
       else                      ! when there is only 1 free param call POWELL
 
          ftol=1.d-4             ! desired fractional tolerance in function to be minimized
-         npars=4                ! max number of free params
+         npars=6                ! max number of free params
          nfreefunc=nfreepar     ! passed through a common to function func
          
          do ixi=1,npars
@@ -3802,8 +3817,8 @@ c     &           tmassnew,scrnew,sigma)
       tmass=tmassnew
       screen=scrnew
       call vmaxlik(nfv,xfv,fml2)
-c       write(*,*) 'value from vmaxlik: -logL'
-c       write(*,*) fml2
+       write(*,*) 'value from vmaxlik: -logL'
+       write(*,*) fml2
  429  format(6(f6.3,2x),f10.3)
       rs=rsg
       rc=rcg
@@ -3840,7 +3855,7 @@ c***********************************************************************
       dfm=2*(fml3-fml2)
       
       if (istop.eq.1) then  !stops if required
-       if(dfm.gt.delik) then
+       if(dfm.gt.(2*delik)) then
          write(*,*) ''
 	     write(*,*) 'Initial guess not fulfilling the requirements'
          stop
@@ -3856,22 +3871,19 @@ c***********************************************************************
          stop
        endif
       else
-       if(dfm.gt.(2*delik)) then
+       kreq=0
+       if(dfm.gt.(2*delik)) kreq=1
+        
+       if(r2df.gt.teps(1).or.rcdf.gt.teps(2).or.scdf.gt.teps(6)) kreq=1
+        
+       if (rsdf.gt.teps(3).or.cbdf.gt.teps(4).or.tmdf.gt.teps(5)) kreq=1
+       if (kreq.eq.1) then 
         write(*,*) ''
         write(*,*) 'Initial guess not fulfilling the requirements'
-        write(*,*) 'As required, the grid search starts anyway'
-        endif
-       if (r2df.gt.teps(1).or.rcdf.gt.teps(2).or.scdf.gt.teps(6)) then
-        write(*,*) ''
-        write(*,*) 'Initial guess not fulfilling the requirements'
-        write(*,*) 'As required, the grid search starts anyway'
+      write(*,*) 'As requested, the parameter exploration starts anyway'
        endif
-       if (rsdf.gt.teps(3).or.cbdf.gt.teps(4).or.tmdf.gt.teps(5)) then
-        write(*,*) ''
-        write(*,*) 'Initial guess not fulfilling the requirements'
-        write(*,*) 'As required, the grid search starts anyway'
-       endif
-
+       
+       
       endif
 
 c   if the best fit are out of the range, stop the code
@@ -4370,7 +4382,13 @@ c                write(*,*) 'Screening radius found at ', screen
 c In the following, there is a module devoted to the kinematic+lensing
 c analysis of MACSJ-1206   /RXJ2248  
 c this is a modification made by Pizzuti, 01/10/2021 to include the
-c lensing likelihood by Umetsu+16
+c lensing likelihood by Umetsu+16 in Vainsthein screening and in Chameleon
+c screening (01/03/2022). The module can be unlocked by setting kdata=1
+c at line 392.
+c It performs a MCMC run sampling the kinematic likelihood over the
+c lensing chains of Umetsu+16. Kinematic and lensing data can be made
+c available under reasonable request given the approval of the CLASH/
+c CLASH-VLT collaborations.
 
       else if(nmcmc.ge.2) then
        if(kmp.eq.8.and.nlens.eq.1) then
@@ -4378,7 +4396,7 @@ c lensing likelihood by Umetsu+16
        call CPU_TIME(start) !uses cpu time for the random generator seed
        nstar=int(100*start, kind=8)
        nseed = 123434789+(-1)**nstar*nstar
-       !open(1,file='M1206_LogM200LogC200Y1Y2LnP.txt')
+
        if (nmcmc.eq.2) then
          write(*,*) 'reading lensing file MACS1206_lens.txt'
          open(1,file='MACS1206_lens.txt') !MACS1206_lens.txt !RXJ2248_lens.txt
@@ -4423,7 +4441,6 @@ c lensing likelihood by Umetsu+16
 !***********************************************************************       
        
   24   continue
-c       hz=h0*sqrt(Omegam*(1.+za)**3+Olam)
        if (mod(icount,100).eq.0) then 
             nseed=abs(nseed+(-1)**(nseed)*floor(nseed/4.))
        endif
@@ -4606,6 +4623,226 @@ c       if(icount.gt.1e2) stop
  675           format(7(f13.5,2x),i2)
       
       
+       else if (kmp.eq.9.and.nlens.eq.1) then
+       !Case of chameleon screening with data of MACS1206
+       
+        call CPU_TIME(start) !uses cpu time for the random generator seed
+        nstar=int(100*start, kind=8)
+        nseed = 123434789+(-1)**nstar*nstar
+
+        if (nmcmc.eq.2) then
+         write(*,*) 'reading lensing file MACS1206_lensCHAM.txt'
+         open(1,file='MACS1206_lensCHAM.txt')
+        else
+         stop('this setup has not yet implemented') 
+        endif
+        
+        READ (1,*) tm200,tc200,Pl
+        Pl=-Pl
+        r200= tm200/0.7  !this data are in unit of Mpc/h with h=0.7
+        rs=tc200/0.7 
+        if (kopt.lt.0) then 
+           cbe=cbnew
+           rc=rcnew
+           tmass=tmassnew
+           screen=scrnew
+        endif
+       
+       xfv(1)=rs
+       xfv(2)=cbe
+       call vmaxlik(nfv,xfv,fmb)
+       fmb=fmb+Pl
+
+       !    DEFINE TEMPORARY VARIABLES        CONTROL2
+       rsst=rs      
+       cbt=cbe
+       r2t=r200
+       tmt=tmass
+       rct=rc
+       scrt=screen
+!***********************************************************************       
+       
+  44   continue
+
+       if (mod(icount,100).eq.0) then 
+            nseed=abs(nseed+(-1)**(nseed)*floor(nseed/4.))
+       endif
+       r200n=r2t       
+       rcn=rct
+       rsn=rsst
+       cbn=cbt
+       tmassn=tmt
+       scrn=scrt
+       if (cdc.eq.1) scrn=tmt
+          
+        call tranmod(r200n,rcn,rsn,cbn,
+     &           tmassn,scrn,sigma,6,nseed)
+         rc=rcn
+         cbe=cbn  
+         tmass=tmassn
+         screen=scrn     
+       READ (1,*,end=45) tm200,tc200, Pl
+       Pl=-Pl
+       r200=tm200/0.7
+       rs=tc200/0.7
+       
+         omegal=Olam!6
+         omega0=Omegam!2.*(q0+omegal)
+         hz=h0*sqrt(omega0*(1.+za)**3+omegal)
+         rm200=100.*hz*hz/grav*r200**3
+         cmean=6.76*(rm200/1.e12)**(-0.098)
+         v200=10.*hz*r200
+ 
+         if (nrc.eq.-2) then
+
+          write(*,*) ' Fit to N(R) up to R/r200=',rup/r200
+
+          write(*,293) rc,r200/rc
+
+         endif        
+
+c     Mass follows light
+c
+         if (kmfl.eq.1) then
+          rs=rc
+         elseif (klcdm.eq.1) then
+c
+c     concentration from c=c(M)
+c
+          rs=r200/cmean
+         endif
+         
+c     a_ML forced = r_s
+c
+         if (kaml.eq.1) cbe=rs
+
+c     
+c     Light follows Mass (TLM)
+c
+         if (klfm.eq.1) then
+            rc=rs  ! assume N(R) and M(r) chosen with same model
+            if (kmp.eq.1.and.knfit.eq.2) rc=2.*rs ! NFW M(r), Her N(R)
+            if (kmp.eq.2.and.knfit.eq.1) rc=rs/2. ! Her M(r), NFW N(R)
+         endif
+c     
+cc     If considering the universal distrib of interlopers
+cc     the surface density profile cannot be as concentrated
+cc     as the mass density profile; we use the factor found
+cc     in MBM for R<r200
+c
+cc               if (kintd.eq.1) rc=0.85*rs        
+                        
+         
+         xfv(1)=rs
+         xfv(2)=cbe
+
+         call vmaxlik(nfv,xfv,fml2)
+         
+       
+         fml2=fml2+Pl
+ 
+         call priord(r200,rc,rs,cbe,tmass,screen,pout1)
+
+         call acceptance(-fmb,(-fml2+pout1),eval,nseed)
+
+         if(eval.or.icount.eq.0) then !Always accept the first step of the chain
+          icount=icount+1 
+          if (mod(icount,30).eq.0) then
+           write(*,*) icount, 'trial accepted'
+           write(*,*) ' '
+           write (*,444) r200, rc, rs, cbe, 
+     &   tmass, screen,fml2, Pl
+           write(*,*) ' '
+          endif 
+          
+          if (mod(icount,500).eq.0) then
+          call CPU_TIME(start) !uses cpu time for the random generator seed
+          nstar=int(100*start, kind=8)
+          nseed = nseed+(-1)**nstar*nstar
+          endif
+          
+c  trial accepted: update the temporary parameters *********************      
+          r2t=r200     
+          rct=rc
+          rsst=rs
+          cbt=cbe
+          tmt=tmass
+          scrt=screen  
+          scprova=scrt
+
+          fmb=fml2
+          write(iu60,665) r2t,rct,rsst,cbt,tmt,scprova,fml2,kani
+          
+           if (fml2.lt.fmlmingrid) then
+                  plenmingrid=plen
+                  fmlmingrid=fml2
+                  r200mingrid=r2t
+                  rsmingrid=rsst
+                  rcmingrid=rct
+                  cbmingrid=cbt
+	  	          tmingrid=tmt
+                  smingrid=scprova
+                  xfn1best=rct
+                  ngamin=nga
+                  rlowmin=rlow
+                  rupmin=rup
+                  rcmin=rc
+                  do j=1,nga
+                     rso(j)=r(j)
+                     vso(j)=v(j)
+                  enddo        
+            endif
+
+         endif
+         
+ 444     format(6(f6.3,2x),f10.3,2x,f10.3)
+
+       
+         
+         
+c       if(icount.gt.1e2) stop
+      goto 44
+  45  continue
+       
+      close(1)
+      
+       write(*,*) icount, 'trials accepted'
+       plenmin=plenmingrid
+       fmlmin=fmlmingrid
+       r200min=r200mingrid
+       rsmin=rsmingrid
+       rcmin=rcmingrid
+       cbmin=cbmingrid
+       tmmin=tmingrid
+       scmin=smingrid
+       rc=xfn1best
+       nga=ngamin
+       rlow=rlowmin
+       rup=rupmin
+       write(iu60,*) '.................................................'
+       write(iu60,665) r200min,rcmin,rsmin,cbmin,tmmin,
+     &                scmin,fmlmin,kani
+       write(iu60,*) '.................................................'
+      
+      
+       if (kopt.lt.0) then          ! optimization skipped
+         r200new=r200min
+         rcnew=rcmin
+         rsnew=rsmin
+         cbnew=cbmin
+         scrnew=scmin
+         tmassnew=tmmin
+         plenew=plenmin
+         f=fmlmin
+       endif
+       write(iu60,674) r200new,rcnew,rsnew,cbnew,tmassnew,scrnew,f,
+     &                 kani 
+
+ 665           format(7(f13.5,2x),i2)
+       
+       
+       
+       
        else
         write(*,*) 'this setup has not yet implemented'
         stop
@@ -4932,17 +5169,13 @@ c     Search on a grid
            if(ms.lt.0) tmass=10.**(dlog10(tmt)+ms*deltmm)-tsafe
            if(ms.ge.0) tmass=10.**(dlog10(tmt)+ms*deltmp)-tsafe
           endif
-             
-           
-          
+            
        endif
-       
-       
        
        
        write(*,239) za,va,r200,v200,tmass
  239   format(//' New run with  <z>,<v>,r200,v200, MG param = ',
-     &     f7.3,2x,f7.0,2x,2x,f6.3,2x,f5.0,2x,f6.3)
+     &     f7.3,2x,f7.0,2x,2x,f6.3,2x,f5.0,2x,f10.3)
 
 c     Best-fit to N(R) external to MAMPOSSt, if required
 
@@ -5163,7 +5396,7 @@ c     [Obsolete, since we select galaxies within a radial range in Mpc
 c      and not in units of r200 that may change]
 cc               fml=fml*float(ngaref)/float(nga)
                scprova=screen
-               if(kmp.eq.9.and.nhone.gt.0) scprova=screen/(1+screen)
+c               if(kmp.eq.9.and.nhone.gt.0) scprova=screen/(1+screen)
                write(iu60,673) r200,rc,rs,cbe,tmass,scprova,fml,kani
  673           format(7(f13.5,2x),i2)
 
@@ -5662,6 +5895,7 @@ c     dqdagi integrates from a lower bound (xmin) to +infinity
 c     while dqdag does not
 
          xx1=xmin
+         
          call dgaus8 (sr2int,xris(i),dlog(2.*rinfinity),errrel,
      &   risl, IERR) 
 
@@ -5973,7 +6207,7 @@ c
 c     &     omegal=0.7,omega0=0.3)
       integer RKNOTS, VZKNOTS
       parameter (RKNOTS=10,VZKNOTS=6)
-      dimension x(4),rp(RKNOTS),vp(VZKNOTS),z(RKNOTS,VZKNOTS)
+      dimension x(6),rp(RKNOTS),vp(VZKNOTS),z(RKNOTS,VZKNOTS)
       dimension y2a(RKNOTS,VZKNOTS)
       dimension bsc(RKNOTS,VZKNOTS),xknot(13),yknot(9)
       dimension rmbm(25000),vmbm(25000),embm(25000),wmbm(25000)
@@ -6024,10 +6258,10 @@ cc      endif
 
       irule=2
       errabs=0.d0
-      errrel=0.005d0
+      errrel=0.001d0
       rismin=1.d-190
       rismax=1.d190
-      rinfinity=20.0d0
+      rinfinity=25.0d0
 
       do i=1,ninterp
          xx2=2.d0*rinfinity
@@ -6039,15 +6273,9 @@ c     dqdagi integrates from a lower bound (xmin) to +infinity
 c     while dqdag does not
 
          xx1=xmin
+c         write(*,*) 'pdd', tmass, screen, func
          call dgaus8 (sr2int,xris(i),dlog(2.*rinfinity),errrel,
      &   risl, IERR) 
-     
-c         risl = dcadre(sr2int,xris(i),dlog(2.*rinfinity),errabs,errrel,
-c     &    errest,ier)
-c         if (ier .gt. 128) then
-c            print *,'VMAXLIK-SR2INT: rmin=',xx1,' rmax=',xx2
-c            stop
-c         endif
 
          risok=dsqrt(risl*sr2out(xmin))
          if (risl.gt.1.8d195) risok=rismax 
@@ -6134,7 +6362,8 @@ c
 c
 c     here I uses dqdag to handle peak singularities 
 c     that dqdagi does not handle 
-c               
+c              
+               errrel=0.001d0
                umax = dacosh(rinfinity/rj)
                call dgaus8 (gwenu,0.d0,umax,errrel,gdgau, IERR) 
                g= rj*gdgau
@@ -6161,7 +6390,7 @@ c
                   xmin=rlow/r200
                   xmax=rup/r200
                   errabs=0.d0
-                  errrel=0.005d0
+                  errrel=0.001d0
 c                  xinteg=dcadre(sdint,xmin,xmax,errabs,errrel,
 c     &                 errest,ier)
                   call dgaus8 (sdint,xmin,xmax, errrel, 
@@ -6248,7 +6477,7 @@ c     check the limits of the integral
 c     compute the integral of gwen, yielding g(R,vz)
 
                umax = dacosh(rinfinity/rj)
-               errrel=0.005d0
+               errrel=0.001d0
                call dgaus8 (gwenu,0.d0,umax,errrel,gdgau, IERR) 
                g= rj*gdgau
                
@@ -6276,7 +6505,7 @@ c     Add interloper contribution if requested
                   xmin=rlow/r200
                   xmax=rup/r200
                   errabs=0.d0
-                  errrel=0.005d0
+                  errrel=0.001d0
 c                  xinteg=dcadre(sdint,xmin,xmax,errabs,
 c     &                 errrel,errest,ier)
                   call dgaus8 (sdint,xmin,xmax, errrel, 
@@ -6325,7 +6554,7 @@ c     the other is for the case in which c_nu is fitted externally
             endif
 
          enddo
-
+    
       endif
 c
 c     The factor nga/wsum is =1 if no weights, but is not 1
@@ -6336,9 +6565,9 @@ c     Ngr is the average number of galaxies per group, since
 c     the likelihood we want to estimate is the Sum of the
 c     ngambm galaxy probabilities)
 c     
-
+   
       func=psum/wsum*ngambm
-
+      
       return
       end
 
@@ -6392,16 +6621,28 @@ c
       else
          ifp=ifp+1
          tmassnew=10.**freepar(ifp)
-	 if (tmassg.lt.0) then 
-	    tmassnew=freepar(ifp)
-cc	    write(*,*) tmassnew
-	 endif
+         if (kmp.eq.9) then !explore from 0 to 1 the range of parameter
+         ! in the case of CS 
+          if (freepar(ifp).lt.0) freepar(ifp)=dabs(freepar(ifp)) !avoid < 0
+          if (freepar(ifp).ge.1) freepar(ifp)=1/freepar(ifp) !avoid >1
+          tmassnew=-dlog(1-freepar(ifp))/0.1
+         endif
+         if (tmassg.lt.0) then 
+	      tmassnew=freepar(ifp)
+
+	     endif
       endif
       if (ipar(6).eq.0) then
          scrnew=screeg
       else
          ifp=ifp+1
          scrnew=10.**freepar(ifp)
+         if (kmp.eq.9) then !explore from 0 to 1 the range of parameter
+         ! in the case of CS 
+          if (freepar(ifp).lt.0) freepar(ifp)=dabs(freepar(ifp)) !avoid < 0
+          if (freepar(ifp).ge.1) freepar(ifp)=1/freepar(ifp) !avoid >1
+          scrnew=freepar(ifp)/(1-freepar(ifp))
+         endif
       endif
 
 
@@ -6542,37 +6783,37 @@ c	if(field.ge.fr) field=fr
 
        RETURN
       END
-      
-      function phizero(x) 
-c     compute the chameleon field in semianalitical approximation
+c***********************************************************************
+c      function phizero(x) 
+cc     compute the chameleon field in semianalitical approximation
        
-       implicit real*8 (a-h,o-z)
-       implicit integer*4 (i-n)
+c       implicit real*8 (a-h,o-z)
+c       implicit integer*4 (i-n)
 
-       parameter (pig=3.1415926535d0, ampl=2.43e27, ah0=1.48e-33,
-     & ampc=1.57e29,rhoc=3.88e-11)
-     
-       include 'paramsoptS.i'
+c       parameter (pig=3.1415926535d0, ampl=2.43e27, ah0=1.48e-33,
+c     & ampc=1.57e29,rhoc=3.88e-11)
+ 
+c       include 'paramsoptS.i'
        
-       grav=1/(8*pig*ampl**2)
+c       grav=1/(8*pig*ampl**2)
        
-       c200=r200/rs
-       phinf=tmass*1e-5
-       fac200=1./(dlog(1.d0+r200/rs)-(r200/rs)/(1.d0+r200/rs))
-       rhozero=200/3*c200**3*rhoc*fac200
-       bcoup=1./dsqrt(6.0d0)
-       B=bcoup*rhozero*(rs*ampc)**2/ampl**2
-       xczero=(B/phinf-1)
-       Czero=-B*dlog(1+xczero)+phinf*xczero     
-        if (x.le.xczero) then
-            phizero=0
-        else 
-            phizero=-B*dlog(1+x)/x-Czero/x+phinf
-        endif
-        return
-       end 
+c       c200=r200/rs
+c       phinf=tmass*1e-5
+c       fac200=1./(dlog(1.d0+r200/rs)-(r200/rs)/(1.d0+r200/rs))
+c       rhozero=200/3*c200**3*rhoc*fac200
+c       bcoup=1./dsqrt(6.0d0)
+c       B=bcoup*rhozero*(rs*ampc)**2/ampl**2
+c       xczero=(B/phinf-1)
+c       Czero=-B*dlog(1+xczero)+phinf*xczero     
+c        if (x.le.xczero) then
+c            phizero=0
+c        else 
+c            phizero=-B*dlog(1+x)/x-Czero/x+phinf
+c        endif
+c        return
+c       end 
        
-       function dphidr(x) 
+      function dphidr(x) 
 c     compute the effective mass due to chameleon field
        
        implicit real*8 (a-h,o-z)
@@ -6589,7 +6830,7 @@ c     compute the effective mass due to chameleon field
        phinf=tmass*1e-5 !in realtà è phinf/Mpl in unità di 1e-5clight**2
        fac200=1./(dlog(1.d0+r200/rs)-(r200/rs)/(1.d0+r200/rs))
 
-       if(kmp.eq.9.and.nhone.gt.0) then
+       if(kmp.eq.9.and.nhone.ge.0) then
          bcoup=screen !the modified parameter of the screening becomes
                       !the coupling constant in the genneric chameleon run
 
@@ -6618,107 +6859,18 @@ c     compute the effective mass due to chameleon field
         !if the cluster is totally screened, the chameleon contribution is
         !seattled to zero
         
-        !if (xczero*rs.gt.1.5*rupin) dphidr=0
-        
-c        write(*,*) xczero*rs, dphidr, 1.5*rupin
+        if (xczero*rs.gt.1.5*rupin) dphidr=0
         return
        end 
       
       
+c***********************************************************************      
       
-      
 
-      subroutine find_root( f, xinit, tol, maxiter, result, success )
-
-        interface
-             function f(x)
-              real*8, intent(in) :: x
-            end function f
-        end interface
-
-        real*8, intent(in)     :: xinit
-        real*8, intent(in)     :: tol
-        integer, intent(in)  :: maxiter
-    	real*8, intent(out)    :: result
-    	logical, intent(out) :: success
-
-    	real*8                 :: eps = 1.0e-4
-    	real*8                 :: fx1
-    	real*8                 :: fx2
-    	real*8                 :: fprime
-    	real*8                 :: x
-    	real*8                 :: xnew
-    	integer              :: i
-
-    	result  = 0.0
-    	success = .false.
-
-   	x = xinit
-    	do i = 1,max(1,maxiter)
-        	fx1    = f(x)
-        	fx2    = f(x+eps)
-        	write(*,*) i, fx1, fx2, eps
-        	fprime = (fx2 - fx1) / eps
-
-        	xnew   = x - fx1 / fprime
-
-        	if ( abs(xnew-x) <= tol ) then
-            	 success = .true.
-            	 result  = xnew
-            	 exit
-        	endif
-
-        	x = xnew
-        	write(*,*) i, x
-     	enddo
-
-	end subroutine find_root
-
-       
-       double precision function fsqrt( x )
-    	implicit real*8 (a-h,o-z)
-        implicit integer*4 (i-n)
-        external field
-        include 'paramsoptS.i'
-        zeb=0.0d0
-        Ric=5.44e-8*0.9*((1+zb)**3+4*0.7/0.3)
-        n=nhs  !exp in H&S model
-        fr=Ric/(3*(n+1)*tmass*tmass+(n+2)*Ric)
-        fsqrt = (field(x)-fr)
-        return 
-       end
-    
-       subroutine findroot2(x1,x2)
-       implicit real*8 (a-h,o-z)
-       implicit integer*4 (i-n)
-      
-       external fsqrt
-       include 'paramsoptS.i'
-       limit=1000
-       i=1
-       write(*,*) limit
-      !x1 = 0.05d0 ; x2 = 10.d0 ; e = 1.0e-10
-      
-      DO 
-        IF (i > limit) THEN
-          WRITE(*,*) "Function not converging"
-         EXIT
-        END IF
-        d = (x2 - x1) / (fsqrt(x2) - fsqrt(x1)) * fsqrt(x2)
-        write(*,*) d, x1,x2
-        IF (ABS(d) < e) THEN
-         WRITE(*,"(A,F18.15)") "Root found at x = ", x2
-         EXIT    
-        END IF
-        x1 = x2
-        x2 = x2 - d
-        i = i + 1
-      END DO
-      end
 
       function r_normal_ab ( a, b, nseed )
 
-!*****************************************************************************80
+!***********************************************************************
 
 !! R8_NORMAL_AB returns a scaled pseudonormal R8.
 
@@ -6766,7 +6918,7 @@ c        write(*,*) xczero*rs, dphidr, 1.5*rupin
 
       function r_uniform_01 ( seed )
 
-!*****************************************************************************80
+!***********************************************************************
 
 !! R8_UNIFORM_01 returns a unit pseudorandom R8.
 
@@ -6892,7 +7044,12 @@ c     a MCMC using a gaussian distribution with std sigma(nfreepar)
         !case of general chameleon. The parameter space is explored
         !in terms of the rescaled variables Q_2 phi_2 (see e.g. Terukina
         !et al., 2014, Pizzuti et al., 2021)
-         if (kmp.eq.9.and.nhone.gt.0) then
+        
+        nLogP=1 !Set equal to 0 to explore the phi space using the logarithm
+        ! of the parameter. 
+        
+        !Exploration is made using the phi_2 parameter
+         if (kmp.eq.9.and.nhone.gt.0.and.nLogP.eq.1) then
            tmassnew=1-dexp(-tmassnew*0.1)
            if (tmassnew.lt.0) then
              tmassnew=dabs(r_normal_ab (0.d0,sigma(5),neseed))
@@ -6907,6 +7064,7 @@ c     a MCMC using a gaussian distribution with std sigma(nfreepar)
            endif
            tmassnew=(-10*dlog(1-tmassnew))
            
+        !Exploration is made using the log(phi) parameter  
          else 
           tmassnew=r_normal_ab (dlog10(tmassnew),sigma(5),neseed)
           tmassnew=10**(tmassnew)
@@ -6960,9 +7118,9 @@ c     &           tmassnew,scrnew,sigma)
       dimension sigma(nparr)
       include 'paramsoptS.i'
 
-      omegal=Olam!6
-      omega0=Omegam!2.*(q0+omegal)
-      hz=h0*sqrt(omega0*(1.+za)**3+omegal)
+!      omegal=Olam!6
+!      omega0=Omegam!2.*(q0+omegal)
+!      hz=h0*sqrt(omega0*(1.+za)**3+omegal)
 
       r200g=r200
       
@@ -7610,3 +7768,92 @@ c      return
 c      end
 
 
+
+! Find roots of a function 
+c      subroutine find_root( f, xinit, tol, maxiter, result, success )
+
+c        interface
+c             function f(x)
+c              real*8, intent(in) :: x
+c            end function f
+c        end interface
+
+c        real*8, intent(in)     :: xinit
+c        real*8, intent(in)     :: tol
+c        integer, intent(in)  :: maxiter
+c    	real*8, intent(out)    :: result
+c    	logical, intent(out) :: success
+
+c    	real*8                 :: eps = 1.0e-4
+c    	real*8                 :: fx1
+c    	real*8                 :: fx2
+c    	real*8                 :: fprime
+c    	real*8                 :: x
+c    	real*8                 :: xnew
+c    	integer              :: i
+
+c    	result  = 0.0
+c    	success = .false.
+
+c   	    x = xinit
+c        do i = 1,max(1,maxiter)
+c        	fx1    = f(x)
+c        	fx2    = f(x+eps)
+c        	write(*,*) i, fx1, fx2, eps
+c        	fprime = (fx2 - fx1) / eps
+
+c        	xnew   = x - fx1 / fprime
+
+c        	if ( abs(xnew-x) <= tol ) then
+c            	 success = .true.
+c            	 result  = xnew
+c            	 exit
+c        	endif
+
+c        	x = xnew
+c        	write(*,*) i, x
+c     	enddo
+
+c      end subroutine find_root
+
+       
+c       double precision function fsqrt( x )
+c    	implicit real*8 (a-h,o-z)
+c        implicit integer*4 (i-n)
+c        external field
+c        include 'paramsoptS.i'
+c        zeb=0.0d0
+c        Ric=5.44e-8*0.9*((1+zb)**3+4*0.7/0.3)
+c        n=nhs  !exp in H&S model
+c        fr=Ric/(3*(n+1)*tmass*tmass+(n+2)*Ric)
+c        fsqrt = (field(x)-fr)
+c        return 
+c       end
+    
+c       subroutine findroot2(x1,x2)
+c       implicit real*8 (a-h,o-z)
+c       implicit integer*4 (i-n)
+      
+c       external fsqrt
+c       include 'paramsoptS.i'
+c       limit=1000
+c       i=1
+c       write(*,*) limit
+c      !x1 = 0.05d0 ; x2 = 10.d0 ; e = 1.0e-10
+      
+c      DO 
+c        IF (i > limit) THEN
+c          WRITE(*,*) "Function not converging"
+c         EXIT
+c        END IF
+c        d = (x2 - x1) / (fsqrt(x2) - fsqrt(x1)) * fsqrt(x2)
+c        write(*,*) d, x1,x2
+c        IF (ABS(d) < e) THEN
+c         WRITE(*,"(A,F18.15)") "Root found at x = ", x2
+c         EXIT    
+c        END IF
+c        x1 = x2
+c        x2 = x2 - d
+c        i = i + 1
+c      END DO
+c      end
