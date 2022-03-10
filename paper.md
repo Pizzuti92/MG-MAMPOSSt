@@ -41,8 +41,7 @@ bibliography: paper.bib
 output:
   pdf_document:
     citation_package: natbib
-  bookdown::pdf_book:
-    citation_package: biblatex
+
 biblio-style: "mnras"
 link-citations: true
 
