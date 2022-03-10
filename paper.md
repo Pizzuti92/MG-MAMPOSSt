@@ -2,7 +2,12 @@
 title: 'MG-MAMPOSSt, a Fortran code to test gravity at galaxy-cluster scales'
 tags:
   - Fortran
+  - astronomy
   - cosmology
+  -  gravitation
+  -  mass-modeling 
+  -  orbital shapes
+  -  kinematics
   - galaxy clusters
   - modified gravity
 authors:
