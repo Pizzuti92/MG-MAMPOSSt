@@ -168,7 +168,7 @@ In order to check that the installation process was successfull and to produce t
 ```bash
 $ ./script/script_runmam.sh  
 ```
-without changing any parameter in the input files. This way, the code should execute a 100000-points MCMC exploration of the parameter space in DHOST gravity sampling the full kinematics+lensing likelihood by using the test data-set included in the data/ folder. The script runs in Fast Mode **kbsp=1** and should provide the complete output posterior in Output/MaxLik.dat within less than half an hour if the execution is performed over an average laptop. 
+without changing any parameter in the input files. This way, the code should execute a 100000-points MCMC exploration of the parameter space in Vainsthein screening gravity  (**kmp=8**) sampling the full kinematics+lensing likelihood by using the test data-set included in the data/ folder. The script runs in Fast Mode **kbsp=1** and should provide the complete output posterior in Output/MaxLik.dat within less than half an hour if the execution is performed over an average laptop. 
 At the end of the run, if successufull the following text will be printed:
 ```bash
  Best-fit from optimization
@@ -221,7 +221,7 @@ Note that, in the case of a fixed-grid exploration, this corresponds to a 51 X 3
 0.4
 ************************************************************************
 ```
-
+Except for the modified gravity parameters, the others are fixed to the true values of the halo from  which the test data-set is generated.
 
 Go to [Top Page](#top)
 
