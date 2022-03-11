@@ -124,6 +124,8 @@ Input parameters are stored in the file input_pars/pars_all_N_O_spec_DS. Differe
    *  **A2_low:** Lower limit for the second modified gravity parameter A2. 
    *  **A2_up:** Upper limit for the second modified gravity parameter A2. 
 
+**IMPORTANT**: every integer number in the input parameters file should be followed by a dot '.' (see the [example below](#Test-and-Tutorial)). 
+
 ### Working Options
 
 The file Option.txt contains various options and switches for the new features in MG-MAMPOSSt. These are mostly related to the numerical analysis and evaluation of the posterior likelihood. Notice that, the input parameters can be **binary integers** (with values 0 or 1), **integers*4** or **reals*8**. 
@@ -219,5 +221,7 @@ Note that, in the case of a fixed-grid exploration, this corresponds to a 51 X 3
 0.4
 ************************************************************************
 ```
+
+
 Go to [Top Page](#top)
 
