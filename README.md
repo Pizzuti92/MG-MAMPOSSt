@@ -190,7 +190,7 @@ Output/rnvn.dat
 Output/NRpar.dat
 Output/NRbin.dat
 Output/NRfit.dat
-Output/MaxLik_test.dat
+Output/MaxLik.dat
 Output/svbin.dat
 Output/svfit.dat
 ```
