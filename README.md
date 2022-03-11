@@ -58,11 +58,12 @@ Here we summarize all the necessary information to perform a complete run of the
 
 The directory data/ stores the datafiles of projected phase spaces (p.p.s) that serve as input to the MG-MAMPOSSt procedure. The files are structured as a table where the number of rows coincides with the number of data points. The first column is the projected radius in units of ```kpc```, the second and thirds columns represent the l.o.s. velocities and the associated errors in units of ```km/s```. Note that data points should be given in the rest frame of the cluster.
 The first two lines are considered as comment lines when MG-MAMPOSSt read the data.
+The test data file provided correspond to a projected phase space realization of a relaxed dark matter halo, populated with a NFW model characterized by r_200=1.41 Mpc and r_s=r_nu=0.33 Mpc. As for the velocity anisotropy profile, the halo is generated with a Tiret model (implemented in the MG-MAMPOSSt code) with a parameter beta=1.41. 
 
 ### Input parameters
 Input parameters are stored in the file input_pars/pars_all_N_O_spec_DS. Different parameters go on different rows and must be written starting by the first column. They are all mandatory and are divided in four main groups:
 
-* **Number of iterations (lines 1-6, integers):** for the grid search mode, they represent the number of points in each free parameter over which the likelihood is computed. If set to 0 or 1, the parameter is fixed to its guess value, except for specific cases. When MG-MAMPOSSt is in MCMC mode, if **number of iterations** is different from zero, then the corresponding parameters are optimized within the chain. Otherwise the parameters are fixed to the guess value. 
+* **Number of iterations (lines 1-6, integers):** for the grid search mode, they represent the number of points in each free parameter over which the likelihood is computed. Note that, if  **number of iterations** is even, the number of grid points will be **number of iterations+1** in order to have an even number of grid sample below and above the guess value.  If set to 0 or 1, the parameter is fixed to its guess value, except for specific cases. When MG-MAMPOSSt is in MCMC mode, if **number of iterations** is different from zero, then the corresponding parameters are optimized within the chain. Otherwise the parameters are fixed to the guess value. 
    - **nr200**: Number of iteration for the virial radius.
 
    - **nrnu**: Number of iteration for the tracers scale radius r_nu. For **nrnu=-1**  assumes that r_nu is equal to the scale radius of the mass profile r_s in the fit (option: "Light Follows Mass"). If **nrnu=-2** the code first fits the number density profile alone and the best fit found is then used as fixed value in the MG-MAMPOSSt procedure. 
@@ -198,6 +199,25 @@ The first line is the input data-set - Be sure that the format agrees with the d
 ```bash
 Output/MaxLik_ChameleonTest.dat
 ```
-
+Now, we define the details of the run by working on the parameters in pars_all_N_O_spec_DS. In particular, we choose to work with the two free parameters defining the modified gravity model, which are the background value of the chameleon field **\phi_\infty** and the coupling constant **Q**. This means that the only numbers different from zero in the first block should be the last two:
+```bash
+0. 
+0.
+0.
+0.
+50.
+30.
+************************************************************************
+```
+Note that, in the case of a fixed-grid exploration, this corresponds to a 51 X 31 points grid. As for the second block, we select the following guess values of the input parameters:
+```bash
+1.41
+0.33
+0.33
+1.41
+1.2
+0.4
+************************************************************************
+```
 Go to [Top Page](#top)
 
