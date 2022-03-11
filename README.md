@@ -182,6 +182,18 @@ At the end of the run, if successufull the following text will be printed:
 ### A simple tutorial of usage
 In the following, we present a simple tutorial to guide the user over a step-by-step execution of the code. 
 #### File name selection
- 
+First, open the gomamposst_x.inp file, which should appear as:
+```bash
+data/datphys_test.dat
+input_pars/pars_all_N_O_spec_DS
+Output/rnvn.dat
+Output/NRpar.dat
+Output/NRbin.dat
+Output/NRfit.dat
+Output/MaxLik_test.dat
+Output/svbin.dat
+Output/svfit.dat
+```
+The first line is the input data-set. Be sure that the format agrees with the documentation 
 Go to [Top Page](#top)
 
