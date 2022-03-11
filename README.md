@@ -60,7 +60,7 @@ The directory data/ stores the datafiles of projected phase spaces (p.p.s) that 
 The first two lines are considered as comment lines when MG-MAMPOSSt read the data.
 
 ### Input parameters
-Input parameters are stored in the file Input_pars/pars_all_N_O_spec_DS. Different parameters go on different rows and must be written starting by the first column. They are all mandatory and are divided in four main groups:
+Input parameters are stored in the file input_pars/pars_all_N_O_spec_DS. Different parameters go on different rows and must be written starting by the first column. They are all mandatory and are divided in four main groups:
 
 * **Number of iterations (lines 1-6, integers):** for the grid search mode, they represent the number of points in each free parameter over which the likelihood is computed. If set to 0 or 1, the parameter is fixed to its guess value, except for specific cases. When MG-MAMPOSSt is in MCMC mode, if **number of iterations** is different from zero, then the corresponding parameters are optimized within the chain. Otherwise the parameters are fixed to the guess value. 
    - **nr200**: Number of iteration for the virial radius.
@@ -123,7 +123,7 @@ Input parameters are stored in the file Input_pars/pars_all_N_O_spec_DS. Differe
    *  **A2_low:** Lower limit for the second modified gravity parameter A2. 
    *  **A2_up:** Upper limit for the second modified gravity parameter A2. 
 
-### Working Opions
+### Working Options
 
 The file Option.txt contains various options and switches for the new features in MG-MAMPOSSt. These are mostly related to the numerical analysis and evaluation of the posterior likelihood. Notice that, the input parameters can be **binary integers** (with values 0 or 1), **integers*4** or **reals*8**. 
 All the parameters must be given in a format **"label = "value"**. The "label"s are mandatory while the "value"s, if not given, are set by default. 
@@ -154,8 +154,8 @@ All the parameters must be given in a format **"label = "value"**. The "label"s 
    
 
 ### Output
-Output files can be found in the Output folder. The names and the location of those files can be changed by modyfing the file **gomamposst_x.inp**. Main is **MaxLik.dat**, 
-which stores the tabulated ln(L) where L is the  likelihood/posterior, as a function of the model parameters.
+Output files can be found in the Output folder. The names and the location of those files can be changed by modyfing the file **gomamposst_x.inp**. The main output file is **MaxLik.dat**, 
+which stores the tabulated ln(L) where L is the  likelihood/posterior, as a function of the model parameters. The other accessory files are described in the documentation.
 
 
 ## Test and Tutorial
@@ -194,6 +194,10 @@ Output/MaxLik_test.dat
 Output/svbin.dat
 Output/svfit.dat
 ```
-The first line is the input data-set. Be sure that the format agrees with the documentation 
+The first line is the input data-set - Be sure that the format agrees with the documentation (the first two lines are considered as comments) - while the second line corresponds to the file storing the input parameters. All the other lines indicate the output file names. In this tutorial we will perform a test run in Chameleon Screening (**Model I**); as such, we change the output likelihood file as
+```bash
+Output/MaxLik_ChameleonTest.dat
+```
+
 Go to [Top Page](#top)
 
