@@ -81,7 +81,7 @@ Input parameters are stored in the file input_pars/pars_all_N_O_spec_DS. Differe
 
     * **beta**: starting guess for the velocity anisotropy profile parameter. If the selected model is "constant", "Tiret" or "Modified Tiret", the parameter is dimensionless, otherwise it should be given in units of Mpc.
     
-    * **A_1**: Initial guess for the first modified gravity parameter. For the case of gNFW model **kmp=10**, **A_1=gamma** is the free exponent which characterizes the profile.
+    * **A_1**: Initial guess for the first modified gravity parameter. For **kmp=9** the parameter is in unit of 1e-5. For the case of gNFW model **kmp=10**, **A_1=gamma** is the free exponent which characterizes the profile.
     
     * **A_2**: Initial guess for the second modified gravity parameter.
   
@@ -197,11 +197,11 @@ Output/MaxLik.dat
 Output/svbin.dat
 Output/svfit.dat
 ```
-The first line is the input data-set - Be sure that the format agrees with the documentation (the first two lines are considered as comments) - while the second line corresponds to the file storing the input parameters. All the other lines indicate the output file names. In this tutorial we will perform a test run in Chameleon Screening (**Model I**); as such, we change the output likelihood file as
+The first line is the input data-set - Be sure that the format agrees with the documentation (the first two lines are considered as comments) - while the second line corresponds to the file storing the input parameters. All the other lines indicate the output file names. In this tutorial we will perform a test run in Chameleon Screening (**kmp=9**); as such, we change the output likelihood file as
 ```bash
 Output/MaxLik_ChameleonTest.dat
 ```
-Now, we define the details of the run by working on the parameters in pars_all_N_O_spec_DS. In particular, we choose to work with the two free parameters defining the modified gravity model, which are the background value of the chameleon field **\phi_\infty** and the coupling constant **Q**. This means that the only numbers different from zero in the first block should be the last two:
+Now, we define the details of the run by working on the parameters in pars_all_N_O_spec_DS. In particular, we choose to work with the two free parameters defining the modified gravity model, which are the background value of the chameleon field **\phi_\infty**, given in unit of 1e-5 and the coupling constant **Q**. This means that the only numbers different from zero in the first block should be the last two:
 ```bash
 0. 
 0.
@@ -211,7 +211,7 @@ Now, we define the details of the run by working on the parameters in pars_all_N
 30.
 ************************************************************************
 ```
-Note that, in the case of a fixed-grid exploration, this corresponds to a 51 X 31 points grid. As for the second block, we select the following guess values of the input parameters:
+Note that, in the case of a fixed-grid exploration, this corresponds to a 51 X 31 points grid. As for the second group, we select the following guess values of the input parameters:
 ```bash
 1.41
 0.33
@@ -221,7 +221,7 @@ Note that, in the case of a fixed-grid exploration, this corresponds to a 51 X 3
 0.4
 ************************************************************************
 ```
-Except for the modified gravity parameters, the others are fixed to the true values of the halo from  which the test data-set is generated.
+Except for the modified gravity parameters, the others are fixed to the true values of the halo from  which the test data-set is generated. 
 
 Go to [Top Page](#top)
 
