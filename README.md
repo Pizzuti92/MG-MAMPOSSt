@@ -221,7 +221,26 @@ Note that, in the case of a fixed-grid exploration, this corresponds to a 51 X 3
 0.4
 ************************************************************************
 ```
-Except for the modified gravity parameters, the others are fixed to the true values of the halo from  which the test data-set is generated. 
+Except for the modified gravity parameters, the others are fixed to the true values of the halo from  which the test data-set is generated. Now, let's give a look to the third group of parameters:
+```bash
+70.
+0.0
+0.7
+0.3
+0.05
+1.41
+1.
+-0.0
+9.
+4.
+1.0
+0. 
+2.
+0.
+```
+The first four values represent the background cosmology (note that the test phase space has been generated at redshift 0). Then, we set the range of tracers to be considered in the MG-MAMPOSSt analysis [0.05 Mpc,1.41 Mpc] and we choose the  model **1** for the number density profile of the tracers, which corresponds to a NFW profile. The next parameter **-0.0** is ignored in this case.
 
+The effective gravitational potential (mass profile) in Chameleon gravity is selected by the number **9** and the model of the velocity anisotrpy profile is chosen to be a Tiret, represented by the value **4**. The following parameter 1.0 is not considered unless MG-MUMPOSSt runs with the model **3** for the mass profile. 
+If we want to execute the code in fast mode, set the next paramater equal to 1, otherwise (as this is the case), type '0'. 
 Go to [Top Page](#top)
 
