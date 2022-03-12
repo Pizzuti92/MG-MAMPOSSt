@@ -296,6 +296,17 @@ c     analytical approximation of Lombriser+12.
       !general hordenski gravity with coupling Q=Screen  
 
 c***********************************************************************
+      if (kmp.lt.7) then  
+      ! if no MG model is considered, tmassg is set to zero  
+       tmassg=0.0d0
+       tmlow=-0.1d0
+       tmup=0.1d0
+      ! if no MG model is considered, screeg is set to zero 
+       screeg=0.0d0
+       scrlow=-0.1d0
+       scrup=0.1d0
+      endif
+      
       if(r200g.gt.r2up.or.r200g.lt.r2low) then
          Stop('ERROR: GUESS VALUE r200 EXCEEDES PARAMETER LIMITS')
       endif 
@@ -315,9 +326,7 @@ c***********************************************************************
          Stop('ERROR: GUESS VALUE mod2 EXCEEDES PARAMETER LIMITS')
       endif   
       
-      if (kmp.lt.7) then    ! if no MG model is considered, tmassg is set to zero
-       tmassg=0.0d0
-      endif
+
       tmass=tmassg          !set the mass to the guess value
       
 
@@ -5172,7 +5181,7 @@ c     Search on a grid
             
        endif
        
-       
+
        write(*,239) za,va,r200,v200,tmass
  239   format(//' New run with  <z>,<v>,r200,v200, MG param = ',
      &     f7.3,2x,f7.0,2x,2x,f6.3,2x,f5.0,2x,f10.3)
