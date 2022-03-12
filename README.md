@@ -242,5 +242,8 @@ The first four values represent the background cosmology (note that the test pha
 
 The effective gravitational potential (mass profile) in Chameleon gravity is selected by the number **9** and the model of the velocity anisotrpy profile is chosen to be a Tiret, represented by the value **4**. The following parameter 1.0 is not considered unless MG-MUMPOSSt runs with the model **3** for the mass profile. 
 If we want to execute the code in fast mode, set the next paramater equal to 1, otherwise (as this is the case), type '0'. 
+Finally, we choose the optimization algorithm **2** (Powell); the last parameter is ignored unless the mass profile model is equal to **7**.
+
+Close the Pars_all_N_O_spec file and open "Options.txt" to customize the execution of MG-MAMPOSSt. 
 Go to [Top Page](#top)
 
