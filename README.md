@@ -256,8 +256,8 @@ The last step is to choose the parameter limits for your exploration (only if **
 3.9
 0.2
 3.5
-0.5067
-20.2
+0.006
+100.0
 0.02
 100.0
 ************************************************************************
