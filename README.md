@@ -201,6 +201,7 @@ The first line is the input data-set - Be sure that the format agrees with the d
 ```bash
 Output/MaxLik_ChameleonTest.dat
 ```
+#### Parameter definition
 Now, we define the details of the run by working on the parameters in pars_all_N_O_spec_DS. In particular, we choose to work with the two free parameters defining the modified gravity model, which are the background value of the chameleon field **\phi_\infty**, given in unit of 1e-5 and the coupling constant **Q**. This means that the only numbers different from zero in the first block should be the last two:
 ```bash
 0. 
@@ -244,6 +245,25 @@ The effective gravitational potential (mass profile) in Chameleon gravity is sel
 If we want to execute the code in fast mode, set the next paramater equal to 1, otherwise (as this is the case), type '0'. 
 Finally, we choose the optimization algorithm **2** (Powell); the last parameter is ignored unless the mass profile model is equal to **7**.
 
-Close the Pars_all_N_O_spec file and open "Options.txt" to customize the execution of MG-MAMPOSSt. 
+The last step is to choose the parameter limits for your exploration (only if **kpro=1**, see below).
+```bash
+********* parameter limits (for kpro=1) ********************************
+0.4
+5.0
+0.05
+3.9
+0.04
+3.9
+0.2
+3.5
+0.5067
+20.2
+0.02
+100.0
+************************************************************************
+```
+
+#### Select running options
+Close the "Pars_all_N_O_spec" file and open "Options.txt" to customize the execution of MG-MAMPOSSt. 
 Go to [Top Page](#top)
 
