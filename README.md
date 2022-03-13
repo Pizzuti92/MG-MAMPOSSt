@@ -264,6 +264,64 @@ The last step is to choose the parameter limits for your exploration (only if **
 ```
 
 #### Select running options
-Close the "Pars_all_N_O_spec" file and open "Options.txt" to customize the execution of MG-MAMPOSSt. 
+Close the "Pars_all_N_O_spec_DS" file and open "Options.txt" to customize the execution of MG-MAMPOSSt. To choose the fixed-grid parameter space exploration, type 
+```bash
+nmcmc=0
+```
+In this case, the following parameter **Nsample** is ignored. We further exclude the additional lensing distribution by setting
+```bash
+nlens=0
+```
+To select the customized limits of the parameter sapce (the last group of inputs in "Pars_all_N_O_spec_DS"), set 
+```bash
+kpro=1
+```
+We leave the rest of the file unchanged. 
+
+#### Execution
+In the parent working directory, execute
+```bash
+$ ./script/script_runmam.sh -t  
+```
+or
+```bash
+$ sh script/script_runmam.sh -t  
+```
+where the additional option ```bash -t ``` prints the execution time. If everything worked fine, at the end of the execution one should obtain the following printed message:
+```bash 
+ Best-fit (kinematic only)
+   r_200    =  1.410
+   r_tracer =  0.330 (c_tracer=    4.27)
+   r_mass   =  0.330 (c_mass=      4.27)
+   Anisotropy parameter =   1.4100
+   First MG parameter = 50.0665
+   Second MG parameter =  0.0386
+ Likelihood =   5908.61097
+
+
+  After MG-MAMPOSSt:
+
+     build output files of binned N(R), VDP
+     of best-fit N(R), VDP and of
+     input N(R), VDP solutions ('true' values)
+
+  Binned N(R) computed
+  Using           13  bins for the VDP(R)
+  Evaluating expected VDP for
+  Max Lik solution values:
+   r_200    =  1.410
+   r_tracer =  0.330 (c_tracer=    4.27)
+   r_mass   =  0.330 (c_mass=      4.27)
+   Anisotropy parameter =   1.4100
+
+  sigma_r evaluated
+******************************
+time of execution:  11  seconds
+******************************
+No plot for the grid case
+```
+#The output "MaxLik_ChameleonTest.dat" file should be the same found in the "test" folder in this repository  
+
+
 Go to [Top Page](#top)
 
