@@ -294,7 +294,7 @@ where the additional option ```-t``` prints the execution time. If everything wo
    r_tracer =  0.330 (c_tracer=    4.27)
    r_mass   =  0.330 (c_mass=      4.27)
    Anisotropy parameter =   1.4100
-   First MG parameter = 50.0665
+   First MG parameter =  0.0087
    Second MG parameter =  0.0386
  Likelihood =   5908.61097
 
@@ -316,11 +316,11 @@ where the additional option ```-t``` prints the execution time. If everything wo
 
   sigma_r evaluated
 ******************************
-time of execution:  11  seconds
+time of execution:  9  seconds
 ******************************
 No plot for the grid case
 ```
-#The output "MaxLik_ChameleonTest.dat" file should be the same found in the "test" folder in this repository  
+Note that this time of execution refers to a laptop ASUS Intel(R) Core(TM) i7-8565U CPU 1.99 GHz. The output "MaxLik_ChameleonTest.dat" file should be the same found in the "test" folder in this repository  
 
 
 Go to [Top Page](#top)
