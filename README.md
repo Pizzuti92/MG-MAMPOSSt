@@ -287,7 +287,7 @@ or
 ```bash
 $ sh script/script_runmam.sh -t  
 ```
-where the additional option ```bash -t ``` prints the execution time. If everything worked fine, at the end of the execution one should obtain the following printed message:
+where the additional option ```-t``` prints the execution time. If everything worked fine, at the end of the run one should obtain the following printed message:
 ```bash 
  Best-fit (kinematic only)
    r_200    =  1.410
