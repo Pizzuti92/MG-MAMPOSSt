@@ -320,7 +320,11 @@ time of execution:  9  seconds
 ******************************
 No plot for the grid case
 ```
-Note that this time of execution refers to a laptop ASUS Intel(R) Core(TM) i7-8565U CPU 1.99 GHz. The output "MaxLik_ChameleonTest.dat" file should be the same found in the "test" folder in this repository  
+Note that this time of execution refers to a laptop ASUS Intel(R) Core(TM) i7-8565U CPU 1.99 GHz. The output "MaxLik_ChameleonTest.dat" file should be the same found in the "test" folder in this repository. 
+
+In order to perform the same run in MCMC mode type ```nmcmc=0``` in "Options.txt". Running ```$ sh script/script_runmam.sh -t``` in this case should produce the marginalized distributions in the "test" folder. The corresponding (log) likelihood is stored in "MaxLike_ChameleonTestMCMC.dat" in the same folder  
+
+
 
 
 Go to [Top Page](#top)
