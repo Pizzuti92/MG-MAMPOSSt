@@ -132,7 +132,7 @@ The file Option.txt contains various options and switches for the new features i
 All the parameters must be given in a format **"label = "value"**. The "label"s are mandatory while the "value"s, if not given, are set by default. 
 * **nmcmc (binary)**. Select between grid-search mode (= 0), and MCMC sampling (= 1). The default value is 1.
 * **Nsample (integer)**. Number of points in the MCMC run. Default is 400000.
-* **nlens (binary)**. Lensing information: If equal to 1, it adds to the kinematics likelihood, a probability distribution simulating additional information such as provided by a lensing mass profile reconstruction. For each set of values of the parameters, the joint (log) likelihood is then computed as
+* **nlens (binary)**. Lensing information: If equal to 1, in the case of modified gravity mass profiles (**kmp=7,8,9**) it adds to the kinematics likelihood a probability distribution simulating additional information such as provided by a lensing mass profile reconstruction. For each set of values of the parameters, the joint (log) likelihood is then computed as
 
     **L(joint) =L(dyn)+L(lens),**
 
