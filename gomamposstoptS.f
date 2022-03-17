@@ -1,11 +1,11 @@
       program gomamposstoptS
 
-c     Version of 28/10/2021 - inclusion of beyond Hrodenski and general
+c     Version of 17/13/2022 - inclusion of beyond Hrodenski and general
 c     chameleon gravity. Lensing additional simulation
-c     plots with the gedist python package
+c     plots with the gedist python package if MCMC run is selected
 
 c     ADDED THE gNFW PROFILE: option kmp=10
-c     THE Exponent gamma is given by the tmass
+c     THE Exponent gamma is given by the tmass parameter 
 
 c     derived from gomamposst.f ...'opt' for optimization
 
@@ -74,8 +74,11 @@ c                                        substituted by John Burkardt's
 c                                        routines (GNU public license) and
 c                                        SLATEC routines by  Jones, R. E., (SNLA) 
 
+c                 Aosta,   March 2022: few adjustments have been made,
+c                                      cmake for installation, some bugs
+c                                       fixed 
 
-c     if needed, re-create the archives:
+c     if needed (cmake doesn't work), use the script installation:
 c     (change the permission of the script to make them executable)
 c     ./script/script_Lib.sh
 c     Compile with ./script/script_compile.sh
@@ -147,17 +150,7 @@ c
       bhm=-0.192
 
 c***********************************************************************
-c      tmass=5.0
-c      r200=3.0
-c      rs=0.3
-      
-c      write(*,*)gamma_mg(1.0d0,r200t,rst,15.0d0,0.0d0),gamma_true(1.0d0)
-c      call Likelens_bh(10,plens)
-c      write(*,*) plens
-c      stop
-      
-
-      
+            
       write(*,*) ' '
       write(*,*) ' '
       write(*,*)    ' ***************************************'
@@ -263,6 +256,7 @@ c     read file with parameters for MAMPOSSt
       rupin=pars(18)          ! Outer radius for sample selection (Mpc) 
       kintd=0 !nint(pars(19))    ! Use universal surface density of interlopers? N/Y=0/1 (note: in this version
                              ! the interlopers have been already removed from the input file)
+                             
 
       knfit=nint(pars(19))   ! N(R) model, projected NFW / projected Hernquist / beta-model (1/2/3)
                              !             
@@ -529,10 +523,7 @@ c     output a binned number density profile N(R)
       do j=1,nga
          dns(j)=rso(j)
       enddo
-c      call sort(nga,dns)
-c      do j=1,nga
-c       write(*,*) dns(j)
-c      enddo
+
       call sortp(dns,nga)
       do j=1,nbins+1
          if (j.eq.nbins+1) then
@@ -706,7 +697,7 @@ c     evaluate sigma_r at some points (it will then interpolate)
          xx2 = dlog(2.d0*rinfinity)
          xx1 = dlog(rlow)+dfloat(i-1)*
      &    dlog(1.001*rinfinity/rlow)/dfloat(ninterp-1)
-c         risl = dcadre(sr2int,xx1,xx2,errabs,errrel,errest,ier)
+
          call dgaus8 (sr2int,xx1,xx2, errrel, risl, IERR)
 
          xmin=dexp(xx1)
@@ -927,12 +918,12 @@ c
       end
 c
 c
+      
       subroutine robusti(xin,n,ibwt,c,s)
 
 C     Routine that uses robust techniques to estimate the central location C
 C     and the spread S, for a distribution of N sorted values X.
 C     Based on the work of Beers, Flynn and Gebhardt, AJ 100, 32, 1990.
-C     When necessary, use is made of Numerical Recipes routines.
 
       implicit real*8 (a-h,o-z)
       implicit integer*4 (i-n)
@@ -1044,7 +1035,6 @@ c
       implicit integer*4 (i-n)
       include 'paramsoptS.i'
       t=tt/rc
-ccc      sigmar3=(1.d0+t*t)**al/(r200*r200)
       sigmar3=(1.d0+t*t)**al
       return
       end
@@ -1057,7 +1047,6 @@ c
       parameter (pig=3.1415926535897932d0)
       include 'paramsoptS.i'
       t=tt/rc
-
 
 c     no interlopers considered
 
@@ -1109,7 +1098,7 @@ c     from eqs. A3, A4, A6 in Mamon & Lokas (2005)
 c     or from eq.(A3) in Mamon, Biviano & Boue' (2013)
 c     
 c       modified by GAM to handle integration of ln r
-c
+c       Added modified gravity parametrizations
       function sr2int(alr)
       implicit real*8 (a-h,o-z)
       implicit integer*4 (i-n)
@@ -3962,8 +3951,8 @@ c      call CPU_TIME(astar)
           call vmaxlik(nfv,xfv,f)
         endif
         fmlb=f
-!      do only lensing analysis (BH gravity) 
-        nlonly=0
+
+        nlonly=0    !do only lensing analysis 
 ! **********************************************************************
         if (nlens.eq.1) then
          if(kmp.eq.7.or.kmp.eq.9) then
