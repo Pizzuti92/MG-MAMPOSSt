@@ -41,7 +41,8 @@ done
 
 
 start=`date +%s`
-./gomamposstopt.e < $cartellacl\gomamposst_x.inp   
+gomamposstopt < $cartellacl\gomamposst_x.inp  
+#./gomamposstopt.e < $cartellacl\gomamposst_x.inp   
 end=`date +%s`
 
 runtime=$((end-start))
