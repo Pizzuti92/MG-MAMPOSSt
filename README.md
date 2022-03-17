@@ -272,7 +272,7 @@ In this case, the following parameter **Nsample** is ignored. We further exclude
 ```bash
 nlens=0
 ```
-To select the customized limits of the parameter sapce (the last group of inputs in "Pars_all_N_O_spec_DS"), set 
+To select the customized limits of the parameter space (the last group of inputs in "Pars_all_N_O_spec_DS"), set 
 ```bash
 kpro=1
 ```
