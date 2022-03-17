@@ -4185,8 +4185,8 @@ c     &   tmassn, scrn,fml2+pout1, fmlb
           icount=icount+1
           itotal=0 
           call sigmaeva(npar,sigma)!sigmaeva(npar,r200n,rcn,rsn,cbn,tmassn,scrn,sigma) 
-          if (mod(icount,30).eq.0) then
-           write(*,*) icount, 'trial accepted'
+          if (mod(icount,1000).eq.0) then
+           write(*,*) icount, 'trials accepted'
            write(*,*) ' '
            write (*,428) r200n, rcn, rsn, cbn, 
      &   tmassn, scrn,fml2, plen
@@ -4527,8 +4527,8 @@ c     &   tmass, screen,fml2+pout1
 
          if(eval.or.icount.eq.0) then !Always accept the first step of the chain
           icount=icount+1 
-          if (mod(icount,30).eq.0) then
-           write(*,*) icount, 'trial accepted'
+          if (mod(icount,1000).eq.0) then
+           write(*,*) icount, 'trials accepted'
            write(*,*) ' '
            write (*,422) r200, rc, rs, cbe, 
      &   tmass, screen,fml2, Pl
@@ -4745,8 +4745,8 @@ cc               if (kintd.eq.1) rc=0.85*rs
 
          if(eval.or.icount.eq.0) then !Always accept the first step of the chain
           icount=icount+1 
-          if (mod(icount,30).eq.0) then
-           write(*,*) icount, 'trial accepted'
+          if (mod(icount,1000).eq.0) then
+           write(*,*) icount, 'trials accepted'
            write(*,*) ' '
            write (*,444) r200, rc, rs, cbe, 
      &   tmass, screen,fml2, Pl
