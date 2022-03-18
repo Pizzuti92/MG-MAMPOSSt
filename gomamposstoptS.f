@@ -3815,8 +3815,8 @@ c     &           tmassnew,scrnew,sigma)
       tmass=tmassnew
       screen=scrnew
       call vmaxlik(nfv,xfv,fml2)
-       write(*,*) 'value from vmaxlik: -logL'
-       write(*,*) fml2
+c       write(*,*) 'value from vmaxlik: -logL'
+c       write(*,*) fml2
  429  format(6(f6.3,2x),f10.3)
       rs=rsg
       rc=rcg
