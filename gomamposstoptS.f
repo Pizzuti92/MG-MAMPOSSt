@@ -3806,7 +3806,7 @@ c     &           tmassnew,scrnew,sigma)
       
       write(*,*) 
       write(*,*) 'result from optimization: r200,rc,rs,beta,A1,A2,-logL'
-      write(*,429) r200new, rcnew, rsnew, cbnew, tmassnew, scrnew, f
+      
       rs=rsnew
       cbe=cbnew
       xfv(1)=rs
@@ -3817,6 +3817,7 @@ c     &           tmassnew,scrnew,sigma)
       call vmaxlik(nfv,xfv,fml2)
 c       write(*,*) 'value from vmaxlik: -logL'
 c       write(*,*) fml2
+      write(*,429) r200new, rcnew, rsnew, cbnew, tmassnew, scrnew, fml2
  429  format(6(f6.3,2x),f10.3)
       rs=rsg
       rc=rcg
