@@ -8,6 +8,7 @@
 - [Install](#Install)
 - [Overview of usage](#Overview-of-usage)
 - [Test and Tutorial](#Test-and-Tutorial)
+- [Extension and Update](#Extension-and-Update)
 ## Introduction
 
 MG-MAMPOSSt is a FORTRAN code that extended the MAMPOSSt algorithm of G. Mamon, A. Biviano and G. Boué - 
@@ -325,6 +326,13 @@ Note that this time of execution refers to a laptop ASUS Intel(R) Core(TM) i7-85
 In order to perform the same run in MCMC mode type ```nmcmc=0``` in "Options.txt". We select ```Nsample=100000``` points in the chain.
 
 Running ```$ sh script/script_runmam.sh -t``` in this case should produce the [marginalized distributions](https://github.com/Pizzuti92/MG-MAMPOSSt/blob/main/test/plot_test_MCMC_Chameleon.png) in the "test" folder. The corresponding (log) likelihood is stored in "MaxLike_ChameleonTestMCMC.dat" in the same folder; the execution on a laptop with the features specified above should take roughly 10 minutes.   
+
+
+## Extension and update
+
+Since the expression of the gravitational potential is involved only in the solution of the Jeans' equation, new mass models or modified gravity/dark energy parametrizations can be introduced by modifying the routines where the potential enters, which are the functions fa(tlog) and sr2int(alr) in API.f. Add a new entry in the condition chain, identified by a new integer number **kmp**. 
+
+
 
 
 
