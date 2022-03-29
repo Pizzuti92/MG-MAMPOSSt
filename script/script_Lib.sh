@@ -35,13 +35,15 @@ while [ -n "$1" ]; do
   esac
   shift
 done
-
+  
+ 
  cd $cartellacl\Utili/
-# $FCOMP -c $cartellacl\Utili/*.f
+
  $FCOMP -c *.f
-# ar -r $cartellacl\Utili/libUtil.a $cartellacl\Utili/*.o
  ar -r libUtil.a  *.o
  cd  ../GamI/
+ 
+ 
  
 # $FCOMP -c $cartellacl\GamI/*.f
 # $FCOMP -c $cartellacl\GamI/*.f90
@@ -65,6 +67,7 @@ $FCOMP -c *.f
 ar -r libJin.a *.o
 
 cd ..
+ 
 echo ''
 echo '*******************************'
 echo 'Libriaries created sucessfully'

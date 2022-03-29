@@ -18,8 +18,6 @@ Help()
 
 
 
-
-
 FCOMP=f95
 
 while [ -n "$1" ]; do
@@ -35,6 +33,5 @@ while [ -n "$1" ]; do
   shift
 done
 
-
-
-$FCOMP -o gomamposstopt.e gomamposstoptS.f -L GamI/ -lGAM -L Utili/ -lUtil -L Newuoa/ -lNewuoa -L Powell/ -lPowell -L JJin/ -lJin  -lm
+$FCOMP -c API.f
+$FCOMP -o gomamposstopt.e gomamposstoptS.f API.o -L GamI/ -lGAM -L Utili/ -lUtil -L Newuoa/ -lNewuoa -L Powell/ -lPowell -L JJin/ -lJin  -lm 
