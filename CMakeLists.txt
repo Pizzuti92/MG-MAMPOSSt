@@ -2,7 +2,11 @@ cmake_minimum_required(VERSION "3.17.1")
 project("gomamposstopt")
 
 enable_language (Fortran)
-
+if (gfortran)
+	set (CMAKE_Fortran_FLAGS "-fallow-invalid-boz")
+#	set(dialect "-fallow-invalid-boz")
+#    add_compile_options("-fallow-invalid-boz")
+endif()
 
 
 add_subdirectory(GamI)
