@@ -1,11 +1,15 @@
-cmake_minimum_required(VERSION "3.17.1")
+cmake_minimum_required(VERSION "3.3")
 project("gomamposstopt")
-
+include(CheckFortranCompilerFlag)
 enable_language (Fortran)
-if (gfortran)
-	set (CMAKE_Fortran_FLAGS "-fallow-invalid-boz")
-#	set(dialect "-fallow-invalid-boz")
-#    add_compile_options("-fallow-invalid-boz")
+if(CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
+    CHECK_Fortran_COMPILER_FLAG("-fallow-invalid-boz" prova)
+
+    if(${prova})
+		set (CMAKE_Fortran_FLAGS "-fallow-invalid-boz")
+#		set(dialect "-fallow-invalid-boz")
+#		add_compile_options("-fallow-invalid-boz")
+    endif()
 endif()
 
 
