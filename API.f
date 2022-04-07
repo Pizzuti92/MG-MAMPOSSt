@@ -1,8 +1,8 @@
-!******************** API routines and functions ***********************   
-! made available in the libAPI.a library 
+!******************** MG-MAMPOSSt routines and functions ***********************   
+! made available in the libMAM.a library 
 ! when compiling, link all the libraries, stored in the build folder 
 ! e.g.:
-! f95 -o testAPI.e testAPI.f -L build/ -lAPI -L build/GamI/ -lGamI -L build/Newuoa/ -lNewuoa -L build/JJin/ -lJJin -L build/Utili/ -lUtili -L build/Powell/ -lPowell
+! f95 -o testMAM.e testMAM.f -L build/ -lMAM -L build/GamI/ -lGamI -L build/Newuoa/ -lNewuoa -L build/JJin/ -lJJin -L build/Utili/ -lUtili -L build/Powell/ -lPowell
 ! **********************************************************************
 ! **********************************************************************
 
