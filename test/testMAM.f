@@ -1,7 +1,7 @@
-       program testAPI
-!>  test of some routines in libAPI.a
-!>  Usage (assuming testAPI.f is in the main folder): 
-!>  f95 -o testAPI.e testAPI.f -L build/ -lAPI -L build/GamI/ -lGamI -L build/Newuoa/ -lNewuoa -L build/JJin/ -lJJin -L build/Utili/ -lUtili -L build/Powell/ -lPowell
+       program testMAM
+!>  test some routines in libMAM.a
+!>  Usage (assuming testMAM.f is in the main folder): 
+!>  f95 -o testMAM.e testMAM.f -L build/ -lMAM -L build/GamI/ -lGamI -L build/Newuoa/ -lNewuoa -L build/JJin/ -lJJin -L build/Utili/ -lUtili -L build/Powell/ -lPowell
        
        implicit real*8 (a-h,o-z)
        implicit integer*4 (i-n)
