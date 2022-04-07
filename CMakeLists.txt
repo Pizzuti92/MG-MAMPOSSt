@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION "3.3")
+cmake_minimum_required(VERSION "3.17.1")
 project("gomamposstopt")
 include(CheckFortranCompilerFlag)
 enable_language (Fortran)
@@ -20,8 +20,8 @@ add_subdirectory(JJin)
 add_subdirectory(Newuoa)
 
 file(GLOB file_SRC CONFIGURE_DEPENDS "*.f")
-add_library(API ${file_SRC})
-target_link_libraries(API
+add_library(MAM ${file_SRC})
+target_link_libraries(MAM
 	GamI
 	Powell
 	Utili
@@ -40,7 +40,7 @@ target_link_libraries(${PROJECT_NAME}
 	Utili
 	JJin
 	Newuoa
-	API
+	MAM
 	m
 )
 	
