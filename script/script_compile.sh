@@ -33,5 +33,5 @@ while [ -n "$1" ]; do
   shift
 done
 
-$FCOMP -c API.f
-$FCOMP -o gomamposstopt.e gomamposstoptS.f API.o -L GamI/ -lGAM -L Utili/ -lUtil -L Newuoa/ -lNewuoa -L Powell/ -lPowell -L JJin/ -lJin  -lm 
+$FCOMP -c MAM.f
+$FCOMP -o gomamposstopt.e gomamposstoptS.f MAM.o -L GamI/ -lGAM -L Utili/ -lUtil -L Newuoa/ -lNewuoa -L Powell/ -lPowell -L JJin/ -lJin  -lm 
