@@ -762,7 +762,7 @@ c   if the best fit are out of the range, stop the code
       if(cbnew.gt.bup.or.cbnew.lt.blow) then
         write(*,*) 'Warning: best fit "beta" outside the prior range'
         write(*,*) 'redefine the best fit "beta" as the average value'
-        cbenew=(bup-blow)/2
+        cbnew=(bup-blow)/2
       endif 
       if(tmassnew.gt.tmup.or.tmassnew.lt.tmlow) then
         write(*,*) 'Warning: best fit "tmass" outside the prior range'
