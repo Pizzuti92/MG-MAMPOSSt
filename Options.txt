@@ -14,7 +14,7 @@ CHANGE ONLY THE NUMERICAL VALUES IN THIS FILE!
 !3) Forecasts with additional (lensing) information for rs and r200
 add a lensing probability distribution to the likelihood  (only NFW)    
 !NOTE: for Vainshtein screening, it computes the full tangential shear profile
-nlens = 0
+nlens = 1
 
   
 !4) r200t,rst: "true" values for the parameters in the lensing likelihood 
