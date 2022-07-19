@@ -566,7 +566,7 @@ if(plot):
     mpl.fill_between(r, Mup95, Mlow95, alpha=.2)
     mpl.fill_between(r, Mup, Mlow, alpha=.2)
     mpl.xlim(0.05,1.2*rupin)
-    mpl.ylim(1e12,3e15)
+    mpl.ylim(1e12,1.5*np.amax(Mup95))
     mpl.axvline(r2min[0], 0, 3.0,c='black',ls='--')
     mpl.xlabel('r [Mpc]',size=24)
     mpl.ylabel(r'M [$M_{sun}$]',size=24)

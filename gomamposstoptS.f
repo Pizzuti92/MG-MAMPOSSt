@@ -87,7 +87,7 @@ c     Execute as ./script/script_runmam.sh
       implicit real*8 (a-h,o-z)
       implicit integer*4 (i-n)
       parameter (pig=3.1415926535d0,iga=25000,
-     &     grav=4.302e-9,q0=-0.64,clight=2.99792458d5,npar=6)
+     &     grav=4.302e-9,q0=-0.64,clight=2.99792458d5,npar=7)
       dimension di(iga),ve(iga),eve(iga),dns(iga),ra(iga),de(iga),
      &     rso(iga),vso(iga),bins(400),pars(27),   
      &     syb(1000),sybs(1000),vkb(1000),vkbs(1000),
@@ -762,11 +762,15 @@ c Coupling constant for f(R)
      &     'f(R) gravity, Hu&Sawicki model with n =',i4,/
      &     ' instantaneous transition between linear and screen ')
          elseif (kscr.eq.2) then           
-	  write(*,801)	nhs						
+      write(*,801)	nhs						
  801  format(/' Screening: '/				
      &     'f(R) gravity, Hu&Sawicki model with n = ',i4,/
      &     ' modelled transition between linear and screen '/
      &     'arcatan function with sharpness=10 ')
+         elseif(kscr.eq.0.and.kmp.eq.7) then
+          write(*,*) 'linear f(R) gravity with no screening, Q=',aQ
+          screeg=aQ
+           nhone=0
          elseif(kmp.ne.9.and.kmp.ne.8) then
           screeg=0.0d0      !screening guess value forced to be zero
           nhone=0           !number of steps in screening radius
