@@ -21,11 +21,11 @@ nbeta = 40
 nA1 = 40 
 			   ! number of steps in the first MG parameter 
 
-nA2 = 0        
+nA2 = 40        
 			   ! number of steps in the second MG parameter
 			   ! If equal to -1 force the case of chameleon f(R) gravity
 			   
-nbeta2 = 40     ! number of steps for the second anisotropy parameter                             
+nbeta2 = 0     ! number of steps for the second anisotropy parameter                             
 ************************************************************************
 ************* free parameters initial guess values *********************
 
@@ -38,10 +38,10 @@ rcg = 0.33
 rsg = 0.33     
 			   ! mass profile scale radius initial guess (Mpc)
 
-betag = 1.21   
+betag = 1.41   
 			   ! Anisotropy initial guess, beta_C, a_ML, a_OM, a_W, beta_inf 
 
-A1g = 0.00      
+A1g = 0.01      
 			   ! first MG parameter initial guess
 
 A2g = 0.01      
@@ -89,7 +89,7 @@ M(r) = mNFW_BH
               ! gNFW = generalized NFW
               
 
-Beta(r) = gT   
+Beta(r) = T   
               ! Anisotropy model.
               ! Here we list the labels for beta(r) and then the corresponding profile: 
               ! C=Constant/  ML=Mamon&Lokas/ OM=Osipkov-Merritt/  WJ=simplified Wojtak/
