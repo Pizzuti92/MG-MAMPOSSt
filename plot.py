@@ -30,27 +30,33 @@ rs=data[:,2]
 beta=data[:,3]
 mod1=data[:,4]
 mod2=data[:,5]
-like=data[:,6]-np.amin(data[:,6]) #scaled likelihood
-
+beta2=data[:,6]
+like=data[:,7]-np.amin(data[:,7]) #scaled likelihood
+r2min=r200[np.where(like==0)]
+rsmin=rs[np.where(like==0)]
+betamin=beta[np.where(like==0)]
+beta2min=beta2[np.where(like==0)]
+mod1min=mod1[np.where(like==0)]
+mod2min=mod2[np.where(like==0)]
 
 #add weigths in the marginalization
 ww=np.ones(len(data[:,0]))
 weig=1/(r200*rs*beta)
 
 bb=(matrix(titfile)[1])
-titinput=bb[0]
-massmodel=(matrix(titinput)[22])[0]
-massmodel=int(massmodel[0])
-
-#NOTE: In the case of general chameleon the RESCALED VARIABLES Q_2 and \phi_2
-#are plotted (see Pizzuti et al., 2021)
-#fr case
-nhone=(matrix(titinput)[5])[0]
+#titinput='Output/log_for_plot'
+#massmodel=(matrix(titinput)[6])[0]
+#massmodel=int(massmodel[0])
+#
+##NOTE: In the case of general chameleon the RESCALED VARIABLES Q_2 and \phi_2
+##are plotted (see Pizzuti et al., 2021)
+##fr case
+#nhone=(matrix(titinput)[5])[0]
 frcase=0
-try:
-    int(nhone[0])
-except:
-    frcase=1
+#try:
+#    int(nhone[0])
+#except:
+#    frcase=1
 
 f = open('Options.txt', 'r')
 for line in map(str.strip,f.read().splitlines()):
@@ -72,28 +78,87 @@ if (nmcmc<1):
 	print("No plot for the grid case")
 	exit()
 
+fpar = open(bb[0],'r') #
+for line in map(str.strip,fpar.read().splitlines()):
+    line1 = line.split('=')
+    line2 = line.split(' ')  #perché posso mettere anche uno spazio prima dell'uguale
+
+    if 'za' == line1[0] or 'za' ==line2[0]:
+        try:
+            za=float(line1[1]) #è sempre dopo l'uguale!
+        except ValueError:
+            za=0.0
+    if 'H0' == line1[0] or 'H0' ==line2[0]:
+        try:
+            H0=float(line1[1]) #è sempre dopo l'uguale!
+        except ValueError:
+            H0=70.0
+            
+    if 'M(r)' == line1[0] or 'M(r)' ==line2[0]:
+        try:
+            mass_string=(line1[1].split(' '))[-1] #ultimo elemento
+        except ValueError:
+            mass_string='NFW'
+    if 'nA2'== line1[0] or 'nA2'==line2[0]:
+        try:
+            nhone=int(line1[1])
+        except ValueError: 
+            nhone=0
+    if 'A1low'== line1[0] or 'A1low'==line2[0]:
+        try:
+            mod1low=float(line1[1])
+        except ValueError: 
+            mod1low=np.amin(mod1)
+    if 'A1up'== line1[0] or 'A1up'==line2[0]:
+        try:
+            mod1up=float(line1[1])
+        except ValueError: 
+            mod1up=np.amax(mod1)
+    if 'A2low'== line1[0] or 'A2low'==line2[0]:
+        try:
+            mod2low=float(line1[1])
+        except ValueError: 
+            mod2low=np.amin(mod2)
+    if 'A2up'== line1[0] or 'A2up'==line2[0]:
+        try:
+            mod2up=float(line1[1])
+        except ValueError: 
+            mod2up=np.amax(mod2)
+    if 'Rup'== line1[0] or 'Rup'==line2[0]:
+        try:
+            rupin=float(line1[1])
+        except ValueError: 
+            rupin=np.amax(r200)
+
+            
+fpar.close()
+if nhone==-1:
+    frcase=1
 #find which are the free parameters
 sigma=1.0
 fontlabel=20
 font=22
 total=0
-freep=np.zeros(6)
+freep=np.zeros(7)
 
-for i in range(0,6):
+for i in range(0,7):
     if(np.any(data[:,i]!=data[0,i])):
         freep[i]=1
         
             
 il,=np.where(freep==1)
 total=len(il)
-print(total)
+
 
 labelb=r"r_{\beta}\,\, [Mpc]"
 Plabelb=r"P(r_{\beta})"
-if(data[7,0]!=1):
+
+if(data[0,7]!=1):
     labelb="\mathcal{A}_\infty"
     Plabelb="P(\mathcal{A}_\infty)"
-
+    
+labelb2="\mathcal{A}^0_\infty"
+Plabelb2="P(\mathcal{A}^0_\infty)"
 labelm1="\phi_2"
 Plabelm1=r"$P(\phi_2)$"
 if (frcase==1):
@@ -106,56 +171,58 @@ if (frcase==1):
     Plabelm1=r"$P[Log10(\phi/c^2)]$"
 
 
-if(massmodel==8):
+if (mass_string=='mNFW_BH'):
     labelm1="Y_1"
     labelm2="Y_2"
     Plabelm1="r$P(Y_1)$"
     Plabelm2="r$P(Y_2)$"
-elif (massmodel==7):
+elif (mass_string=='mNFW_LH'):
 	labelm1="Log(m/Mpc^{-1})"
 	labelm2=r"Q"
 	Plabelm1=r"P[Log$(m/Mpc^{-1})$]"
 	Plabelm2=r"$P(Q)$"
-elif (massmodel==1):
-    massm2=(matrix(titinput)[22])[0]
-    if(massm2[1]=='0'):
-        labelm1=r"\gamma"
-        Plabelm1=r"$P(\gamma)$"
-if (massmodel==7 and np.any(il==5)):
+elif (mass_string=='gNFW'):
+#    massm2=(matrix(titinput)[6])[0]
+#    if(massm2[1]=='0'):
+    labelm1=r"\gamma"
+    Plabelm1=r"$P(\gamma)$"
+if (mass_string=='mNFW_LH' and np.any(il==5)):
     data[:,5]=np.log10(data[:,5]) #uses log values for Q in the linear
     #Horndeski case to avoid problems in the getdist marginalizations
     labelm2=r"Log(Q)"
     Plabelm2=r"P[Log$(Q)$]"
 if(np.any(il==4)):
-    if (massmodel==7):
+    if (mass_string=='mNFW_LH'):
         data[:,4]=np.log10(data[:,4])
-    if (massmodel==9 and  frcase==1):
+    if (mass_string=='mNFW_GC' and  frcase==1):
         data[:,4]=np.log10(data[:,4])
-    if (massmodel==9 and frcase==0):
+    if (mass_string=='mNFW_GC' and frcase==0):
+        Qcoup=np.copy(data[:,5])
+        phicoup=np.copy(data[:,4])
         data[:,4]=1-np.exp(-data[:,4]*0.1)
         data[:,5]=data[:,5]/(1+data[:,5])  
   
-label=np.array(["r_{200}\,\,[Mpc]",r"r_{\nu}\,\, [Mpc]",r"r_{s}\,\, [Mpc]",labelb,labelm1,labelm2])
-label1d=np.array([r"$r_{200}$ [Mpc]",r"$r_{\nu}$ [Mpc]",r"$r_{s}$ [Mpc]",labelb,labelm1,labelm2])
+label=np.array(["r_{200}\,\,[Mpc]",r"r_{\nu}\,\, [Mpc]",r"r_{s}\,\, [Mpc]",labelb,labelm1,labelm2,labelb2])
+label1d=np.array([r"$r_{200}$ [Mpc]",r"$r_{\nu}$ [Mpc]",r"$r_{s}$ [Mpc]",labelb,labelm1,labelm2,labelb2])
 
-Plabel=np.array([r"$P(r_{200})$",r"$P(r_{\nu})$",r"$P(r_{s})$",Plabelb,Plabelm1,Plabelm2])
+Plabel=np.array([r"$P(r_{200})$",r"$P(r_{\nu})$",r"$P(r_{s})$",Plabelb,Plabelm1,Plabelm2,Plabelb2])
 
 
-mod1up=float((matrix(titinput)[38])[0])
-mod1low=float((matrix(titinput)[37])[0])
-
-mod2up=float((matrix(titinput)[40])[0])
-mod2low=float((matrix(titinput)[39])[0])
-if (massmodel==7 or (massmodel==9 and frcase==1)):
+#mod1up=float((matrix(titinput)[17])[0])
+#mod1low=float((matrix(titinput)[16])[0])
+#
+#mod2up=float((matrix(titinput)[19])[0])
+#mod2low=float((matrix(titinput)[18])[0])
+if (mass_string=='mNFW_LH' or (mass_string=='mNFW_GC' and frcase==1)):
     mod1up=np.log10(mod1up)
     mod1low=np.log10(mod1low)
-if (massmodel==9 and frcase==0):
+if (mass_string=='mNFW_GC' and frcase==0):
     mod1up=1-np.exp(-mod1up*0.1)
     mod1low=1-np.exp(-mod1low*0.1)
     mod2up=0.0
     mod2up=1.1
 
-if (massmodel==7 and np.any(il==5)):
+if (mass_string=='mNFW_LH' and np.any(il==5)):
     mod2up=np.log10(mod2up)
     mod2low=np.log10(mod2low)
 
@@ -348,3 +415,167 @@ elif total==6:
     print(samples.getTable().tableTex())
 
 mpl.show()
+#plot of mass profile
+
+def M_nfw(r,r200,rs):
+    c200=r200/rs
+    x=r/rs
+    G=4.302e-9
+    z=za
+    Hz2=H0**2*(0.3*(1+z)**3+0.7)
+    M200=100*Hz2/G*r200**3
+    fac200=np.log(1+c200)-c200/(1+c200)
+    return (np.log(1+x)-x/(1+x))/fac200*M200
+
+def M_nfw_BH(r,r200,rs,Y1):
+    c200=r200/rs
+    x=r/rs
+    G=4.302e-9
+    z=za
+    Hz2=H0**2*(0.3*(1+z)**3+0.7)
+    M200=100*Hz2/G*r200**3
+    fac200=np.log(1+c200)-c200/(1+c200)
+    return (Y1*r**2*(rs-r)/(rs+r)**3/4 +(np.log(1+x)-x/(1+x)))/fac200*M200    
+
+def M_Her(r,r200,rs):
+    G=4.302e-9
+    z=za
+    Hz2=H0**2*(0.3*(1+z)**3+0.7)
+    M200=100*Hz2/G*r200**3
+    return M200*r**2/(r+rs)**2*(r200+rs)*(r200+rs)/(r200*r200)
+
+def M_Bur(r,r200,rs):
+    G=4.302e-9
+    z=za
+    Hz2=H0**2*(0.3*(1+z)**3+0.7)
+    M200=100*Hz2/G*r200**3
+    trs=r/rs
+    rvrs=r200/rs
+    fac200=1.0/(np.log(1+rvrs*rvrs)+2.*np.log(1.0+rvrs)-2.*np.arctan(rvrs))
+    return M200*fac200*(np.log(1+trs*trs)+2.*np.log(1.0+trs)-2.*np.arctan(trs))
+
+def M_gNFW(r,r200,rs,gamma):
+    G=4.302e-9
+    z=za
+    Hz2=H0**2*(0.3*(1+z)**3+0.7)
+    M200=100*Hz2/G*r200**3
+    h2x=spec.hyp2f1(3-gamma,3-gamma,4-gamma,-r200/rs)
+    h2y=spec.hyp2f1(3-gamma,3-gamma,4-gamma,-r/rs)
+    return (r/r200)**(3-gamma)*M200*h2y/h2x
+    
+def M_nfw_CS(r,r200,rs,tmass,Q):
+    c200=r200/rs
+    x=r/rs
+    G=4.302e-9
+    clight=3e5
+    z=za
+    Hz2=H0**2*(0.3*(1+z)**3+0.7)
+    M200=100*Hz2/G*r200**3
+    fac200=np.log(1+c200)-c200/(1+c200)  
+    phinf=tmass*1e-5
+    B=Q*200*c200**3/fac200*Hz2*rs**2/clight**2
+    xczero=(B/phinf-1)
+    Czero=-B*np.log(1+xczero)+phinf*xczero
+    if (xczero<=0.001):
+        xczero=0.0   
+        Czero=0.0             
+    if (x<=xczero):
+        dphidr=0.0
+    else: 
+        cdav=rs*Q*clight**2/(100*Hz2*r200**3)
+        dphidr=cdav*(Czero-B*(x/(1.0+x)-np.log(1.0+x)))
+
+        #if the cluster is totally screened, the chameleon contribution is
+        #seattled to zero
+        
+    if (xczero*rs>1.2*rupin): 
+        dphidr=0
+    #DA FINIRE
+    return ((np.log(1+x)-x/(1+x))/fac200+dphidr)*M200
+
+M_nfw_CS=np.vectorize(M_nfw_CS)
+#dist=(r200-r2min)**2+(rs-rsmin)**2+(beta-betamin)**2+(mod1-mod1min)**2+(mod1-mod1min)**2
+#prova=np.column_stack((dist,r200,rs,beta,mod1,mod2))
+#prova=prova[prova[:, 0].argsort()]
+#
+#r268=prova[0:int(0.68*len(prova)),1]
+#rs68=prova[0:int(0.68*len(prova)),2]
+#r295=prova[0:int(0.95*len(prova)),1]
+#rs95=prova[0:int(0.95*len(prova)),2]
+#mod168=prova[0:int(0.68*len(prova)),4]
+#mod268=prova[0:int(0.68*len(prova)),5]
+#mod195=prova[0:int(0.95*len(prova)),4]
+#mod295=prova[0:int(0.95*len(prova)),5]
+Mup=[]
+Mlow=[]
+Mup95=[]
+Mlow95=[]
+Mmedian=[] 
+r=np.linspace(0.05,2.5,50)
+median_string=True
+plot=True
+for ri in r:
+    profile=[]
+    profile95=[]
+#for CS we use the median profile
+    for i in range(0,len(r200)):
+        if (mass_string=='NFW'):
+            profile.append(M_nfw(ri,r200[i],rs[i]))
+        elif (mass_string=='Her'):
+            profile.append(M_Her(ri,r200[i],rs[i]))
+        elif (mass_string=='Bur'):
+            profile.append(M_Bur(ri,r200[i],rs[i]))            
+        elif (mass_string=='mNFW_BH'):
+            profile.append(M_nfw_BH(ri,r200[i],rs[i],mod1[i]))
+        elif (mass_string=='gNFW'):
+            profile.append(M_gNFW(ri,r200[i],rs[i],mod1[i]))
+        elif (mass_string=='mNFW_GC'):
+            profile.append(M_nfw_CS(ri,r200[i],rs[i],phicoup[i],Qcoup[i]))
+        else:
+            profile.append(0.0)
+    profile=np.sort(np.array(profile).astype(float))
+    Mup.append(profile[int(len(profile)*0.86)]) #0.975
+    Mlow.append(profile[int(len(profile)*0.16)]) #0.025
+    Mup95.append(profile[int(len(profile)*0.975)]) #0.975
+    Mlow95.append(profile[int(len(profile)*0.025)]) #0.025    
+    Mmedian.append(profile[int(len(profile)*0.5)])
+if (mass_string=='NFW'):
+    Mnfw=M_nfw(r,r2min[0],rsmin[0]) 
+elif (mass_string=='Her'):
+    Mnfw=M_Her(r,r2min[0],rsmin[0]) 
+elif (mass_string=='Bur'):
+    Mnfw=M_Bur(r,r2min[0],rsmin[0])     
+elif (mass_string=='mNFW_BH'):
+    Mnfw=M_nfw_BH(r,r2min[0],rsmin[0],mod1min[0])
+elif (mass_string=='gNFW'):
+    Mnfw=M_gNFW(r,r2min[0],rsmin[0],mod1min[0])
+elif (mass_string=='mNFW_GC'):
+    M_nfw_CS(ri,r2min[0],rsmin[0],mod1min[0],mod2min[0])
+    #Mnfw=M_nfw_CS(r,r2min[0],rsmin[0],mod1min[0],mod2min[0])
+else:
+    plot=False
+    Mnfw=np.zeros(len(r))
+if(plot):   
+    if median_string==True:    
+        Mnfw=Mmedian
+
+    mpl.figure(figsize=(12,12))
+    mpl.grid()
+    mpl.tick_params(axis="x", labelsize=22)
+    mpl.tick_params(axis="y", labelsize=22)
+    mpl.fill_between(r, Mup95, Mlow95, alpha=.2)
+    mpl.fill_between(r, Mup, Mlow, alpha=.2)
+    mpl.xlim(0.05,1.2*rupin)
+    mpl.ylim(1e12,3e15)
+    mpl.axvline(r2min[0], 0, 3.0,c='black',ls='--')
+    mpl.xlabel('r [Mpc]',size=24)
+    mpl.ylabel(r'M [$M_{sun}$]',size=24)
+#    if (mass_string=='mNFW_GC'):
+#        mpl.semilogy(r,Mnfw)
+#    else:
+#        mpl.ylim(1e12,3e15)
+#        mpl.plot(r,Mnfw)
+    mpl.plot(r,Mnfw)
+    mpl.show()    
+    
+    

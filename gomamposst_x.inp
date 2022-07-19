@@ -1,9 +1,9 @@
 data/datphys_test.dat
-input_pars/pars_all_N_O_spec_DS
+input_pars/pars_test.txt
 Output/rnvn.dat
 Output/NRpar.dat
 Output/NRbin.dat
 Output/NRfit.dat
-Output/MaxLik.dat
+Output/MaxLik_test.dat
 Output/svbin.dat
 Output/svfit.dat

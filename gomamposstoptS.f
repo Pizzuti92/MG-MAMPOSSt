@@ -96,6 +96,22 @@ c     Execute as ./script/script_runmam.sh
       character*75 fgroup,frnvn,fbfn,fbn,ffn,fmlv,fprop,line,
      &     fsb,fsf,fsft,fkb,fkf,fkft,fparmam
       real*8 rjl(1), yrjl(1)
+c   input files      
+      character(len = 13) :: filename
+      character(len=4) :: dat
+      character(len=300) :: buffer, label
+      character (len=300) :: massmod, animod, numod
+      integer :: pos, pos1, pos2, posl1, posl2, posl, poscom
+      integer, parameter :: fh = 15
+      integer :: ios = 0
+      integer :: lin = 0
+      logical*4 :: read2=.False. !for r200
+      logical*4 :: addrup=.False.
+      logical*4 :: taddl=.False.
+      logical*4 :: taddu=.False.
+      logical*4 :: saddl=.False.
+      logical*4 :: saddu=.False.
+      
 c     all file to be read by MAMPOSSt *************************
       include 'datarv.i'             !definition of data arrays
       include 'paramsoptS.i'         !all useful parameters
@@ -153,15 +169,15 @@ c***********************************************************************
             
       write(*,*) ' '
       write(*,*) ' '
-      write(*,*)    ' ***************************************'
-      write(*,*)    ' ***                                 ***'
+      write(*,*)    ' ******************************************'
+      write(*,*)    ' ***                                    ***'
       if (ktsa.gt.0.5) then
          write(*,*) ' *** Welcome into Tsallis MG-MAMPOSSt!  ***'
       else
          write(*,*) ' *** Welcome into Gaussian MG-MAMPOSSt! ***'
       endif
-      write(*,*)    ' ***                                 ***'
-      write(*,*)    ' ***************************************'
+      write(*,*)    ' ***                                    ***'
+      write(*,*)    ' ******************************************'
       write(*,*) ' '
       write(*,*) ' '
 
@@ -177,119 +193,496 @@ c***********************************************************************
 
       write(*,196) fgroup
  196  format(//' Data-set is ',a50,//)
+
+c     default parameters:
+      nr200=0
+      nrs=0
+      nrc=0
+      nbs=0
+      ntmass=0
+      nhone=0
+      nb2=0
+      
+      r200g=1.0d0
+      r200=r200g
+      rsg=1.0d0
+      rs=rsg
+      rcg=1.0d0
+      rc=rcg
+      cbeg=1.0d0
+      cbe=cbeg
+      
+      cbe0g=1.2d0
+      cbe0=cbe0g
+      cb0low=0.0001d0
+      cb0up=100.0d0
     
 c     read file with parameters for MAMPOSSt
 
-      do i=1,6
-         read(29,291) pars(i)
- 291     format(f9.4)
-         
-      enddo
-      read(29,9) line
-      do i=7,12
-         read(29,291) pars(i)
-         
-      enddo
-      read(29,9) line
-      do i=13,26
-         read(29,291) pars(i)
-         
-      enddo
-      
-      read(29,9) line
-      
-      read(29,291) r2low  !r200 lower bound
-      read(29,291) r2up   !r200 upper bound
-      read(29,291) rclow  !rc lower bound
-      read(29,291) rcup   !rc upper bound
-      read(29,291) rslow  !rs lower bound
-      read(29,291) rsup   !rs upper bound
-      read(29,291) blow   !beta lower bound
-      read(29,291) bup    !beta upper bound
-      read(29,291) tmlow  !tmass lower bound
-      read(29,291) tmup   !tmass upper bound
-      read(29,291) scrlow !screen lower bound
-      read(29,291) scrup  !screen upper bound
-      close(29)
+	                  
+  ! ios is negative if an end of record condition is encountered or if
+  ! an endfile condition was detected.  It is positive if an error was
+  ! detected.  ios is zero otherwise.
 
-************************************************************************
+     
+      do while (ios == 0)
+         read(29, '(A)', iostat=ios) buffer
+         if (ios == 0) then
+            lin = lin + 1
 
-      nr200=nint(pars(1))   ! number of steps for r200 fit
-      nrc=nint(pars(2))     ! number of steps for rc fit, scale radius of N(R)
+        ! Find the first instance of whitespace.  Split label and data.
+            pos1 = scan(buffer, '    ')
+            pos2 = scan(buffer, '=')
+            if (pos2.ge.pos1) then
+               pos=pos2
+            else
+               pos=pos1
+            endif         
+         ! split equality sign and space.
+            posl1=scan(buffer, '    ')
+            posl2=scan(buffer, '=')
+            if (posl1.ne.0.and.posl2.ne.0) then 
+             posl=min(posl1,posl2)
+             label = buffer(1:posl-1)
+            else if (posl1.ne.0.and.posl2.eq.0) then 
+             label = buffer(1:posl1)
+             
+            else if (posl1.eq.0.and.posl2.ne.0) then 
+             label = buffer(1:posl2)
+            endif 
+            
+            
+            buffer = buffer(pos+1:)
+            poscom= scan(buffer, '!')
+            if (poscom.ne.0) buffer= buffer(:poscom-1)
+                    
+            select case (label)
+c*********** number of steps in the input parameters *******************            
+            case ('nr200')  ! number of steps for r200 fit
+                read2=.True.
+                read(buffer, *, iostat=ios) nr200
+                if (ios.eq.-1) then
+                    ios=0
+                    nr200=0
+                endif
+                pars(1)=nr200  
+            case ('nrc')    ! number of steps for rc fit, scale radius of N(R)
                             !   [if = 0 takes guess value]
                             !   [if = -1 forces LfM, c_nu=c]
                             !   [if = -2 fit N(R) outside MAMPOSSt]
-      nrs=nint(pars(3))     ! number of steps for rs fit, scale radius of M(r)
+                read(buffer, *, iostat=ios) nrc
+                if (ios.eq.-1) then
+                    ios=0
+                    nrc=0
+                endif 
+                pars(2)=nrc
+            case ('nrs')    ! number of steps for rs fit, scale radius of M(r)
                             !   [if = 0 takes guess value]
                             !   [if = -1 forces MfL, c=c_nu]
                             !   [if = -2 forces LCDM, c=c(M)]
-      nbs=nint(pars(4))     ! number of steps for anisotropy parameter
+                read(buffer, *, iostat=ios) nrs
+                if (ios.eq.-1) then
+                    ios=0
+                    nrs=0
+                endif
+                pars(3)=nrs 
+            case ('nbeta')  ! number of steps for anisotropy parameter
                             !   [if = -1 forces a_ML=r_s]
                             !   [if = -2 forces Hansen+Moore]
-      ntmass=nint(pars(5)) ! number of steps in mass parameter 
-      
-      nhone=nint(pars(6))  ! number of steps in the additional free parameter
+                read(buffer, *, iostat=ios) nbs 
+                if (ios.eq.-1) then
+                    ios=0
+                    nbs=0
+                endif
+                pars(4)=nbs 
+            case ('nA1')    ! number of steps in mass parameter
+                read(buffer, *, iostat=ios) ntmass
+                if (ios.eq.-1) then
+                    ios=0
+                    ntmass=0
+                endif 
+                pars(5)=ntmass
+            case ('nA2')    ! number of steps in the additional free parameter
                             ! could be the screening radius for f(R)-Hu Sawicki 
                             ! or Coupling constant Q for chameleon gravity
-************************************************************************                             
-      r200g=pars(7)         ! r200 initial guess (Mpc)
-      r200=r200g            ! set r200 initial value to guess value
-      rcg=pars(8)           ! N(R) scale radius initial guess (Mpc)
-      rsg=pars(9)           ! rho(r) scale radius initial guess (Mpc)
-      cbeg=pars(10)         ! Anisotropy initial guess, beta', a_ML, a_OM, a_W, beta'_inf 
-      tmassg=pars(11)       ! MG parameter initial guess
-      screeg=pars(12)       ! Screening initial guess
-      
+                read(buffer, *, iostat=ios) nhone
+                if (ios.eq.-1) then
+                    ios=0
+                    nhone=0
+                endif
+                pars(6)=nhone
+            case ('nbeta2')    ! number of steps in the additional free parameter
+                            ! could be the screening radius for f(R)-Hu Sawicki 
+                            ! or Coupling constant Q for chameleon gravity
+                read(buffer, *, iostat=ios) nb2
+                if (ios.eq.-1) then
+                    ios=0
+                    nb2=0
+                endif
+c***********************************************************************
+c********** parameters input guess values ******************************
+            case ('r200g')
+                read(buffer, *, iostat=ios) r200g
+                if (ios.eq.-1) then
+                    ios=0
+                    r200g=1.0d0 
+                    stop('Error: input guess value required') 
+                endif
+                r200=r200g ! set r200 initial value to guess value
+            case ('rcg')
+                read(buffer, *, iostat=ios) rcg
+                if (ios.eq.-1) then
+                    ios=0
+                    rcg=1.0d0
+                    stop('Error: input guess value required') 
+                endif
+                rc=rcg ! set rc initial value to guess value
+            case ('rsg')
+                read(buffer, *, iostat=ios) rsg
+                if (ios.eq.-1) then
+                    ios=0
+                    rsg=1.0d0
+                    stop('Error: input guess value required') 
+                endif
+                rs=rsg ! set rs initial value to guess value
+            case ('betag')
+                read(buffer, *, iostat=ios) cbeg
+                if (ios.eq.-1) then
+                    ios=0
+                    cbeg=1.0d0
+                    stop('Error: input guess value required') 
+                endif
+                cbe=cbeg ! set cbe initial value to guess value
+            case ('A1g')
+                read(buffer, *, iostat=ios) tmassg
+                if (ios.eq.-1) then
+                    ios=0
+                    tmassg=0.0d0
+                    stop('Error: input guess value required') 
+                endif
+                
+            case ('A2g')
+                read(buffer, *, iostat=ios) screeg
+                if (ios.eq.-1) then
+                    ios=0
+                    screeg=0.0d0
+                    stop('Error: input guess value required') 
+                endif
+                
+            case ('beta2g')
+                read(buffer, *, iostat=ios) cbe0g
+                if (ios.eq.-1) then
+                    ios=0
+                    cbe0g=1.0d0
+                    
+                endif
+                cbe0=cbe0g
+c***********************************************************************
+c********* Model Options ***********************************************
 
-      rs=rsg                !set scale radius to guess value  
-      
-      write(*,346) nr200,nrc,nrs,nbs,ntmass,nhone
- 346  format(' Grid steps in r200, rtr, rs, anis, mod1, mod2: ',6(i5))
-      
-************************************************************************
-      h0=pars(13)             ! Hubble constant at z=0
-      za=pars(14)             ! average redshift of the cluster (needed to evaluate Hz)
-                                        ! since velocities are given as rest-frame in input file
-      Olam=pars(15)
-      Omegam=pars(16)
-      rlowin=pars(17)         ! Inner radius for sample selection (Mpc) 
-      rupin=pars(18)          ! Outer radius for sample selection (Mpc) 
-      kintd=0 !nint(pars(19))    ! Use universal surface density of interlopers? N/Y=0/1 (note: in this version
-                             ! the interlopers have been already removed from the input file)
-                             
+            case ('za')  ! average redshift of the cluster (needed to evaluate Hz)
+                         ! since velocities are given as rest-frame in input file
+                read(buffer, *, iostat=ios) za
+                if (ios.eq.-1) then
+                    ios=0
+                    za=0.0
+                endif
+            case ('H0')  ! Hubble constant at z=0
+                read(buffer, *, iostat=ios) h0
+                if (ios.eq.-1) then
+                    ios=0
+                    h0=70.0
+                endif
+            case ('Olam')  ! Omega Lambda density parameter 
+                read(buffer, *, iostat=ios) Olam
+                if (ios.eq.-1) then
+                    ios=0
+                    Olam=0.7
+                endif
+            case ('Omegam')  ! Omega matter density parameter
 
-      knfit=nint(pars(19))   ! N(R) model, projected NFW / projected Hernquist / beta-model (1/2/3)
-                             !             
-      al=pars(20)            ! N(R) negative exponent (only if knfit=3)
-      kmp=nint(pars(21))     ! rho(r) model: NFW/Hernquist/PIEMD/Burkert/SoftIS/Einasto_m=5/
-                             ! mod_NFW linear f(R)/mod_NFW beyond Horndeski/mod_NFW general chameleon (1/2/3/4/5/6/7/8/9)
-      
-      kani=nint(pars(22))    ! Anisotropy model, beta'=constant, MamLok, OsiMer, 
-                             !   simplified Wojtak, simplified Tiret, modified Tiret (0,1,2,3,4,5)
-      if (nbs.eq.-1.) kani=1 !   forced to MamLok if requested
-      if (nbs.eq.-2.) kani=-1 !   if Hansen&Moore, beta(r) depends on rho(r)
+                read(buffer, *, iostat=ios) Omegam
+                if (ios.eq.-1) then
+                    ios=0
+                    Omegam=0.3
+                endif
+            case ('Rlow')  ! Inner radius for sample selection (Mpc)
 
+                read(buffer, *, iostat=ios) rlowin
+                if (ios.eq.-1) then
+                    ios=0
+                    rlowin=0.05
+                endif
+            case ('Rup')  ! Outer radius for sample selection (Mpc)
 
+                read(buffer, *, iostat=ios) rupin
+                if (ios.eq.-1) then
+                    ios=0
+                    rupin=2.0 
+                    addrup=.True.
+                    
+                endif
+            case ('N(R)')  ! model for number density profile N(R)
+                           ! projected NFW / projected Hernquist / beta-model (1/2/3)
 
-      rcut=pars(23)  	    ! PIEMD model rcut in Mpc (only used if kmp=3)
-      
-      kbsp=nint(pars(24))   ! run MAMPOSSt in fast mode? N/Y=0/1
+                read(buffer, *, iostat=ios) numod
+                if (ios.eq.-1) then
+                    ios=0
+                    numod='pNFW'
+                endif
+                select case(numod)
+                    case('pNFW')
+                      knfit=1
+                    case('pHer')
+                      knfit=2
+                    case('beta')
+                      knfit=3
+                    case default
+                      print *, 'Invalid number, switching to default'
+                      knfit=1
+                end select
+            case ('al')  ! N(R) exponent for beta-model (if knfit=3)
 
-      kopt=nint(pars(25))   ! optimization algorithm: 0/1/2=bobyqa/newuao/powell
+                read(buffer, *, iostat=ios) al
+                if (ios.eq.-1) then
+                    ios=0
+                    al=-0.00
+                endif 
+                
+            case ('M(r)')  ! rho(r) model: NFW/Hernquist/PIEMD/Burkert/SoftIS/Einasto_m=5/
+                           ! mod_NFW linear f(R)/mod_NFW beyond Horndeski/mod_NFW general chameleon (1/2/3/4/5/6/7/8/9)
+
+                read(buffer, *, iostat=ios) massmod
+                if (ios.eq.-1) then
+                    ios=0
+                    massmod='NFW'
+                endif 
+                select case(massmod)
+                    case('NFW')
+                      kmp=1
+                    case('Her')
+                      kmp=2
+                    case('PIEMD')
+                      kmp=3
+                    case('Bur')
+                      kmp=4
+                    case('SoftIS')
+                      kmp=5
+                    case('Eis5')
+                      kmp=6
+                    case('mNFW_LH')
+                      kmp=7
+                    case('mNFW_BH')
+                      kmp=8   
+                    case('mNFW_GC')
+                      kmp=9
+                    case('gNFW')
+                      kmp=10                                                                                     
+                    case default
+                      print *, 'Invalid number, switching to default'
+                      kmp=1
+                end select
+                pars(7)=kmp
+            case ('Beta(r)')  ! Anisotropy model, beta'=constant, MamLok, OsiMer, 
+                           !   simplified Wojtak, simplified Tiret, modified Tiret (0,1,2,3,4,5)
+                read(buffer, *, iostat=ios) animod
+                if (ios.eq.-1) then
+                    ios=0
+                    animod='C'
+                endif 
+                select case(animod)
+                    case('C')
+                      kani=0
+                    case('ML')
+                      kani=1
+                    case('OM')
+                      kani=2
+                    case('gOM')
+                      kani=21
+                    case('WJ')
+                      kani=3
+                    case('T')
+                      kani=4
+                    case('gT')
+                      kani=41
+                    case('O')
+                      kani=5                                                                                
+                    case default
+                      print *, 'Invalid number, switching to default'
+                      kani=0
+                end select
+                pars(8)=kani
+            case ('rcut')  ! PIEMD model rcut in Mpc (only used if kmp=3) 
+                read(buffer, *, iostat=ios) rcut
+                if (ios.eq.-1) then
+                    ios=0
+                    rcut=1.0
+                endif
+            case ('FASTMODE')  ! PIEMD model rcut in Mpc (only used if kmp=3) 
+                read(buffer, *, iostat=ios) kbsp
+                if (ios.eq.-1) then
+                    ios=0
+                    kbsp=0
+                endif   
+            case ('OPT')  ! optimization algorithm: 0/1/2=bobyqa/newuao/powell
                                             ! -1 skip optimization
-
+                read(buffer, *, iostat=ios) kopt
+                if (ios.eq.-1) then
+                    ios=0
+                    kopt=-1
+                endif 
 c********************** implemented phenomenological screening *********
 c     for linear f(R) kmp.eq.7, one can decide to set an instantaneous
 c     transition between screeening and linear regime, by using the 
-c     analytical approximation of Lombriser+12.         
-
-      kscr=nint(pars(26))   !-1/0/1/2=noscreen (general Hordenski)/noscreen f(R)/screen(instantaneous transition)
+c     analytical approximation of Lombriser+12.                 
+            case ('screen')  ! optimization algorithm: 0/1/2=bobyqa/newuao/powell
+                                            ! -1 skip optimization
+!-1/0/1/2=noscreen (general Hordenski)/noscreen f(R)/screen(instantaneous transition)
                             !/screen (arctan transition)/
                             
       !if kscr=3 then the modified gravity contribution assumes the form of
       !general hordenski gravity with coupling Q=Screen  
 
+c***********************************************************************                                            
+                read(buffer, *, iostat=ios) kscr
+
+                if (ios.eq.-1) then
+                    ios=0
+                    kscr=-1
+                endif  
+                
+                
 c***********************************************************************
+c*********** parameter limits ******************************************
+            case ('r2low')  !r200 lower bound 
+                                            
+                read(buffer, *, iostat=ios) r2low
+                if (ios.eq.-1) then
+                    ios=0
+                    r2low=0.0001d0
+                endif
+                pars(9)=r2low
+            case ('r2up')  !r200 upper bound 
+                                            
+                read(buffer, *, iostat=ios) r2up
+                if (ios.eq.-1) then
+                    ios=0
+                    r2up=100.0d0
+                endif
+                pars(10)=r2up
+            case ('rclow')  !rc lower bound
+                read(buffer, *, iostat=ios) rclow
+                if (ios.eq.-1) then
+                    ios=0
+                    rclow=0.0001d0
+                endif
+                pars(11)=rclow
+            case ('rcup')  !rc upper bound
+                read(buffer, *, iostat=ios) rcup
+                if (ios.eq.-1) then
+                    ios=0
+                    rcup=100.0d0
+                endif
+                pars(12)=rcup
+            case ('rslow')  !rs lower bound
+                read(buffer, *, iostat=ios) rslow
+                if (ios.eq.-1) then
+                    ios=0
+                    rslow=0.0001d0
+                endif
+                pars(13)=rslow 
+            case ('rsup')  !rs upper bound
+                read(buffer, *, iostat=ios) rsup
+                if (ios.eq.-1) then
+                    ios=0
+                    rsup=100.0d0
+                endif 
+                pars(14)=rsup
+            case ('blow')  !beta lower bound
+                read(buffer, *, iostat=ios) blow
+                if (ios.eq.-1) then
+                    ios=0
+                    blow=0.0001d0
+                endif
+                pars(15)=blow
+            case ('bup')  !beta upper bound
+                read(buffer, *, iostat=ios) bup
+                if (ios.eq.-1) then
+                    ios=0
+                    bup=100.0d0
+                endif 
+                pars(16)=bup 
+            case ('A1low')  !first MG parameter lower bound
+                read(buffer, *, iostat=ios) tmlow
+                if (ios.eq.-1) then
+                    ios=0
+                    taddl=.True.
+                    tmlow=0.0001d0
+                endif
+                pars(17)=tmlow
+            case ('A1up')  !first MG parameter upper bound
+                read(buffer, *, iostat=ios) tmup
+                if (ios.eq.-1) then
+                    ios=0
+                    taddu=.True.                   
+                    tmup=100.0d0
+                endif
+                pars(18)=tmup 
+            case ('A2low')  !second MG parameter lower bound
+                read(buffer, *, iostat=ios) scrlow
+                if (ios.eq.-1) then
+                    ios=0
+                    saddl=.True.
+                    scrlow=0.0001d0
+                endif
+                pars(19)=scrlow
+            case ('A2up')  !second MG parameter upper bound
+                read(buffer, *, iostat=ios) scrup
+                if (ios.eq.-1) then
+                    ios=0
+                    saddu=.True.
+                    scrup=100.0d0
+                endif
+                pars(20)=scrup 
+            case ('b2low')  !second MG parameter upper bound
+                read(buffer, *, iostat=ios) cb0low
+                if (ios.eq.-1) then
+                    ios=0
+                    cb0low=0.0001d0
+                endif
+                
+            case ('b2up')  !second MG parameter upper bound
+                read(buffer, *, iostat=ios) cb0up
+                if (ios.eq.-1) then
+                    ios=0
+                    cb0up=100.0d0
+                endif
+                
+            case default
+               ! print *, 'Skipping invalid label at line', line
+
+            end select
+         end if
+      end do
+
+      if (addrup) then
+         if (read2) rupin=r200g !if not given, set the maximum fitting radius
+                                !equal to the guess value of r200
+      endif
+      if (nbs.eq.-1.) kani=1 !   forced to MamLok if requested
+      if (nbs.eq.-2.) kani=-1 !   if Hansen&Moore, beta(r) depends on rho(r)
+      
+      if(kmp.eq.8) then
+        if (taddl) tmlow=-0.67
+        if (taddu) tmup=8.0
+        if (saddl) scrlow=-12.0
+        if (saddu) scrup=12.0
+      endif
+c      write(*,*) kbsp, kopt, kscr, tmlow,tmup,scrlow,scrup     
+      close(29)
+
+c************************************************************************
+
       if (kmp.lt.7) then  
       ! if no MG model is considered, tmassg is set to zero  
        tmassg=0.0d0
@@ -318,7 +711,10 @@ c***********************************************************************
       endif 
             if(screeg.gt.scrup.or.screeg.lt.scrlow) then
          Stop('ERROR: GUESS VALUE mod2 EXCEEDES PARAMETER LIMITS')
-      endif   
+      endif
+      if(cbe0g.lt.cb0low.or.cbe0g.gt.cb0up) then
+         Stop('ERROR: GUESS VALUE cbe0g EXCEEDES PARAMETER LIMITS')
+      endif
       
 
       tmass=tmassg          !set the mass to the guess value
@@ -331,11 +727,17 @@ c General chameleon screening: sub-case f(R)
 
 
 
+      write(*,731) animod, kani, massmod, kmp
 
+ 731  format(/,' You selected the anisotropy model ',A5,/,
+     &         ' corresponding to the parameter kani= ',i2,/
+     &         '  ',/
+     &         ' You selected the mass  model ',A8,/,
+     &     ' corresponding to the parameter kmp= ',i2,/)
 
 c Screening approximation allowed only for linear f(R)
       if (kmp.ne.7) then
-        write(*,*) 'Option kscr not used in this model'
+        write(*,*) 'Option SCREEN not used in this model'
         kscr=0
       endif
 
@@ -433,6 +835,13 @@ c
       open(80,file=fsf,status='unknown')
 
 
+c      needed for old version of plot.py
+c      open(fh,file='Output/log_for_plot',status='unknown')
+c      do i=1,20
+c       write(fh,*) pars(i)
+c      enddo
+c      close(fh)
+      
 c     read system properties
 
 c     read radial positions, velocities and velocity errors;
@@ -507,6 +916,7 @@ c     MAMPOSSt subroutine
       close(60)
 
       if (r200.ne.r200) r200=r200g
+      
 
       write(*,*) ' '
       write(*,*) ' After MG-MAMPOSSt: '
@@ -678,12 +1088,14 @@ c     using best-fit parameters
 
       v200=10.*hz*r200
 
-      write(*,516) r200,rc,r200/rc,rs,r200/rs,cbe
+      write(*,516) r200,rc,r200/rc,rs,r200/rs,cbe,cbe0,tmass,screen
  516  format('   r_200    = ',f6.3,
      &       /'   r_tracer = ',f6.3,' (c_tracer= ',f7.2,')'
      &       /'   r_mass   = ',f6.3,' (c_mass=   ',f7.2,')'
-     &       /'   Anisotropy parameter = ',f8.4,/)
-
+     &       /'   Anisotropy parameter = ',f8.4,
+     &       /'   Second anisotropy parameter = ',f8.4,
+     &       /'   First MG parameter = ',f8.4,
+     &       /'   Second MG parameter = ',f8.4,/)
 c
 c**************************************************************
 
