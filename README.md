@@ -109,7 +109,7 @@ Default is C.
     
     * **rcut (real):** Truncation radius. Value of the truncation radius needed in the pseudo-isothermal elliptical mass distribution (PIEMD), which correspond to kmp=3. It is ignored for other mass profile models. Default is 1.0.
     
-    * **FASTMODE (boolean integer 0/1): If equal to 1, the likelihood is estimated by using a grid of values (default 60 points) in the phase space (R,v_z) of the galaxies and then bispline-interpolating over the data points. Default is 0.
+    * **FASTMODE (boolean integer 0/1):** If equal to 1, the likelihood is estimated by using a grid of values (default 60 points) in the phase space (R,v_z) of the galaxies and then bispline-interpolating over the data points. Default is 0.
     
     * **OPT (integer): Optimization choice.** If required, an optimization algorithm is launched before the grid/MCMC likelihood computation to find the minimum of $-\ln \mathcal{L}$. Eventually, the resulting best fit parameters are used as guess values for the subsequent parameter space exploration. Currently, three choices are available:  BOBYQA **OPT=0**, NEWUOA **OPT=1** or POWELL **OPT=2** We point out that the POWELL algorithm may not work efficiently in MG mode due to round-off errors in the integration routines. If **OPT=-1** the optimization is skipped. Default is -1.
     
