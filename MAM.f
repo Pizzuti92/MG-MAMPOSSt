@@ -1217,7 +1217,7 @@ c    ClusterGEN code
        
   22  continue
       
-      READ (1,fmt="(6(f13.5,2x))",end=23) r200,rc,rs,cbe,
+      READ (1,fmt="(7(f13.5,2x))",end=23) r200,rc,rs,cbe,
      & tmass, screen,cbe0
        
 c++++++++++++++++++++ simple computation of the screening radius ++++
