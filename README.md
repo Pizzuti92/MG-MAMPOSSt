@@ -31,12 +31,12 @@ Details of the original MAMPOSSt method can be found in [Mamon et al., 2013](htt
 
 ## Install
 
-To install and run MG-MAMPOSSt on a Linux terminal, download the .zip file which contains all the dependencies. Note that the main source code gomamposstoptS.f requires additional routines which are stored in the various folders shipped within the code. Some routines are taken from free FORTRAN libraries available on the web. Credits to the developers are given in the header of the source files of these routines.
+To install and run MG-MAMPOSSt, download the .zip file which contains all the dependencies. Note that the main source code gomamposstoptS.f requires additional routines which are stored in the various folders shipped within the code. Some routines are taken from free FORTRAN libraries available on the web. Credits to the developers are given in the header of the source files of these routines.
 
 ### Install with CMake
 
 The configuration and installation requires at least CMake 3.17.1. 
-Execute the following commands:
+In the working directory, execute the following commands:
 ```bash
 $ mkdir build
 $ cd build/
