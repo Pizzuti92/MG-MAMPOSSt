@@ -767,9 +767,12 @@ c Coupling constant for f(R)
      &     'f(R) gravity, Hu&Sawicki model with n = ',i4,/
      &     ' modelled transition between linear and screen '/
      &     'arcatan function with sharpness=10 ')
+
          elseif(kscr.eq.0.and.kmp.eq.7) then
           write(*,*) 'linear f(R) gravity with no screening, Q^2=',aQ
           screeg=dsqrt(aQ)
+          scrlow=0.00d0
+          scrup=100.0d0
            nhone=0
 
          endif

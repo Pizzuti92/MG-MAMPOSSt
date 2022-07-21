@@ -230,7 +230,7 @@ c             ic=ic+1
 c            enddo
     
 c            label2=label(ic:)
-c            write(*,*) 'pdd', ic, label2, label
+
             
             select case (label)
             case ('nmcmc')
@@ -513,7 +513,7 @@ c     define free parameters
          endif
 	     if (kmp.eq.8) then
            freepar(ip)=(facguess*(tmassg))
-           if (tmassg.eq.0.0) freepar(ip)=(facguess*(tmassg+1.e-2)) 
+           if (tmassg.eq.0.0) freepar(ip)=(facguess*(tmassg+1.e-4)) 
          endif !For BH gravity Y1 can be negative
       else
          ipar(5)=0
@@ -539,7 +539,7 @@ c     define free parameters
       else
          ipar(6)=0
       endif
-
+     
       
       nfreepar=ip
 
@@ -552,7 +552,7 @@ c     define free parameters
      &     ' anisotropy model= ',i2,/)
       
       
-      if(kmp.eq.8) then
+      if(kmp.eq.8.and.nhone.gt.1) then
        ipar(6)=0 
        nfreepar=nfreepar-1
        write(*,*) "MG second parameter not optimized in kinematic BH"
@@ -853,7 +853,7 @@ c   if the best fit are out of the range, stop the code
       
       
  732  continue  
- 
+      
       write(*,*)  ''   
       write(*,*)  '**********************************'
       if(kbsp.eq.1) write(*,*) 'Running in Fast mode'
@@ -882,6 +882,7 @@ c   if the best fit are out of the range, stop the code
           r200=r200new
           tmass=tmassnew
           screen=scrnew
+          
 
           call vmaxlik(nfv,xfv,f)
         endif
@@ -939,7 +940,6 @@ c**********************************************************************
           endif
           enddo  
           if (itotal.ge.2000) then
-            write(*,*) 'here'
             r200n=r200g
             rcn=rcg
             rsn=rsg
@@ -1018,10 +1018,12 @@ c                     for f(R)= Hu&Sawicki with n=1 +++++++++++++++++
            t=t+0.005d0
            if (field(t).le.fr.or.t.ge.25.0d0) then
              screen=t
+             
              intsuc=0
            endif
           enddo 
 c                write(*,*) 'Screening radius found at ', screen
+c           scrn=screen !The screening parameter is the screening radius
          endif         
                         
          
@@ -1112,9 +1114,9 @@ c                write(*,*) did(jgiu),viv(jgiu),eie(jgiu)
          endif
 
          call priord(r200n,rcn,rsn,cbn,tmassn,scrn,cb0n,pout1)
-
+          
          call acceptance(-fmlb,(-fml2+pout1),eval,nseed)
-         
+
  !        write (*,428) r200n, rcn, rsn, cbn, 
  !    &   tmassn, scrn,fml2+pout1, fmlb 
          itotal=itotal+1
@@ -5800,7 +5802,6 @@ c     Ninterp points logarithmically spaced between 0.001 and 20
       ninterp=21*2
 
       call freepareva(n,x,r200,rc,rs,cbe,tmass,screen,cbe0)
-
 ccc     write(*,429) r200,rc,rs,cbe,tmass,f
 ccc 429  format(' In calfun: r200,rc,rs,cbe,tmass,L = ',5(f6.3,2x),f10.3)
       omegal=Olam
@@ -6570,7 +6571,7 @@ c
          endif
          if (kmp.eq.8) then
            tmassnew=freepar(ifp)
-           if (tmassnew.eq.0.0d0) tmassnew=1.e-2 
+           if (tmassnew.eq.0.0d0) tmassnew=1.e-4
          endif
       endif
       
