@@ -1,7 +1,7 @@
 on: [push]
 
-jobs: 
-  paper:
+jobs:
+  paper: 
     runs-on: ubuntu-latest
     name: Paper Draft 
     steps:
