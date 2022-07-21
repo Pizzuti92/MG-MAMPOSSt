@@ -755,7 +755,7 @@ c exponent for f(R) Hu&Sawicki model (to be set manually)
 c Coupling constant for f(R)
       aQ=1./6
       
-      if (kscr.ne.-1) then
+      if (kmp.eq.7.and.kscr.ne.-1) then
          if (kscr.eq.1) then
 	  write(*,811) nhs
  811  format(/' Screening: '/
@@ -768,24 +768,27 @@ c Coupling constant for f(R)
      &     ' modelled transition between linear and screen '/
      &     'arcatan function with sharpness=10 ')
          elseif(kscr.eq.0.and.kmp.eq.7) then
-          write(*,*) 'linear f(R) gravity with no screening, Q=',aQ
-          screeg=aQ
+          write(*,*) 'linear f(R) gravity with no screening, Q^2=',aQ
+          screeg=dsqrt(aQ)
            nhone=0
-         elseif(kmp.ne.9.and.kmp.ne.8) then
-          screeg=0.0d0      !screening guess value forced to be zero
-          nhone=0           !number of steps in screening radius
-         endif
-      else
-        
-        aQ=screen !set the coupling constant in frLin(x) to be equal to 
-                  !the guess value
 
+         endif
+      elseif(kmp.eq.7.and.kscr.eq.-1) then
+        
+        aQ=screen*screen !set the coupling constant in frLin(x) to be equal to 
+                  !the guess value
+      
       	write(*,802) tmass,screen
- 802  format(/' Linear Horndeski gravity: '/				
+ 802    format(/' Linear Horndeski gravity: '/				
      &     'guess value of free parameter mass= ',f7.4,/
      &     ' and coupling constant= ',f7.4 )
       endif
-            
+      
+      
+!      if(kmp.ne.9.and.kmp.ne.8.and.kmp.ne.7) then
+!          screeg=0.0d0      !screening guess value forced to be zero
+!          nhone=0           !number of steps in screening radius
+!       endif     
       
 c     Stop if H&M beta(r) required and M(r) difft from NFW
 c
@@ -796,7 +799,7 @@ c
       endif
       
       
-      
+
       kgas=0
       kdata=0
       if (kdata.eq.1) then

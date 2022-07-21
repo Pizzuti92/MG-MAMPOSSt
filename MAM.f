@@ -81,9 +81,9 @@
       implicit integer*4 (i-n)
       logical*4 eval
       parameter (pig=3.1415926535d0,iga=25000,
-     &     grav=4.302e-9,q0=-0.64,clight=2.99792458d5)
+     &     grav=4.302e-9,q0=-0.64,clight=2.99792458d5, npar=7)
       dimension di(npg1),ve(npg1),eve(npg1),rso(npg1),vso(npg1),
-     &     xfv(2), sigma(7) 
+     &     xfv(2), sigma(npar) 
       dimension dpp(25000),vpp(25000),epp(25000),wpp(25000), 
      &     did(25000),viv(25000),eie(25000),wiw(25000)
       dimension freepar(7),freelow(7),freeup(7),wpar(5000),xi(7,7)
@@ -505,8 +505,7 @@ c     define free parameters
          ipar(4)=0
       endif
       if (ntmass.gt.0) then   ! modified grav parameter
-         ip=ip+1
-      !CAPIRE COSA SUCCEDE   
+         ip=ip+1   
          if (kmp.ne.8) freepar(ip)=dlog10(facguess*tmassg)
          if (kmp.eq.9) then !explore from 0 to 1 the range of parameter
          ! in the case of CS 
@@ -519,27 +518,28 @@ c     define free parameters
       else
          ipar(5)=0
       endif
+      
+      if (nb2.gt.0) then     ! tracer velocity anisotropy parameter
+         ip=ip+1
+         freepar(ip)=(facguess*cbe0g)
+      else
+         ipar(7)=0
+      endif
       if (nhone.gt.0) then   ! screening parameter
          ip=ip+1
          freepar(ip)=dlog10(facguess*screeg)
          if(kmp.eq.9) then
           freepar(ip)=facguess*screeg/(facguess*screeg+1)
          endif
-         if (kmp.eq.8) then
-           freepar(ip)=(facguess*(screeg))
-           if (screeg.eq.0.0) freepar(ip)=(facguess*(screeg+1.e-2)) 
-         endif !For BH gravity Y2 can be negative         
+!         if (kmp.eq.8) then
+!           freepar(ip)=(facguess*(screeg))
+!           if (screeg.eq.0.0) freepar(ip)=(facguess*(screeg+1.e-2)) !TEST2
+!         endif !For BH gravity Y2 can be negative         
          
       else
          ipar(6)=0
       endif
-      if (nb2.gt.0) then     ! tracer velocity anisotropy parameter
-         ip=ip+1
-         
-         freepar(ip)=(facguess*cbe0g)
-      else
-         ipar(7)=0
-      endif
+
       
       nfreepar=ip
 
@@ -550,7 +550,14 @@ c     define free parameters
      &         ' Initial guess values: ',7(f6.3,1x),/,
      &     ' mass model= ',i2,/,
      &     ' anisotropy model= ',i2,/)
-
+      
+      
+      if(kmp.eq.8) then
+       ipar(6)=0 
+       nfreepar=nfreepar-1
+       write(*,*) "MG second parameter not optimized in kinematic BH"
+       write(*,*) " "
+      endif
       npoints=(nfreepar+1)*(nfreepar+2)/2
 
 c     Setting switches
@@ -573,7 +580,15 @@ c     start optmization unless not required
          tmassnew=tmassg
          goto 732
       endif
-
+      if (kopt.eq.2.and.kani.gt.10) then
+c     POWELL doesn't work for gT, gOM with MG parametrizations
+        if (nfreepar.gt.1) then
+          write(*,*) 'WARNING: POWELL does not work efficiently with'
+          write(*,*) 'gOM, gT: switching to NEWUOA algorithm OPT=1'
+          write(*,*) ''
+          kopt=1
+        endif
+      endif
 c     newuoa and bobyqa only work with at least 2 free params
       temp=r200g
       if (nfreepar.gt.1.and.ktried.lt.2.9) then
@@ -698,8 +713,11 @@ cc 294        inew=inew+1
       call freepareva(nfreepar,freepar,r200new,rcnew,rsnew,cbnew,
      & tmassnew,scrnew,cb0new)
       
+      
+      if(kmp.eq.8.and.nhone.gt.1) ipar(6)=1 !set again the free parameter
       call sigmaeva(npar,sigma) 
 
+      
       
       write(*,*) 
       write(*,*) 'optimiz. results: r200,rc,rs,beta,A1,A2,cbe0,-logL'
@@ -820,8 +838,9 @@ c   if the best fit are out of the range, stop the code
         tmassnew=(tmup-tmlow)/2
       endif
       if(scrnew.gt.scrup.or.scrnew.lt.scrlow) then
+       
        write(*,*) 'Warning: best fit "screen" outside the prior range'
-       write(*,*) 'redefine the best "screen" fit as the average value'
+       write(*,*) 'redefine the best fit "screen"  as the average value'
        scrnew=(scrup-scrlow)/2
        write(*,*) scrnew
       endif
@@ -3295,10 +3314,10 @@ c     the inner anisotropy for r=0, cbe0
          if (bec.ge.1.) bec=0.999d0  ! avoid unphysical values
          if (bec0.ge.1.) bec0=0.999d0  ! avoid unphysical values
          
-         if (dabs((2*bec0-2)*dlog10(t)).gt.40) then
+         if (dabs((2*bec0-2)*dlog10(t)).gt.60) then
           stop('ABORTED: value of anisotropy makes overflow')
          endif   
-         if (dabs(((bec-bec0))*dlog10(t+rm2)).gt.40) then
+         if (dabs(((bec-bec0))*dlog10(t+rm2)).gt.60) then
           stop('ABORTED: value of anisotropy makes overflow')
          endif
          
@@ -3337,11 +3356,11 @@ c
          if (bec.ge.1.) bec=0.999d0  ! avoid unphysical values
          if (bec0.ge.1.) bec0=0.999d0  ! avoid unphysical values
 
-         if (dabs((2*bec0-2)*dlog10(t)).gt.40) then
+         if (dabs((2*bec0-2)*dlog10(t)).gt.60) then
           stop('ABORTED: value of anisotropy makes overflow')
           
          endif 
-         if (dabs((2.*(bec-bec0))*dlog10(t+rm2)).gt.40) then
+         if (dabs((2.*(bec-bec0))*dlog10(t+rm2)).gt.60) then
           
           stop('ABORTED: value of anisotropy makes overflow')
          endif
@@ -6554,7 +6573,15 @@ c
            if (tmassnew.eq.0.0d0) tmassnew=1.e-2 
          endif
       endif
-      if (ipar(6).eq.0) then
+      
+      if (ipar(7).eq.0) then
+         cb0new=cbe0g
+      else
+         ifp=ifp+1
+         cb0new=freepar(ifp)
+      endif
+            
+      if (ipar(6).eq.0) then  !TEST2
          scrnew=screeg
       else
          ifp=ifp+1
@@ -6565,17 +6592,12 @@ c
           if (freepar(ifp).ge.1) freepar(ifp)=1/freepar(ifp) !avoid >1
           scrnew=freepar(ifp)/(1-freepar(ifp))
          endif
-         if (kmp.eq.8) then
-           scrnew=freepar(ifp)
-           if (scrnew.eq.0.0d0) scrnew=1.e-2 
-         endif
+ !        if (kmp.eq.8) then
+ !          scrnew=freepar(ifp)
+ !          if (scrnew.eq.0.0d0) scrnew=1.e-2 
+ !        endif
       endif
-      if (ipar(7).eq.0) then
-         cb0new=cbe0g
-      else
-         ifp=ifp+1
-         cb0new=freepar(ifp)
-      endif
+
 
 
       if (klcdm.eq.1) then      ! LCDM c=c(M)
