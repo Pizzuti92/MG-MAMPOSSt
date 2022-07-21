@@ -350,12 +350,11 @@ OPT= 2
               
 screen= 0   
               !     for linear f(R) kmp.eq.7, one can decide to set an instantaneous
-			  !     transition between screeening and linear regime, by using the 
-			  !     analytical approximation of Lombriser+12.                
+	      !     transition between screeening and linear regime, by using the 
+	      !     analytical approximation of Lombriser+12.                
               !-1/0/1/2=noscreen (general Hordenski)/noscreen f(R)/screen(instantaneous transition)
-              !/screen (arctan transition)/                     
-			  !if screen=3 then the modified gravity contribution assumes the form of
-			  !general linear Hordenski gravity with coupling Q=Screen 
+              !/screen (arctan transition)                    
+			 
 ************************************************************************
 ```
 The first four values represent the background cosmology (note that the test phase space has been generated at redshift 0). Then, we set the range of tracers to be considered in the MG-MAMPOSSt analysis [0.05 Mpc,1.41 Mpc] and we choose the  model **pNFW** for the number density profile of the tracers. The next parameter **-0.0** is ignored in this case.
