@@ -31,7 +31,7 @@ r200g = 1.41 ! mass profile r200 initial guess (Mpc)
              
 rcg = 0.33  ! N(R) scale radius initial guess (Mpc)  
              
-rsg = 0.47  ! mass profile scale radius initial guess (Mpc)  
+rsg = 0.33  ! mass profile scale radius initial guess (Mpc)  
              
 betag = 1.41 ! Anisotropy initial guess, 
              ! beta_C, a_ML, a_OM, a_W, beta_inf   
