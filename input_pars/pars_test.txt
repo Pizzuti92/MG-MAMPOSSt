@@ -108,10 +108,7 @@ screen= 0
              ! analytical approximation of Lombriser+12.                
              !-1/0/1/2=noscreen (general Hordenski)/noscreen f(R)/
              ! screen(instantaneous transition)
-             ! /screen (arctan transition)         
-             ! if screen=3 then the modified gravity 
-             ! contribution assumes the form of
-             !general linear Hordenski gravity with coupling Q=Screen 
+             ! /screen (arctan transition)          
 			   
 ************************************************************************
 ********* parameter limits *********************************************
