@@ -36,9 +36,9 @@ rsg = 0.47  ! mass profile scale radius initial guess (Mpc)
 betag = 1.41 ! Anisotropy initial guess, 
              ! beta_C, a_ML, a_OM, a_W, beta_inf   
              
-A1g = 0.0 ! first MG parameter initial guess     
+A1g = 0.01 ! first MG parameter initial guess     
              
-A2g = 0.0  ! second MG parameter initial guess    
+A2g = 0.01  ! second MG parameter initial guess    
              
 beta2g = 1.0 ! Second Anisotropy parameter initial guess beta0 for 
              ! gOM and gT models  
