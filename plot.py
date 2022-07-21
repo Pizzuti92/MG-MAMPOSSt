@@ -157,8 +157,8 @@ if(data[0,7]!=1):
     labelb="\mathcal{A}_\infty"
     Plabelb="P(\mathcal{A}_\infty)"
     
-labelb2="\mathcal{A}^0_\infty"
-Plabelb2="P(\mathcal{A}^0_\infty)"
+labelb2="\mathcal{A}_0"
+Plabelb2="P(\mathcal{A}_0)"
 labelm1="\phi_2"
 Plabelm1=r"$P(\phi_2)$"
 if (frcase==1):
