@@ -81,7 +81,7 @@ The code is equipped with the two most popular and observationally viable  class
 \frac{\text{d}\Phi}{\text{d}r}=\frac{G}{r^2}\left[M(r,\bold{\theta}_{DM})+f(r,\bold{\theta}_{DM},\bold{\theta}_\text{MG})\right] .
 \end{equation}
 In the above equation, $M(r,\bold{\theta}_{DM})$ is the total mass profile at radius $r$, as a function of the parameter vector $\bold{\theta}_{DM}$, while $f(r,\bold{\theta}_{DM},\bold{\theta}_\text{MG})$ is the contribution of the fifth force, which depends on the parametrisation of the mass density and on the parameters defining the modified gravity models $\bold{\theta}_\text{MG}$.
-Both families are characterized by two free parameters determining the action of the fifth force, which can be constrained with \textsc{MG-MAMPOSSt}. For a detailed exposition of these models and the associated equations we refer to our main paper [@Pizzuti2021], as well as to the original papers where the models were  first introduced (@Kobayashi:2014ida, @Crisostomi:2017lbg, @Dima:2017pwp).
+Both families are characterized by two free parameters determining the action of the fifth force, which can be constrained with \textsc{MG-MAMPOSSt}. For a detailed exposition of these models and the associated equations we refer to our main paper [@Pizzuti2021], as well as to the original papers where the models were  first introduced (@Kobayashi:2014ida, @Crisostomi:2017lbg, @Dima:2017pwp). For recent constraints on DHOST models see e.g. @Saltas22, @Laudato22.
 
 As shown in [@Pizzuti2021], internal kinematics alone is generally not enough to provide stringent bounds on the modified gravity parameters, due to the strong degeneracy between model parameters. For this reason, \textsc{MG-MAMPOSSt} gives the possibility to include a simulated lensing information to your kinematics analysis in modified gravity, a feature which is particularly useful for forecasting the constraining power of the method in view of upcoming imaging and spectroscopic surveys such as Euclid or LSST. 
 
@@ -108,7 +108,7 @@ The \textsc{MG-MAMPOSSt} run further produces additional output files, stored in
 # Acknowledgements
 
 LP is partially supported by a 2019 "Research and Education" grant from Fondazione CRT. The OAVdA is managed by the Fondazione Cle\'ment Fillietroz-ONLUS, which is supported by the Regional Government of the Aosta Valley, the Town Municipality of Nus and the "Unite\' des Communes valdotaines Mont-E\'milius.
-I. D. Saltas is supported by the Grant Agency of the Czech Republic (GAČR), under the grant number 21-16583M. The authors further acknowledge all the developers of the free FORTRAN routines used in \textsc{MG-MAMPOSSt}. Credits are given in the header of each routine.
+Ippocratis D. Saltas acknowledges support from the Czech Academy of Sciences under the grant number LQ100102101. The authors further acknowledge all the developers of the free FORTRAN routines used in \textsc{MG-MAMPOSSt}. Credits are given in the header of each routine.
 
 
 
