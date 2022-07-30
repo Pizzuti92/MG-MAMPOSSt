@@ -47,7 +47,7 @@ $ cd ..
 ```
 To run and test the code, execute:
 ```bash
-$ gomamposst < gomamposst_x.inp
+$ gomamposstopt < gomamposst_x.inp
 ```
 which produces the main outputs, or
 ```bash
