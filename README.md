@@ -19,7 +19,7 @@ The code requires a Fortran90 compiler or higher and makes use of the Python3 [g
 
 ### Documentation
 
-MG-MAMPOSSt has been developed by L. Pizzuti, I.D. Saltas G. Mamon L. Amendola and A. Biviano from the MAMPOSSt version of A. Biviano, with a precious contribution by S. Sartor. A full description of the code functionalities, input parameters and output files is given in the [documentation](https://github.com/Pizzuti92/MG-MAMPOSSt/blob/main/Documentation.pdf), while some of the main functions/subroutines needed are further described in the [API docmumentation](https://github.com/Pizzuti92/MG-MAMPOSSt/blob/main/API%20Documentation.pdf). To test some of the subroutines, refer to the source code testMAM.f, which can be compiled and executed as
+MG-MAMPOSSt has been developed by L. Pizzuti, I.D. Saltas G. Mamon L. Amendola and A. Biviano from the MAMPOSSt version of A. Biviano, with a precious contribution by S. Sartor and S. Sanseverinati. A full description of the code functionalities, input parameters and output files is given in the [documentation](https://github.com/Pizzuti92/MG-MAMPOSSt/blob/main/Documentation.pdf), while some of the main functions/subroutines needed are further described in the [API docmumentation](https://github.com/Pizzuti92/MG-MAMPOSSt/blob/main/API%20Documentation.pdf). To test some of the subroutines, refer to the source code testMAM.f, which can be compiled and executed as
 ```bash
  f95 -o testMAM.e testMAM.f -L build/ -lMAM -L build/GamI/ -lGamI -L build/Newuoa/ -lNewuoa -L build/JJin/ -lJJin -L build/Utili/ -lUtili -L build/Powell/ -lPowell
  ./testMAM.e
