@@ -69,6 +69,8 @@ N(R) = pNFW
 al = -0.00   ! N(R) negative exponent (only if knfit=3)
              
 
+weights = 0  ! weights are given in the dataset? Y/N=1/0 
+
 M(r) =  mNFW_BH		  
              ! mass profile model. 
              ! Here we list the labels for M(r) and 
