@@ -216,6 +216,7 @@ c     default parameters:
       cbe0=cbe0g
       cb0low=0.0001d0
       cb0up=100.0d0
+      nweigh=0
     
 c     read file with parameters for MAMPOSSt
 
@@ -518,6 +519,12 @@ c********* Model Options ***********************************************
                     ios=0
                     rcut=1.0
                 endif
+	    case ('weights')    ! weights in the mass distribution
+                read(buffer, *, iostat=ios) nweigh
+                if (ios.eq.-1) then
+                    ios=0
+                    nweigh=0
+                endif 	
             case ('FASTMODE')  ! PIEMD model rcut in Mpc (only used if kmp=3) 
                 read(buffer, *, iostat=ios) kbsp
                 if (ios.eq.-1) then
@@ -865,13 +872,18 @@ c     errors are in km/s
       j0=-1
       dimin=1.e12
  222  continue
-      read(10,*,end=111) dkpc,vkms,evkms !,wei !to put in the case of four columns
+      if (nweigh.eq.0) then
+       read(10,*,end=111) dkpc,vkms,evkms !,wei !to put in the case of four columns
+      else
+       read(10,*,end=111) dkpc,vkms,evkms,wei
+      endif
       j=j+1
       di(j)=dkpc/1.e3
       ve(j)=vkms
       eve(j)=evkms
       w(j)=1.0
-c      w(j)=wei
+      if (nweigh.ne.0) w(j)=wei
+      
       if (di(j).lt.dimin) then
          dimin=di(j)
          j0=j
