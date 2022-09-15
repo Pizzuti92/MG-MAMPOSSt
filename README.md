@@ -64,8 +64,8 @@ Here we summarize all the necessary information to perform a complete run of the
 
 The directory data/ stores the datafiles of projected phase spaces (p.p.s) that serve as input to the MG-MAMPOSSt procedure. The files are structured as a table where the number of rows coincides with the number of data points. The first column is the projected radius in units of ```kpc```, the second and thirds columns represent the l.o.s. velocities and the associated errors in units of ```km/s```. Note that data points should be given in the rest frame of the cluster.
 The first two lines are considered as comment lines when MG-MAMPOSSt read the data.
+If a fourth column is given, the numbers should correspond to the weights associated to each measurement. Set the parameter **weights=1** in the input parameter file (see [next section](#input-parameters)), otherwise the weights will be ignored.
 
-If a fourth column is given, they should correspond to the weights associated to each measurement. Set the parameter **weights=1** in the input parameter file (see [next section](#input-parameters)), otherwise the weights will be ignored.
 The test data file provided corresponds to a projected phase space realization of a relaxed dark matter halo, populated with a NFW model characterized by r_200=1.41 Mpc and r_s=r_nu=0.33 Mpc. As for the velocity anisotropy profile, the halo is generated with a Tiret model (implemented in the MG-MAMPOSSt code) with a parameter beta=1.41. 
 
 ### Input parameters
