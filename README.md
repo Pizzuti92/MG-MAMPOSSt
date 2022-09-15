@@ -64,6 +64,7 @@ Here we summarize all the necessary information to perform a complete run of the
 
 The directory data/ stores the datafiles of projected phase spaces (p.p.s) that serve as input to the MG-MAMPOSSt procedure. The files are structured as a table where the number of rows coincides with the number of data points. The first column is the projected radius in units of ```kpc```, the second and thirds columns represent the l.o.s. velocities and the associated errors in units of ```km/s```. Note that data points should be given in the rest frame of the cluster.
 The first two lines are considered as comment lines when MG-MAMPOSSt read the data.
+If a fourth column is given, set the parameter **weights=1** in the input parameter file (see [next section](### Input parameters)).
 The test data file provided corresponds to a projected phase space realization of a relaxed dark matter halo, populated with a NFW model characterized by r_200=1.41 Mpc and r_s=r_nu=0.33 Mpc. As for the velocity anisotropy profile, the halo is generated with a Tiret model (implemented in the MG-MAMPOSSt code) with a parameter beta=1.41. 
 
 ### Input parameters
@@ -105,7 +106,9 @@ Input parameters are stored in the file input_pars/pars_test.txt. All the parame
    *  **N(R) (string):** Number density profile model. It selects the model for the tracer's projected number density profile. In the current version three possible choices are allowed: projected NFW (**pNFW**), projected Hernquist (**pHer**) and beta-model (**beta**). Default is pNFW
     
    * **al (real):** Exponent for beta-model. The beta-model choice requires an additional input exponent which should be negative. The input parameter is ignored otherwise. Default is 0.0.
-    
+   
+  * **weights (boolean integer 0/1):**  in the dataset, the user may provide a fourth column where the weights assigned to each measurement are given. If **weights=1** the code reads the additional column in the dataset. Default is 0.
+   
    * **M(r) (string):** Mass profile/gravitational potential model. It selects the allowed parametrisations of the mass profile to be used in the Jeans' equation. The allowed models in GR and their corresponding **string labels** are Navarro-Frenk-White **NFW**, Hernquist **Her**, PIEMD **PIEMD**, Burkert **Bur**, Soft Isothermal model **SoftIS**, Einasto with m=5 **Eis5** and generalized NFW **gNFW**. The modified gravity frameworks are currently implemented for an effective dynamical modified NFW mass profile in linear Horndeski gravity **mNFW_LH**, modified NFW in beyond Horndeski - DHOST gravity (which exhibits Vainsthein screening) **mNFW_BH** and modified NFW in general chameleon gravity **mNFW_GC**. Default is NFW.
     
    * **Beta(r) (string):** Anisotropy profile model. It selects the  
