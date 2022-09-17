@@ -88,13 +88,13 @@ Input parameters are stored in the file input_pars/pars_test.txt. All the parame
     
     * **rsg**: guess starting value for the scale radius of the mass profile, in  units of Mpc. 
 
-    * **betag**: starting guess for the velocity anisotropy profile parameter. If the selected model is "C", "T" or "O", the parameter is dimensionless, otherwise it should be given in units of Mpc.
+    * **betag**: starting guess for the velocity anisotropy profile parameter. If the selected model is "C", "T" or "O", the parameter is dimensionless and it is given by the quantity (1-beta_inf)^(-1/2), where beta_inf correspond to the value of the anisotropy at infinity. **betag=1** indicates fully isotropic orbits (beta_inf=0). For the other anisotropy models **betag** should be given in units of Mpc.
     
     * **A1g**: Initial guess for the first modified gravity parameter. For **M(r)=mNFW_GC** the parameter is in unit of 1e-5. For the case of model **gNFW**, **A1=gamma** is the free exponent which characterizes the profile.
     
     * **A2g**: Initial guess for the second modified gravity parameter.
     
-    * **beta2g**: Initial guess for the second velocity anisotropy parameter (always dimensionless)
+    * **beta2g**: Initial guess for the second velocity anisotropy parameter (always dimensionless) and corresponding to (1-beta_0)^(-1/2), where beta_0 correspond to the value of the anisotropy at r=0.
     
 * **Model options (reals/integers/strings):** this family of values allow to select cosmological environment such as the value of the  Hubble parameter and the average redshift of the cluster, the mass or number density profiles, the velocity anisotropy profiles, as well as the optimization algorithm choices.
    * **H0 (real):** The value of the Hubble parameter evaluated at redshift z=0, measured in units of km/s/Mpc. Default is 70.0
