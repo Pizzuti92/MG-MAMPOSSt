@@ -1593,7 +1593,7 @@ c       if(icount.gt.1e2) stop
         else
          stop('this setup has not yet implemented') 
         endif
-        
+        icount=0
         READ (1,*) tm200,tc200,Pl
         Pl=-Pl
         r200= tm200/0.7  !this data are in unit of Mpc/h with h=0.7
