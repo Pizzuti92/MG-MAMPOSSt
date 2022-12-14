@@ -13,7 +13,7 @@ tags:
 authors:
   - name: Lorenzo Pizzuti^[corresponding author] # note this makes a footnote saying 'co-first author'
     orcid: 0000-0001-5654-7580
-    affiliation: "1" 
+    affiliation: "1,2" 
   - name: Ippocratis D. Saltas 
     affiliation: 2
   - name: Andrea Biviano
