@@ -107,8 +107,8 @@ The \textsc{MG-MAMPOSSt} run further produces additional output files, stored in
 
 # Acknowledgements
 
-Lorenzo Pizzuti is supported by the Czech Grant Agency (GACR), under the grant number 21-16583M. Lorenzo Pizzuti is partially supported by a 2019 "Research and Education" grant from Fondazione CRT. The OAVdA is managed by the Fondazione Cle\'ment Fillietroz-ONLUS, which is supported by the Regional Government of the Aosta Valley, the Town Municipality of Nus and the "Unite\' des Communes valdotaines Mont-E\'milius.
-Ippocratis D. Saltas acknowledges support from the Czech Academy of Sciences under the grant number LQ100102101. The authors further acknowledge all the developers of the free FORTRAN routines used in \textsc{MG-MAMPOSSt}. Credits are given in the header of each routine.
+Lorenzo Pizzuti acknowledges support from the Czech Academy of Sciences under the grant number LQ100102101. Lorenzo Pizzuti is partially supported by a 2019 "Research and Education" grant from Fondazione CRT. The OAVdA is managed by the Fondazione Cle\'ment Fillietroz-ONLUS, which is supported by the Regional Government of the Aosta Valley, the Town Municipality of Nus and the "Unite\' des Communes valdotaines Mont-E\'milius.
+Ippocratis D. Saltas is supported by the Czech Grant Agency (GACR), under the grant number 21-16583M. The authors further acknowledge all the developers of the free FORTRAN routines used in \textsc{MG-MAMPOSSt}. Credits are given in the header of each routine.
 
 
 
