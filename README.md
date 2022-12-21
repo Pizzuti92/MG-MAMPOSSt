@@ -24,7 +24,7 @@ To install and run MG-MAMPOSSt, one can either download the .zip file which cont
 ```bash
 $ git clone https://github.com/Pizzuti92/MG-MAMPOSSt.git
 ```
-. Note that the main source code gomamposstoptS.f requires additional routines which are stored in the various folders shipped within the code. Some routines are taken from free FORTRAN libraries available on the web. Credits to the developers are given in the header of the source files of these routines.
+in the working directory. Note that the main source code gomamposstoptS.f requires additional routines which are stored in the various folders shipped within the code. Some routines are taken from free FORTRAN libraries available on the web. Credits to the developers are given in the header of the source files of these routines.
 
 ### Install with CMake
 
