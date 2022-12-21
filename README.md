@@ -30,7 +30,7 @@ in the working directory. Note that the main source code gomamposstoptS.f requir
 ### Requirements and dependencies
 The following minimum requirements should be satisfied in order to correctly configure and install the code:
 
-- FORTRAN95 compiler or higer
+- FORTRAN95 compiler or higher
 - CMake 3.17.1 or higher
 - Python3 or higher. This would be needed for the additional plot.py script, which generates plot at the end of the MG-MAMPOSSt run (see below).  
 - The software needs some basic math functions included in the libm FORTRAN library.
