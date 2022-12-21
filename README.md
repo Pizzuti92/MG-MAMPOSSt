@@ -33,6 +33,7 @@ The following minimum requirements should be satisfied in order to correctly con
 - FORTRAN95 compiler
 - CMake 3.17.1
 - Python3. This would be needed for the additional plot.py script, which generates plot at the end of the MG-MAMPOSSt run (see below).  
+- The software needs some basic math functions included in the libm FORTRAN library.
 
 ### Install with CMake
 
