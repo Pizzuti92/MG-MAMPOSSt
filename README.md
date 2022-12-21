@@ -26,9 +26,16 @@ $ git clone https://github.com/Pizzuti92/MG-MAMPOSSt.git
 ```
 in the working directory. Note that the main source code gomamposstoptS.f requires additional routines which are stored in the various folders shipped within the code. Some routines are taken from free FORTRAN libraries available on the web. Credits to the developers are given in the header of the source files of these routines.
 
+
+### Requirements and dependencies
+The following minimum requirements should be satisfied in order to correctly configure and install the code:
+
+- FORTRAN95 compiler
+- CMake 3.17.1
+- Python3. This would be needed for the additional plot.py script, which generates plot at the end of the MG-MAMPOSSt run (see below).  
+
 ### Install with CMake
 
-The configuration and installation requires at least CMake 3.17.1. 
 In the working directory, execute the following commands:
 ```bash
 $ mkdir build
