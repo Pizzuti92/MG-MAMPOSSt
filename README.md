@@ -497,8 +497,9 @@ In order to perform the same run in MCMC mode type ```nmcmc=1``` in "Options.txt
 Running ```$ sh script/script_runmam.sh -t``` in this case should produce the [marginalized distributions](https://github.com/Pizzuti92/MG-MAMPOSSt/blob/main/test/plot_test_MCMC_Chameleon.png) in the "test" folder. The corresponding (log) likelihood is stored in "MaxLike_ChameleonTestMCMC.dat" in the same folder; the execution on a laptop with the features specified above should take roughly 10 minutes.   
 
 
-## Extension and update
+## Contacts, extension and update
 
+For further information, to report issues and providing suggestions, as well as if you are interested in contributing to the development of the package, please contact Lorenzo Pizzuti (pizzuti@fzu.cz) or Andrea Biviano (andrea.biviano@inaf.it) on behalf of the developers team.
 Since the expression of the gravitational potential is involved only in the solution of the Jeans' equation, new mass models or modified gravity/dark energy parametrizations can be introduced by modifying the routines where the potential enters, which are the functions fa(tlog) and sr2int(alr) in MAM.f. Add a new entry in the condition chain, identified by a new integer number **kmp** which should be string for **M(r)**. 
 
 
