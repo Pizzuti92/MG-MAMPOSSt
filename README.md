@@ -17,17 +17,6 @@ to handle modified gravity models and constrain their parameter space. The new v
 namely general chameleon (including $`f(\mathcal{R})`$ models) and beyond Horndeski gravity (Vainshtein screening). MG-MAMPOSSt efficently explores the parameter space either by computing the likelihood over a multi-dimensional grid of points or by performing a simple Metropolis-Hastings MCMC. 
 The code requires a Fortran90 compiler or higher and makes use of the Python3 [getdist package](https://github.com/cmbant/getdist) of Antony Lewis to plot the marginalized distributions in the MCMC mode.
 
-### Documentation
-
-MG-MAMPOSSt has been developed by L. Pizzuti, I.D. Saltas G. Mamon L. Amendola and A. Biviano from the MAMPOSSt version of A. Biviano, with a precious contribution by S. Sartor and S. Sanseverinati. A full description of the code functionalities, input parameters and output files is given in the [documentation](https://github.com/Pizzuti92/MG-MAMPOSSt/blob/main/Documentation.pdf), while the functions/subroutines available esternally are further described in the [API docmumentation](https://github.com/Pizzuti92/MG-MAMPOSSt/blob/main/API%20Documentation.pdf). To test some of the subroutines, refer to the source code testMAM.f, which can be compiled and executed as
-```bash
- f95 -o testMAM.e testMAM.f -L build/ -lMAM -L build/GamI/ -lGamI -L build/Newuoa/ -lNewuoa -L build/JJin/ -lJJin -L build/Utili/ -lUtili -L build/Powell/ -lPowell
- ./testMAM.e
-``` 
-Details of the original MAMPOSSt method can be found in [Mamon et al., 2013](https://academic.oup.com/mnras/article/429/4/3079/1012297?login=false). The updated version of the (GR) MAMPOSSt code can be downloaded [here](https://gitlab.com/gmamon/MAMPOSSt). 
-
-
----
 
 ## Install
 
@@ -55,6 +44,24 @@ $ ./script/script_runmam.sh
 ```
 which also generates additional plots if the MCMC mode is selected (see below).
 Note that to run the above script, permissions should be changed to make it executable. Otherwise, one can simply use the ``` sh ``` environment.
+
+
+
+
+
+### Documentation
+
+MG-MAMPOSSt has been developed by L. Pizzuti, I.D. Saltas G. Mamon L. Amendola and A. Biviano from the MAMPOSSt version of A. Biviano, with a precious contribution by S. Sartor and S. Sanseverinati. A full description of the code functionalities, input parameters and output files is given in the [documentation](https://github.com/Pizzuti92/MG-MAMPOSSt/blob/main/Documentation.pdf), while the functions/subroutines available esternally are further described in the [API docmumentation](https://github.com/Pizzuti92/MG-MAMPOSSt/blob/main/API%20Documentation.pdf). To test some of the subroutines, refer to the source code testMAM.f, which can be compiled and executed as
+```bash
+ f95 -o testMAM.e testMAM.f -L build/ -lMAM -L build/GamI/ -lGamI -L build/Newuoa/ -lNewuoa -L build/JJin/ -lJJin -L build/Utili/ -lUtili -L build/Powell/ -lPowell
+ ./testMAM.e
+``` 
+Details of the original MAMPOSSt method can be found in [Mamon et al., 2013](https://academic.oup.com/mnras/article/429/4/3079/1012297?login=false). The updated version of the (GR) MAMPOSSt code can be downloaded [here](https://gitlab.com/gmamon/MAMPOSSt). 
+
+
+---
+
+
 
 ## Overview of usage
 
