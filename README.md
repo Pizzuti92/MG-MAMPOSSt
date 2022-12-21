@@ -19,10 +19,10 @@ The code requires a Fortran90 compiler or higher and makes use of the Python3 [g
 
 
 ## Install
-
+ 
 To install and run MG-MAMPOSSt, one can either download the .zip file which contains all the dependencies or clone the git repository by executing:
 ```bash
-git clone https://github.com/Pizzuti92/MG-MAMPOSSt.git
+$ git clone https://github.com/Pizzuti92/MG-MAMPOSSt.git
 ```
 . Note that the main source code gomamposstoptS.f requires additional routines which are stored in the various folders shipped within the code. Some routines are taken from free FORTRAN libraries available on the web. Credits to the developers are given in the header of the source files of these routines.
 
