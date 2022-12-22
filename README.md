@@ -199,10 +199,10 @@ which stores the tabulated ln(L) where L is the  likelihood/posterior, as a func
 ### Basic smoke test
 In order to check that the installation process was successfull and to produce the test example, type:
 ```bash
-$ ./script/script_runmam.sh  
+$ ./script/script_runmam.sh -ts
 ```
-without changing any parameter in the input files. This way, the code should execute a 100000-points MCMC exploration of the parameter space in Vainsthein screening gravity  (**M(r)=mNFW_BH**) sampling the full kinematics+lensing likelihood by using the test data-set included in the data/ folder. The script runs in Fast Mode **FASTMODE=1** and should provide the complete output posterior in Output/MaxLik.dat within less than half an hour if the execution is performed over an average laptop. 
-At the end of the run, if successufull the following text will be displayed:
+without changing any parameter in the input files. This way, the code should execute a 100000-points MCMC exploration of the parameter space in Vainsthein screening gravity  (**M(r)=mNFW_BH**) sampling the full kinematics+lensing likelihood by using the test data-set included in the data/ folder. The script runs in Fast Mode **FASTMODE=1** and should provide the complete output posterior in Output/MaxLik.dat within less than half an hour if the execution is performed over an average laptop. The script will print a message at the end of the script to confirm that the test has been concuded succesfully.
+Running without the ```-ts``` option, the script should produce the output plot. At the end of execution the following text will be displayed:
 ```bash
  Best-fit from optimization
    r_200    =  1.406
