@@ -18,6 +18,7 @@ Help()
   echo "where the gomamposst_x.inp file is located."
   echo "-t | --time: print time of execution of the code"
   echo "-h | --help: displays help"
+  echo "-ts | --test: perform an automated test for reproducibility"
   echo "***********************************"
 	
 }
@@ -35,14 +36,29 @@ while [ -n "$1" ]; do
     -t | --time)
      printime=1 
      ;;
+    -ts | --test)
+     testt=1
+     echo $testt
+     ;;
   esac
   shift
 done
 
 
 start=`date +%s`
+if [ $testt -ge 1 ]; then
+ echo 'Performing basic smoke test on DHOST gravity.'
+ echo 'This can take several minuts, please wait' 
+ gomamposstopt < $cartellacl\gomamposst_x.inp  > test_record.txt
+ python3 test.py
+ echo 'records of the run written in test_record.txt'
+ exit
+else 
+
+ gomamposstopt < $cartellacl\gomamposst_x.inp  
+fi 
 gomamposstopt < $cartellacl\gomamposst_x.inp  
-#./gomamposstopt.e < $cartellacl\gomamposst_x.inp   
+ 
 end=`date +%s`
 
 runtime=$((end-start))
