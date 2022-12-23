@@ -2549,7 +2549,9 @@ c     output results for N(R) in a file
 
  737  continue
       sigma0=0.
-            
+      write(iu30,'(a4,1x,a13,1x,a9)') 'N(R)','rc','al'
+      write(iu30,'(a4,1x,a11,1x,a9)') '-','[Mpc]','-'  
+      write(iu30,*) ''    
       write(iu30,330) knfit,rc,al !sigma0,
       
  330  format(i2,1x,e13.5,1x,f6.3) !e11.4,1x,
@@ -2560,9 +2562,12 @@ c     output file of probs
       xfv(2)=cbe
 
       call vmaxlik(nfv,xfv,fml)
-
+      !header
+      write(iu20,'(3(a13,2x))') 'Ri', 'vz,i','p(Ri,vz,i)' 
+      write(iu20,'(3(a13,2x))') '[Mpc]', '[km/s]','-'
+      write(iu20,*) ''
       do jp=1,npv
-         write(iu20,*) rpv(jp),vpv(jp),pv(jp)
+         write(iu20,'(3(f13.5,2x))') rpv(jp),vpv(jp),pv(jp)
       enddo
       close(iu20)
 
