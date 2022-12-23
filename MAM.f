@@ -863,6 +863,19 @@ c   if the best fit are out of the range, stop the code
       itotal=0
 
       call sigmaeva(npar,sigma)
+      !format(8(f13.5,2x),i2)
+      if(nlens.eq.0) then
+      WRITE(iu60,'(9(a13,2x))') 'r200','rc','rs','cbe','A1','A2',
+     & 'cbe0','-log(P)', 'anisotropy'
+      WRITE(iu60,'(9(a13,2x))') '[Mpc]','[Mpc]','[Mpc]','-','-','-',
+     & '-','-', '-' 
+      else
+      WRITE(iu60,'(9(a13,2x))') 'r200','rc','rs','cbe','A1','A2',
+     & 'cbe0','-log(P*Plens)', 'anisotropy'
+      WRITE(iu60,'(9(a13,2x))') '[Mpc]','[Mpc]','[Mpc]','-','-','-',
+     & '-','-', '-'      
+      endif
+      write(iu60, *) ''
       if (nmcmc.eq.1) then  !Start the MCMC run 
        if (nsame.eq.0) then
         icount=0
