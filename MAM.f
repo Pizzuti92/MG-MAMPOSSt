@@ -166,7 +166,7 @@ c     NFW, Hernquist or beta-model (fixed alpha)
          rcg=xf
 
          write(*,195) rc
-	 write(11,195) rc
+         write(11,195) rc
  195     format(' Best-fit to N(R) outside MAMPOSSt: r_tr=',f6.3)
 
       endif
