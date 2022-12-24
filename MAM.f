@@ -108,6 +108,10 @@
       external sr2int,sr2out,sigmar1,sigmar2,sigmar3,gwenu
 
       print *,' Entering MAMPOSSt subroutine'
+c     Opening log file for keeping track of all the options
+      open(11,file="Run_info.txt",status='unknown')
+      write(11,*) 'Information about the current run'
+      write(11,*) ''
 
 c     Select only galaxy members within the requested radial range
 
@@ -162,6 +166,7 @@ c     NFW, Hernquist or beta-model (fixed alpha)
          rcg=xf
 
          write(*,195) rc
+	 write(11,195) rc
  195     format(' Best-fit to N(R) outside MAMPOSSt: r_tr=',f6.3)
 
       endif
@@ -419,6 +424,7 @@ c            label2=label(ic:)
 c     ******************************************************
 
       write(*,601) nmcmc, nres,nequ,istop,nskip,nlens,Nclust,Nsample
+      write(11,601) nmcmc,nres,nequ,istop,nskip,nlens,Nclust,Nsample
  601  format(/,' Switches selected for parameter exploration: ',/,
      &         ' grid or MCMC (0/1)=',i1,/,
      &         ' finer grid= ',i1,/,
@@ -542,11 +548,36 @@ c     define free parameters
      
       
       nfreepar=ip
-
+      write(11,*) 'Running MG-MAMPOSSt with the selected profile:'
+      select case(kmp)
+       case(1)
+	write(11,*) 'NFW mass model'
+       case(2)
+	write(11,*) 'Hernquist mass model'
+       case(3)
+	write(11,*) 'PIEMD mass model'
+       case(4)
+	write(11,*) 'Burkert mass model'
+       case(5)
+	write(11,*) 'Soft Isothermal mass model'
+       case(6)
+	write(11,*) 'Einasto mass model with n=5'
+       case(7)
+	write(11,*) 'mNFW (linear Hordenski) mass model'
+       case(8)
+	write(11,*) 'mNFW DHOST mass model'
+       case(9)
+	write(11,*) 'mNFW chameleon screening mass model'
+       case(10)
+	write(11,*) 'gNFW mass model'
+      end select
+      
       write(*,622) nfreepar,ipar,r200g,rcg,rsg,cbeg,tmassg,
      &             screeg,cbe0g,kmp,kani
+      write(11,622) nfreepar,ipar,r200g,rcg,rsg,cbeg,tmassg,
+     &             screeg,cbe0g,kmp,kani
  622  format(/,' Number of free parameters = ',i1,/
-     &         ' r200, r_tr, r_s, anis1, m, S, anis2 = ',7(i1,1x),/,
+     &         ' r200, rc, rs, anis1, A1, A2, anis2 = ',7(i1,1x),/,
      &         ' Initial guess values: ',7(f6.3,1x),/,
      &     ' mass model= ',i2,/,
      &     ' anisotropy model= ',i2,/)
@@ -2522,8 +2553,10 @@ c      write(*,*) 'time of execution: ', fine-astar
       f=fmlb
       if (nlonly.eq.0) then
        write(*,292) r200,rc,r200/rc,rs,r200/rs,cbe,tmass,screen,cbe0,f
+      write(11,292) r200,rc,r200/rc,rs,r200/rs,cbe,tmass,screen,cbe0,f
       else
-       write(*,290) r200,rc,r200/rc,rs,r200/rs,cbe,tmass,screen,cbe0,f      
+       write(*,290) r200,rc,r200/rc,rs,r200/rs,cbe,tmass,screen,cbe0,f 
+      write(11,290) r200,rc,r200/rc,rs,r200/rs,cbe,tmass,screen,cbe0,f 
       endif
  292  format(/' Best-fit from optimization ',
      &       /'   r_200    = ',f6.3,
@@ -2570,7 +2603,7 @@ c     output file of probs
          write(iu20,'(3(f13.5,2x))') rpv(jp),vpv(jp),pv(jp)
       enddo
       close(iu20)
-
+      close(11) !file of log
       r200=r200min
       rc=rcmin
       rs=rsmin
