@@ -23,7 +23,7 @@ a=(matrix(titfile)[6])
 titinp=a[0]
 
 
-data=np.array(matrix(titinp)[:-4]).astype(float)
+data=np.array(matrix(titinp)[3:-4]).astype(float)
 r200=data[:,0]
 rnu=data[:,1]
 rs=data[:,2]
