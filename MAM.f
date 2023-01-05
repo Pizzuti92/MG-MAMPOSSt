@@ -846,39 +846,39 @@ c   if the best fit are out of the range, stop the code
       if(r200new.gt.r2up.or.r200new.lt.r2low) then
        write(*,*) 'Warning: best fit outside the prior range'
        write(*,*) 'redefine the best fit as the average value'
-       r200new=(r2up-r2low)/2
+       r200new=(r2up+r2low)/2
       endif
       if(rsnew.gt.rsup.or.rsnew.lt.rslow) then
        write(*,*) 'Warning: best fit "rs" outside the prior range'
        write(*,*) 'redefine the best "rs" fit as the average value'
-       rsnew=(rsup-rslow)/2
+       rsnew=(rsup+rslow)/2
       endif 
       if(rcg.gt.rcup.or.rcg.lt.rclow) then
          write(*,*) 'Warning: best fit "rc" outside the prior range'
         write(*,*) 'redefine the best fit "rc" as the average value'
-        rcnew=(rcup-rclow)/2
+        rcnew=(rcup+rclow)/2
       endif 
       if(cbnew.gt.bup.or.cbnew.lt.blow) then
         write(*,*) 'Warning: best fit "beta" outside the prior range'
         write(*,*) 'redefine the best fit "beta" as the average value'
-        cbnew=(bup-blow)/2
+        cbnew=(bup+blow)/2
       endif 
       if(tmassnew.gt.tmup.or.tmassnew.lt.tmlow) then
         write(*,*) 'Warning: best fit "tmass" outside the prior range'
         write(*,*) 'redefine the best fit "tmass" as the average value'
-        tmassnew=(tmup-tmlow)/2
+        tmassnew=(tmup+tmlow)/2
       endif
       if(scrnew.gt.scrup.or.scrnew.lt.scrlow) then
        
        write(*,*) 'Warning: best fit "screen" outside the prior range'
        write(*,*) 'redefine the best fit "screen"  as the average value'
-       scrnew=(scrup-scrlow)/2
+       scrnew=(scrup+scrlow)/2
        write(*,*) scrnew
       endif
       if(cb0new.gt.cb0up.or.cb0new.lt.cb0low) then
         write(*,*) 'Warning: best fit "beta2" outside the prior range'
         write(*,*) 'redefine the best fit "beta2" as the average value'
-        cb0new=(cb0up-cb0low)/2
+        cb0new=(cb0up+cb0low)/2
       endif 
       
       
