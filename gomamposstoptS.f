@@ -851,22 +851,23 @@ c
       open(70,file=fsb,status='unknown')
       open(80,file=fsf,status='unknown')
 
-      write(30,*) 'record of N(R) model used'
+      write(30,'(a)') '# Record of N(R) model used'
              
-      write(40,*) 'Binned project N(R) profile'
+      write(40,'(a)') '# Binned project N(R) profile'
       write(40,*)  
       
-      write(50,*) 'Best fit project N(R) profile'
-      write(50,*) 'R[Mpc], N(R)' 
+      write(50,'(a)') '# Best fit project N(R) profile'
+      write(50,'(a)') '# R[Mpc], N(R)'
        
-      WRITE(60,*) 'Table containing parameters and -log(P)'
-      WRITE(60,*) ''  
+      WRITE(60,'(a)') '# Table containing parameters and -log(P)'
+      WRITE(60,'(a)') '#'
         
-      write(70,*) 'Binned velocity dispersion profile'
-      write(70,*) 'R[Mpc], VDP [km/s], err_up[km/s] err_low [km/s]'
+      write(70,'(a)') '# Binned velocity dispersion profile'
+      write(70,'(a)') '# R[Mpc], VDP [km/s], err_up[km/s],'/
+     &/' err_low [km/s]'
       
-      write(80,*) 'Fitted velocity dispersion profile'
-      write(80,*) 'R[Mpc], VDP [km/s]'      
+      write(80,'(a)') '# Fitted velocity dispersion profile'
+      write(80,'(a)') '# R[Mpc], VDP [km/s]'
       
 c     read system properties
 
@@ -958,8 +959,8 @@ c     MAMPOSSt subroutine
       write(*,*) ' '
 
 c     output a binned number density profile N(R)
-      write(40,*) 'Output a binned number density profile N(R)'
-      write(40,*) 'rbin [Mpc], density [1/Mpc^3], err [1/Mpc^3]'
+      write(40,'(a)') '# Output a binned number density profile N(R)'
+      write(40,'(a)') '# rbin [Mpc], density [1/Mpc^3], err [1/Mpc^3]'
       ibwt=0
       nbins=int(dsqrt(dfloat(nga)))
       do j=1,nga
