@@ -896,15 +896,15 @@ c   if the best fit are out of the range, stop the code
       call sigmaeva(npar,sigma)
       !format(8(f13.5,2x),i2)
       if(nlens.eq.0) then
-      WRITE(iu60,'(9(a13,2x))') 'r200','rc','rs','cbe','A1','A2',
-     & 'cbe0','-log(P)', 'anisotropy'
-      WRITE(iu60,'(9(a13,2x))') '[Mpc]','[Mpc]','[Mpc]','-','-','-',
-     & '-','-', '-' 
+      WRITE(iu60,'(a,a12,2x,8(a13,2x))') '#','r200','rc','rs','cbe',
+     & 'A1','A2','cbe0','-log(P)', 'anisotropy'
+      WRITE(iu60,'(a,a12,2x,8(a13,2x))') '#','[Mpc]','[Mpc]','[Mpc]',
+     & '-','-','-','-','-', '-'
       else
-      WRITE(iu60,'(9(a13,2x))') 'r200','rc','rs','cbe','A1','A2',
-     & 'cbe0','-log(P*Plens)', 'anisotropy'
-      WRITE(iu60,'(9(a13,2x))') '[Mpc]','[Mpc]','[Mpc]','-','-','-',
-     & '-','-', '-'      
+      WRITE(iu60,'(a1,a12,2x,8(a13,2x))') '#','r200','rc','rs','cbe',
+     & 'A1','A2','cbe0','-log(P*Plens)', 'anisotropy'
+      WRITE(iu60,'(a,a12,2x,8(a13,2x))') '#','[Mpc]','[Mpc]','[Mpc]',
+     & '-','-','-','-','-', '-'
       endif
       write(iu60, *) ''
       if (nmcmc.eq.1) then  !Start the MCMC run 
@@ -2582,8 +2582,8 @@ c     output results for N(R) in a file
 
  737  continue
       sigma0=0.
-      write(iu30,'(a4,1x,a13,1x,a9)') 'N(R)','rc','al'
-      write(iu30,'(a4,1x,a11,1x,a9)') '-','[Mpc]','-'  
+      write(iu30,'(a2,a4,1x,a13,1x,a9)') '# ','N(R)','rc','al'
+      write(iu30,'(a2,a4,1x,a13,1x,a9)') '# ','-','[Mpc]','-'
       write(iu30,*) ''    
       write(iu30,330) knfit,rc,al !sigma0,
       
@@ -2596,8 +2596,8 @@ c     output file of probs
 
       call vmaxlik(nfv,xfv,fml)
       !header
-      write(iu20,'(3(a13,2x))') 'Ri', 'vz,i','p(Ri,vz,i)' 
-      write(iu20,'(3(a13,2x))') '[Mpc]', '[km/s]','-'
+      write(iu20,'(a1,a12,2x,2(a13,2x))') '#','Ri', 'vz,i','p(Ri,vz,i)'
+      write(iu20,'(a1,a12,2x,2(a13,2x))') '#','[Mpc]', '[km/s]','-'
       write(iu20,*) ''
       do jp=1,npv
          write(iu20,'(3(f13.5,2x))') rpv(jp),vpv(jp),pv(jp)
