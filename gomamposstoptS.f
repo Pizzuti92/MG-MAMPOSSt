@@ -857,17 +857,20 @@ c
       write(40,*)  
       
       write(50,'(a)') '# Best fit project N(R) profile'
-      write(50,'(a)') '# R[Mpc], N(R)'
+      write(50,'(a1,a25,2x,a19)') '#', 'R', 'N(R)'
+      write(50,'(a1,a25)') '#', '[Mpc]'
        
       WRITE(60,'(a)') '# Table containing parameters and -log(P)'
       WRITE(60,'(a)') '#'
         
       write(70,'(a)') '# Binned velocity dispersion profile'
-      write(70,'(a)') '# R[Mpc], VDP [km/s], err_up[km/s],'/
-     &/' err_low [km/s]'
+      write(70,'(a1,a13,a11,a11,a11)') '#','R','VDP','err_up','err_low'
+      write(70,'(a1,a13,a11,a11,a11)') '#','[Mpc]','[km/s]','[km/s]',
+     &'[km/s]'
       
       write(80,'(a)') '# Fitted velocity dispersion profile'
-      write(80,'(a)') '# R[Mpc], VDP [km/s]'
+      write(80,'(a1,a20,a26)') '#', 'R', 'VDP'
+      write(80,'(a1,a20,a26)') '#', '[Mpc]', '[km/s]'
       
 c     read system properties
 
@@ -960,7 +963,10 @@ c     MAMPOSSt subroutine
 
 c     output a binned number density profile N(R)
       write(40,'(a)') '# Output a binned number density profile N(R)'
-      write(40,'(a)') '# rbin [Mpc], density [1/Mpc^3], err [1/Mpc^3]'
+      write(40,'(a1,a20,a26,a26)') '#', 'rbin',
+     &'density','err'
+      write(40,'(a1,a20,a26,a26)') '#', '[Mpc]',
+     &'[1/Mpc^3]','[1/Mpc^3]'
       ibwt=0
       nbins=int(dsqrt(dfloat(nga)))
       do j=1,nga
