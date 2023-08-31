@@ -987,8 +987,8 @@ c**********************************************************************
             r200n=r200g
             rcn=rcg
             rsn=rsg
-            cbn=cbg
-            cb0n=cb0g
+            cbn=cbeg
+            cb0n=cbe0g
             tmassn=tmassg
             scrn=screeg
           endif         
