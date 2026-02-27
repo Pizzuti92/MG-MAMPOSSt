@@ -1,142 +1,244 @@
 **************  number of  steps in free parameters ********************
 
-nr200 = 40  ! number of steps for r200 fit   
-               
+nr200 = 1  ! number of steps for r200 fit
 
-nrc = 0     ! number of steps for rc fit, scale radius of N(R)
+
+nrc = 1     ! number of steps for rc fit, scale radius of N(R)
                             !   [if = 0 takes guess value]
                             !   [if = -1 forces LfM, c_nu=c]
-                            !   [if = -2 fit N(R) outside MAMPOSSt]   
-               
-nrs =  40    ! number of steps for rs fit, scale radius of M(r)
+                            !   [if = -2 fit N(R) outside MAMPOSSt]
+
+nrs =  1    ! number of steps for rs fit, scale radius of M(r)
                             !   [if = 0 takes guess value]
                             !   [if = -1 forces MfL, c=c_nu]
-                            !   [if = -2 forces LCDM, c=c(M)]    
-			  
-nbeta = 40   ! number of steps for anisotropy parameter
-                            !   [if = -1 forces a_ML=r_s]
-                            !   [if = -2 forces Hansen+Moore]  
-			   
-nA1 = 40     ! number of steps in the first MG parameter 
-			   
+                            !   [if = -2 forces LCDM, c=c(M)]
 
-nA2 = 40     ! number of steps in the second MG parameter
-			 ! If equal to -1 force the case of chameleon f(R) gravity   
-			   			   
-nbeta2 = 0   ! number of steps for the second anisotropy parameter                               
+nbeta = 1   ! number of steps for anisotropy parameter
+                            !   [if = -1 forces a_ML=r_s]
+                            !   [if = -2 forces Hansen+Moore]
+
+nA1 = 0     ! number of steps in the first MG parameter
+
+
+nA2 = 0     ! number of steps in the second MG parameter
+			 ! If equal to -1 force the case of chameleon f(R) gravity
+			 
+nA3 = 0		     ! number of steps in the third MG parameter
+
+nbeta2 = 1   ! number of steps for the second anisotropy parameter
+
+nrbeta = 0   ! Number of steps in the scale radius of the velocity anisotropy 
+
+njaf = 0     ! number of step in scale radius for BCG profile
+
+nxmas = 0    !  number of step in stellar M/L ratio for BCG profile
 ************************************************************************
 ************* free parameters initial guess values *********************
-               
-r200g = 1.41 ! mass profile r200 initial guess (Mpc)  
-             
-rcg = 0.33  ! N(R) scale radius initial guess (Mpc)  
-             
-rsg = 0.33  ! mass profile scale radius initial guess (Mpc)  
-             
-betag = 1.41 ! Anisotropy initial guess, 
-             ! beta_C, a_ML, a_OM, a_W, beta_inf   
-             
-A1g = 0.01 ! first MG parameter initial guess     
-             
-A2g = 0.01  ! second MG parameter initial guess    
-             
-beta2g = 1.0 ! Second Anisotropy parameter initial guess beta0 for 
-             ! gOM and gT models  
-                          
+
+r200g = 2.08 ! mass profile r200 initial guess (Mpc)
+
+rcg = 0.52  ! N(R) scale radius initial guess (Mpc) 
+
+rsg = 0.5 ! mass profile scale radius initial guess (Mpc) !
+
+betag = 1.47 ! Anisotropy initial guess,
+             ! beta_C, a_ML, a_OM, a_W, beta_inf
+
+A1g = 0.1  ! first MG parameter initial guess
+
+A2g = 10.1 ! second MG parameter initial guess
+
+A3g = 1.0  ! third MG parameter initial guess
+
+beta2g = 1.16 ! Second Anisotropy parameter initial guess beta0 for
+             ! gOM and gT models
+
+rbetag = 1.0 !rbeta for the velocity anisotropy
+
+
+rjafg = 0.039  !Jaffe radius for BCG mass profile in Mpc
+
+
+xmstarg = 0.00003  !Stellar Mass-to-light ratio for BCG  4.40
+
+
 ************************************************************************
 *************  Model options *******************************************
 
-H0 = 70.0   ! Hubble constant at z=0   
-                           
-za = 0.0    ! average redshift of the cluster (needed to evaluate Hz)  
-                                                     
-Olam = 0.7   ! Omega lambda density parameter  
-             
-Omegam = 0.3  ! Omega matter density parameter 
-             
-Rlow = 0.05  ! Inner projected radius for sample selection (Mpc)  
-             
-Rup = 1.41   ! Outer projected radius for sample selection (Mpc)  
-             
+H0 = 70.   ! Hubble constant at z=0
+
+za = 0.023    ! average redshift of the cluster (needed to evaluate Hz)
+
+Olam = 0.7   ! Omega lambda density parameter
+
+Omegam = 0.3  ! Omega matter density parameter
+
+Rlow = 0.05  ! Inner projected radius for sample selection (Mpc)
+
+Rup = 2.3   ! Outer projected radius for sample selection (Mpc)
+
 
 N(R) = pNFW
              ! model for number density profile N(R)
-             ! Here we list the labels for N(R) and 
+             ! Here we list the labels for N(R) and
              ! then the corresponding profile:
-             ! pNFW=projected NFW / pHer=projected Hernquist / 
+             ! pNFW=projected NFW / pHer=projected Hernquist /
              ! beta=beta-model
-    
+
 al = -0.00   ! N(R) negative exponent (only if knfit=3)
-             
 
-weights = 0  ! weights are given in the dataset? Y/N=1/0 
+betaBCG = OM    !model for the BCG velocity anisotropy profile
+                !C= Constant / OM= Osipkov&Merritt
 
-M(r) =  mNFW_BH		  
-             ! mass profile model. 
-             ! Here we list the labels for M(r) and 
-             ! then the corresponding profile:  
-             ! NFW=NFW/ Her=Hernquist/ PIEMD=PIEMD/ Bur=Burkert/ 
-             ! SoftIS=SoftIS/! Eis5=Einasto_m=5/ 
-             ! mNFW_LH = mod_NFW linear Horndeski/
+rabcg= 20.1  !Beta radius for OM profile of the BCG
+
+xlumbcg= 0.000049 !Luminosity of the BCG (10^11 Lsol)
+
+
+weights = 0  ! weights are given in the dataset? Y/N=1/0
+
+M(r) = NFW
+             ! mass profile model.
+             ! Here we list the labels for M(r) and
+             ! then the corresponding profile:
+             ! NFW=NFW/ Her=Hernquist/ PIEMD=PIEMD/ Bur=Burkert/
+             ! SoftIS=SoftIS/! Eis5=Einasto_m=5/
              ! mNFW_BH = mod_NFW beyond Horndeski/
-             ! mNFW_GC= mod_NFW general chameleon/
-             ! gNFW = generalized NFW
-              
-Beta(r) = T   
+             ! mNFW_GC= mod_NFW general chameleon (includes Hernquist for eim=3)/
+             ! mBur_GC= mod_Burkert general chameleon/
+	     ! mTotal_GC = multi-component mass profile in general chameleon/
+             ! gNFW_GC = generalized NFW in general chameleon (fixed exponent eim)/
+             ! gNFW = generalized NFW/
+             ! RG = Refracted Gravity/
+             ! gNFW_CDE = Clustering Dark Energy
+
+Beta(r) = gT
              ! Anisotropy model.
              ! Here we list the labels for beta(r) and
-             ! then the corresponding profile: 
-             ! C=Constant/  ML=Mamon&Lokas/ 
+             ! then the corresponding profile:
+             ! C=Constant/  ML=Mamon&Lokas/
              ! OM=Osipkov-Merritt/  WJ=simplified Wojtak/
              ! T=simplified Tiret/ gT= generalized Tiret
-             ! O= (Opposite) modified Tiret/ 
-             ! gOM= generalized Osipkov-Merritt
-              
-rcut= 1.0    ! PIEMD model rcut in Mpc (only used if M(r)=PIEMD) 
+             ! O= (Opposite) modified Tiret/
+             ! gOM= generalized Osipkov-
+`	     ! BP = Pizzuti&Biviano model (see Pizzuti et al., 2026a)
+
+FreeBeta = 0 !rbeta free parameter for gT, gOM and BP  
+
+rcut= 1.0    ! PIEMD model rcut in Mpc (only used if M(r)=PIEMD)
+
+eim=  2      ! Exponent of the Einasto profile
+
+FASTMODE= 0  ! Run MG-MAMPOSSt in fast mode interpolating over data points
+
+OPT= -1     	 ! optimization algorithm: 0/1/2=bobyqa/newuao/powell
+             ! -1 skip optimization
+
+BCG = 1      !Do you want to consider the BCG?
+
+BCG_Data = 0 !Do you want to consider VDP data from the BCG as external file?
+
+Baryons = 1  !Do you want to include gas/galaxies separately?
+
+********* Baryons parameters values ***********************************
+
+rho0gas = 8.468  !rho0gas gas (units of 10^13 M_sun/Mpc^3) 
+
+rsgas = 0.30     !scale radius of baryons (Mpc)
+
+srhoga = 0.0      !sigma of the rho0gas gas
+
+srsga = 0.0     !sigma of the scale radius of gas (Mpc)
  
-             
-FASTMODE= 1  ! Run MG-MAMPOSSt in fast mode interpolating over data points
-             
-OPT= 1       ! optimization algorithm: 0/1/2=bobyqa/newuao/powell
-             ! -1 skip optimization 
-                           
-screen= 0    ! for linear f(R) kmp.eq.7, one can decide to set 
-             ! an instantaneous transition between 
-             ! screeening and linear regime, by using the 
-             ! analytical approximation of Lombriser+12.                
-             !-1/0/1/2=noscreen (general Hordenski)/noscreen f(R)/
-             ! screen(instantaneous transition)
-             ! /screen (arctan transition)    
-                  			   
+rhostar = 3.34  !rho0star galaxies (units of 10^13 M_sun/Mpc^3) 
+ 
+rstar = 0.223    !scale radius of galaxies (Mpc) 
+
+srhostar = 0.0   !sigma of the rhostar galaxies
+
+srstar = 0.0     !sigma of the scale radius of galaxies (Mpc)
+
+kbeta = 0       !for beta =1 or beta = 2/3 in the beta model of the gas
 ************************************************************************
 ********* parameter limits *********************************************
 
-r2low= 0.4   !r200 lower bound 
-              
-r2up= 5.0    !r200 upper bound 
-              
-rclow= 0.05  !rc lower bound 
-              
-rcup= 3.9    !rc upper bound
+r2low= 1.4   !r200 lower bound
+
+r2up= 2.6    !r200 upper bound 
+
+rclow= 0.2  !rc lower bound !0.47
  
-rslow= 0.04  !rs lower bound 
-              
-rsup= 3.9    !rs upper bound 
-              
+rcup= 0.8   !rc upper bound. !0.59
+
+rslow= 0.16  !rs lower bound
+
+rsup= 5.56   !rs upper bound
+
 blow= 0.5    !beta lower bound
-              
-bup= 7.1     !beta upper bound 
-              
-A1low = -0.67 !first MG parameter lower bound 
-              
-A1up =   7.2  !first MG parameter upper bound
-              
-A2low=  -12.0 !second MG parameter lower bound
-              
-A2up= 12.0   !second MG parameter upper bound    
-              
-b2low = 0.5  !second beta parameter lower bound 
-              
-b2up = 7.1   !second beta parameter upper bound
+
+bup= 5.0   !beta upper bound
+
+A1low = -0.001 !first MG parameter lower bound
+
+A1up =   0.993  !first MG parameter upper bound
+
+A2low=  -10.0001 !second MG parameter lower bound
+
+A2up= 20.0   !second MG parameter upper bound
+
+A3low = -0.01 !third MG parameter lower bound
+
+A3up = 10.99   !third MG parameter upper bound
+
+b2low = 0.4  !second beta' parameter lower bound
+
+b2up = 4.1   !second beta' parameter upper bound
+
+rbetalow = 0.03  !rbeta parameter lower bound
+
+rbetaup = 3.1   !rbeta parameter upper bound
+
+rjalow = 0.021 !rjaffe lower bounds
+
+rjaup = 0.05   !rjaffe upper bounds
+
+xmalow = 0.00001 !M/L lower bounds 0.92
+
+xmaup= 6.0   !M/L upper bounds 3
+
+***** switches to control the parameter space exploration **************	
+ 
+nmcmc = 1  !grid exploration (0) or MCMC Metropolis-Hastings algorithm (1)?
+
+Nsample = 110000 !Number of points in the MCMC run sampling
+
+GaussianPrior = 0  !kind of prior Flat/Gaussian 0/1
+
+FlatPriorBeta = 1 !Keep flat priors in beta? Y/N = 1/0
+
+FlatPriorBeta0 = 1 !Keep flat priors in beta0? Y/N = 1/0
+#*************** LENSING PARAMETERS ************************************
+
+nlens = 0  !Forecasts with additional (lensing) information for rs and r200
+		   !add a lensing probability distribution to the likelihood  (only NFW)    
+		   !NOTE: for Vainshtein screening, it computes 
+		   ! the full tangential shear profile. 
+	           !rm2 Bur = 1.521*rs  !rm2 Her = 0.5*rs   
+		   !rm2 gnFW=(2-gamma)*rs  rm2 Iso = sqrt(2)*rs
+  
+
+r200t = 2.64 !r200t,rst: peak values for the parameters in the lensing likelihood 
+rst = 0.4
+
+!5) sigma(r200)/r200, sigma(r_s)/r_s, correlation of lensing priors for 
+the case of Chameleon screening and linear Horndeski. 
+! Sigma_ell, sigma_lss, ngal for Vainsthein lensing simulation.
+delta1 = 0.08
+delta2 = 0.32
+delta3 = 0.78
 
 ************************************************************************
+lensing_file = 0 !add lensing chains from file
+
+nLogP = 1 !Explore phi NOT in log (1/0) for general chameleon
+

@@ -1,0 +1,26 @@
+# build dirs
+build/
+_build*/
+_install/
+
+# Fortran/CMake artifacts
+*.o
+*.mod
+*.a
+*.so
+*.dylib
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+install_manifest.txt
+
+# Executables
+gomamposstopt
+*.exe
+*.out
+bin/
+sw/
+
+# macOS
+.DS_Store

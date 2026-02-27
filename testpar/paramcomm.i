@@ -1,0 +1,10 @@
+       common /params/rinfinity,rlow,rup,rc,al,rs,cbe,
+     &     xmin,v200,h0,
+     &     rlowin,rupin,r200,r200min,rsg,gamg,gam,
+     &     cbeg,rcut,vainp,za,dang,rcg,
+     &     rjaf,xlumbcg,xmstarlg,xmstarl,
+     &     cmean,ahm,bhm,ipar(6),
+     &     kani,kgas,kmp,nr200,klcdm,kmfl,kaml,klfm,
+     &     knfit,nrs,nrc,nbs,nml,ngam,
+     &     kkurt,kbsp,kintrv,krunits,kopt,
+     &     vj,ej,omega0,omegal
