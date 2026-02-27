@@ -4,8 +4,16 @@
      &     cbeg,rcut,vainp,za,rv,dang,rcg,tmmin,tmassg,tmingrid,Aa,Bb,
      &     tstrnz,text,tmass,hone,honeg,hmin,tmlow,tmup,blow,bup,rcup,
      &     cmean,ahm,bhm,aQ,scrlow,scrup,r2low,r2up,rslow,rsup,rclow,wr,
-     &     va,teps(7),cbe0,cbe0g,cb0low,cb0up,kani,kgas,kmp,nr200,nscr,
-     &     Nsample,kpro,kscr,knfit,nrs,nrc,nbs,nhone,nexpo,nhs,ipar(7),
-     &     nhone1,nhone2,ntmass,nt1,nt2,kkurt,kbsp,kintrv,krunits,kopt,
-     &     kaml,klfm,kdata,klcdm,kmfl,nb2    
+     &     rtbcg,va,teps(11),cbe0,cbe0g,cb0low,cb0up,rjaf,xmstar,
+     &     xlumbcg,rabcg,rjalow,rjaup,rjafg,xmalow,xmaup,xmstarg,xscCH,
+     &     dA3,dA3g,dA3low,dA3up,xsBCG,ax,alimi,eim,rsgas,rho0gas,rst1,
+     &     srhoga,srsga,rhog1,rsga1,rstar,rhostar,srhost,srstar,rhost1,
+     &     rbetag,rbeta,rbetaup,rbetalow,rbmin,rbmingrid,tjnew,sjnew,
+     &     sjold,tjold,nlens,nmcmc,
+     &     nrbeta,kmody,ipriorGauss,ifreeBeta,ipriorBeta,ipriorBeta0,
+     &     ntmass,nt1,nt2,kkurt,kbsp,kaml,klfm,kdata,klcdm,kmfl,nr200,   
+     &     nscr,kgas,kmp,kbcg,kani,nb2,nhone1,nhone2,Nsample,nexpo,kfs2,
+     &     nhs,ipar(11),njaf,nxmas,nbs,nhone,knfit,nrs,nrc,kintd,kbdt,
+     &     kbary,kopt,kpro,kanbcg,ncutof,kscr,kintrv,krunits,kdbcg,nA3,
+     &     kalpha,naddlens, nLogP
 

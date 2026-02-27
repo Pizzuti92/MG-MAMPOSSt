@@ -16,11 +16,6 @@
 !>   All the routines in this block need external inputs as described below.
 !!   In particular, the COMMON block of parameters "paramsoptS.i" should always be included.
 
-!>  
-
-
-
-
 
 !>  \ingroup MAM
       subroutine mamposst(di,ve,eve,rso,vso,npg1)
@@ -81,38 +76,51 @@
       implicit integer*4 (i-n)
       logical*4 eval
       parameter (pig=3.1415926535d0,iga=25000,
-     &     grav=4.302e-9,q0=-0.64,clight=2.99792458d5, npar=7)
+     &     grav=4.302e-9,q0=-0.64,clight=2.99792458d5, npar=11)
       dimension di(npg1),ve(npg1),eve(npg1),rso(npg1),vso(npg1),
      &     xfv(2), sigma(npar) 
       dimension dpp(25000),vpp(25000),epp(25000),wpp(25000), 
      &     did(25000),viv(25000),eie(25000),wiw(25000)
-      dimension freepar(7),freelow(7),freeup(7),wpar(5000),xi(7,7)
+      dimension freepar(npar),freelow(npar),freeup(npar),wpar(5000),
+     &     xi(npar,npar)
       CHARACTER(len= 1) ARR1
       character(len= 2) arr2
       character(len = 13) :: filename
+      character(len = 16) :: filebcg
       character(len=4) :: dat
       character(len=300) :: buffer, label, label2
       integer :: pos, pos1, pos2, posl1, posl2, posl, poscom
       integer, parameter :: fh = 15
       integer :: ios = 0
       integer :: line = 0
+      logical is_cham, use_u
 
       include 'paramsoptS.i'
+      include 'datavdp.i'
       include 'datarv.i'
       include 'units.i'
       include 'free.i'
       include 'probs.i'
+      include 'barions.i'
 
       external fcn1,fcn2,fcn3,fa
       external Plens
       external sr2int,sr2out,sigmar1,sigmar2,sigmar3,gwenu
 
       print *,' Entering MAMPOSSt subroutine'
+      
 c     Opening log file for keeping track of all the options
       open(11,file="Run_info.txt",status='unknown')
       write(11,*) 'Information about the current run'
-      write(11,*) ''
-
+      write(11,*) ''      
+      
+      
+c     Open files containing the gas and galaxy mass parameters      
+      if (kbary.eq.1) then
+       open(92, file="GasGal_mass.txt", status='unknown')
+       write(92,'(4(a13,2x))') 'rhogas', 'rsgas', 'rhostar', 'rstar'
+      endif
+    
 c     Select only galaxy members within the requested radial range
 
       rup=-1.e10
@@ -137,6 +145,7 @@ c     The radial selection range is in units of Mpc
       enddo
       nga=jsel
       write(*,932) nga,rlow,rup
+      write(11,932) nga,rlow,rup
  932  format(/' Using ',i5,' galaxies in the fits',/,
      +     ' in the radial range: ',f6.3,'--',f6.3,' Mpc')
 
@@ -167,11 +176,54 @@ c     NFW, Hernquist or beta-model (fixed alpha)
 
          write(*,195) rc
          write(11,195) rc
+         
  195     format(' Best-fit to N(R) outside MAMPOSSt: r_tr=',f6.3)
 
       endif
 
+C******************
+      if (kbcg.eq.1.and.kbdt.eq.1) then
+            !read data file of BCG
+       !filebcg='data/vel_bcg.dat'
+       !open (12, FILE=filebcg, STATUS='OLD')
+        jj=0
+        j0=-1
+        dimin=1.e12
+ 406    continue
+                
+        read(81,*,end=176) dmpc,dvr,dev !12
+        jj=jj+1
+        rbcg(jj)=dmpc
+        sbcg(jj)=dvr
+        esbcg(jj)=dev
+       write(*,*) rbcg(jj), sbcg(jj), esbcg(jj)
+        goto 406
+ 176    continue
+        close(81) !12
+        nbcg=jj
+        
+       endif
+       
+       
+      if(kbary.eq.1) then
+      write(*,*) 'inclusion of gas and galaxies from a separate file'
+      open(12,file='data/massbar.dat',status='old')
+      i=0
+ 717  continue
+      read(12,*,end=999) rgasr,xmgasr
+      i=i+1
+      rgas(i)=rgasr
+      xmgas(i)=xmgasr*1.e+13
 
+      goto 717
+ 999  continue
+      close(12)
+      ngas=i
+!      do k = 1, 10000
+!       x = 0.001+0.01*k
+!       write(*,*) fbars(x), fbars2(x)
+!      enddo
+      endif
 
 c     switches to control the grid search *****************	            
       open(fh, file='Options.txt')
@@ -236,62 +288,7 @@ c            enddo
     
 c            label2=label(ic:)
 
-            
             select case (label)
-            case ('nmcmc')
-                read(buffer, *, iostat=ios) nmcmc
-                if (ios.eq.-1) then
-                    ios=0
-                    nmcmc=1
-                endif  
-                !write(*,"('  Read nmcmc:   ',i10)") nmcmc
-                if (nmcmc.gt.4.or.nmcmc.lt.0) nmcmc=0
-                if (kdata.eq.0) then
-                 if (nmcmc.gt.1) nmcmc=0
-                endif
-            case ('Nsample')
-                read(buffer, *, iostat=ios) Nsample
-                if (ios.eq.-1) then
-                    ios=0
-                    Nsample=400000
-                endif 
-                !write(*,"('  Read Nsample:   ',i10)")  Nsample
-                
-!              lensing                 
-            case ('nlens')
-                read(buffer, *, iostat=ios) nlens
-                if (ios.eq.-1) then
-                    ios=0
-                    nlens=0
-                endif 
-                !write(*,"('  Read nlens:   ',i10)") nlens 
-                if (nlens.gt.1.or.nlens.lt.0) nlens=0
-                if(kmp.ne.7.and.kmp.ne.9.and.kmp.ne.8) nlens=0
-            case ('r200t')
-                read(buffer, *, iostat=ios) r200t
-                if (ios.eq.-1) then
-                    ios=0
-                    if (nlens.eq.1) then 
-                      write(*,*) 'error: lensing mode requires an'
-                      write(*,*) 'input value for r200. '
-                      write(*,*) 'Switching to nlens=0'
-                      nlens=0
-                      r200t=0.0d0
-                    endif
-                endif 
-                !write(*,"('  Read r200t:   ',f10.2)") r200t
-            case ('rst')
-                read(buffer, *, iostat=ios) rst
-                if (ios.eq.-1) then
-                    ios=0
-                    if (nlens.eq.1) then 
-                      write(*,*) 'error: lensing mode requires an'
-                      write(*,*) 'input value for rs. '
-                      write(*,*) 'Switching to nlens=0'
-                      nlens=0
-                      rst=0.0d0
-                    endif
-                endif 
                 
                 !write(*,"('  Read rst:     ',f10.2)")  rst
             case ('delta1')
@@ -337,7 +334,14 @@ c            label2=label(ic:)
                     Nclust=1
                 endif                 
                 !write(*,"('  Read Nclust:   ',i10)") Nclust
-
+                if(Nclust.gt.1.and.kbcg.eq.1) then
+                 write(*,*) '**** WARNING *********'
+                 write(*,*) 'no BCG data for more than one cluster'
+                 write(*,*) ' setting kbcg=0'
+                 kbcg=0
+                endif
+                
+                
             case ('nsingle')
                 read(buffer, *, iostat=ios) nsingle
                 if (ios.eq.-1) then
@@ -346,7 +350,7 @@ c            label2=label(ic:)
                 endif                 
                 !write(*,"('  Read nsingle:   ',i10)") nsingle
                 if (nsingle.gt.1.or.nsingle.lt.0) nsingle=0
-                 
+            
 !         additional options                
             case ('istop')            
                 read(buffer, *, iostat=ios) istop
@@ -369,6 +373,10 @@ c            label2=label(ic:)
                     teps(5)=0.1
                     teps(6)=0.1
                     teps(7)=0.1
+                    teps(8)=0.1
+                    teps(9)=0.1
+                    teps(10)=0.1
+                    teps(11)=0.1
                 endif 
                 !write(*,"('  Read teps:   ',7(f10.2))") teps
             case ('delik')            
@@ -480,6 +488,10 @@ c     6 according to the choice of the user
       ipar(5)=1
       ipar(6)=1
       ipar(7)=1
+      ipar(8)=1
+      ipar(9)=1
+      ipar(10)=1
+      ipar(11)=1
 
       facguess=1.0   ! factor to move away from best guess
 
@@ -513,7 +525,7 @@ c     define free parameters
       if (ntmass.gt.0) then   ! modified grav parameter
          ip=ip+1   
          if (kmp.ne.8) freepar(ip)=dlog10(facguess*tmassg)
-         if (kmp.eq.9) then !explore from 0 to 1 the range of parameter
+         if (kmody.eq.1.and.kmp.ne.8.or.kmp.eq.17) then
          ! in the case of CS 
             freepar(ip)=(1-dexp(-facguess*tmassg*0.1))
          endif
@@ -531,10 +543,41 @@ c     define free parameters
       else
          ipar(7)=0
       endif
+      
+      if (njaf.gt.0) then     ! scale radius jaffe profile BCG
+         ip=ip+1
+         freepar(ip)=dlog10(facguess*rjafg)
+      else
+         ipar(8)=0
+      endif
+      
+      if (nxmas.gt.0) then     ! m/L jaff profile BCG
+         ip=ip+1
+         freepar(ip)=dlog10(facguess*xmstarg)
+         
+      else
+         ipar(9)=0
+      endif
+      
+      if (nA3.gt.0) then    !dA3 MG parameter
+       ip=ip+1
+       freepar(ip)=dlog10(facguess*dA3g)
+      else
+         ipar(10)=0
+      endif    
+      
+      if (nrbeta.gt.0) then    !rbeta parameter
+       ip=ip+1
+       freepar(ip)=dlog10(facguess*rbetag)
+      else
+         ipar(11)=0
+      endif            
+       
       if (nhone.gt.0) then   ! screening parameter
          ip=ip+1
          freepar(ip)=dlog10(facguess*screeg)
-         if(kmp.eq.9) then
+         if (kmody.eq.1.and.kmp.ne.8.or.kmp.eq.17) then
+         !if(kmp.eq.9.or.kmp.eq.11.or.kmp.eq.12.or.kmp.eq.15) then
           freepar(ip)=facguess*screeg/(facguess*screeg+1)
          endif
 !         if (kmp.eq.8) then
@@ -548,41 +591,58 @@ c     define free parameters
      
       
       nfreepar=ip
-      write(11,*) 'Running MG-MAMPOSSt with the selected profile:'
+      write(11,*) 'Running MG-MAMPOSSt with the selected mass profile:'
       select case(kmp)
        case(1)
-	write(11,*) 'NFW mass model'
+	     write(11,*) 'NFW mass model'
        case(2)
-	write(11,*) 'Hernquist mass model'
+	     write(11,*) 'Hernquist mass model'
        case(3)
-	write(11,*) 'PIEMD mass model'
+	     write(11,*) 'PIEMD mass model'
        case(4)
-	write(11,*) 'Burkert mass model'
+	     write(11,*) 'Burkert mass model'
        case(5)
-	write(11,*) 'Soft Isothermal mass model'
+	     write(11,*) 'Soft Isothermal mass model'
        case(6)
-	write(11,*) 'Einasto mass model with n=5'
-       case(7)
-	write(11,*) 'mNFW (linear Hordenski) mass model'
+	     write(11,*) 'Einasto mass model with n=5'
+!       case(7)
+!	     write(11,*) 'mNFW (linear Hordenski) mass model'
        case(8)
-	write(11,*) 'mNFW DHOST mass model'
+	     write(11,*) 'mNFW DHOST mass model'
        case(9)
-	write(11,*) 'mNFW chameleon screening mass model'
+	     write(11,*) 'mNFW chameleon screening mass model'
        case(10)
-	write(11,*) 'gNFW mass model'
+	     write(11,*) 'gNFW mass model'
+       case(11)
+         write(11,*) 'mBurkert chameleon screening mass model'
+       case(12)
+         write(11,*) 'mEinasto chamelon screening mass model'
+       case(13)
+         write(11,*) 'Refracted garvity mass model'
+       case(15)
+         write(11,*) 'mIsothermal chameleon screening mass model'
+       case(17)
+         write(11,*) 'multi-component chameleon screening mass model' 
+       case(18)
+         write(11,*) 'multi-component clustering dark energy model' 
       end select
-      
-      write(*,622) nfreepar,ipar,r200g,rcg,rsg,cbeg,tmassg,
-     &             screeg,cbe0g,kmp,kani
+      write(11,*) ' '
+      if(kbcg.eq.1.and.kbdt.eq.1) then
+       write(11,*) 'BCG data added to the fit'
+      endif
+
       write(11,622) nfreepar,ipar,r200g,rcg,rsg,cbeg,tmassg,
-     &             screeg,cbe0g,kmp,kani
+     &             screeg,cbe0g,rjafg,xmstarg,dA3g,rbetag,kmp,kani
+      write(*,622) nfreepar,ipar,r200g,rcg,rsg,cbeg,tmassg,
+     &             screeg,cbe0g,rjafg,xmstarg,dA3g,rbetag,kmp,kani
  622  format(/,' Number of free parameters = ',i1,/
-     &         ' r200, rc, rs, anis1, A1, A2, anis2 = ',7(i1,1x),/,
-     &         ' Initial guess values: ',7(f6.3,1x),/,
+     & 'r200, r_tr, r_s, anis1, A1, A2, anis2, rjaf, M/L, A3, rbeta = ',
+     &  11(i1,1x),/,
+     &         ' Initial guess values: ',11(f6.3,1x),/,
      &     ' mass model= ',i2,/,
      &     ' anisotropy model= ',i2,/)
       
-      
+      !For DHOST, the optimization algorithm cannot work with Y2
       if(kmp.eq.8.and.nhone.gt.1) then
        ipar(6)=0 
        nfreepar=nfreepar-1
@@ -607,8 +667,12 @@ c     start optmization unless not required
          rsnew=rsg
          cbnew=cbeg
          cb0new=cbe0g
+         rbetanew=rbetag
          scrnew=screeg
          tmassnew=tmassg
+         dA3new = dA3g
+         rjafnew=rjafg
+         xmsnew=xmstarg
          goto 732
       endif
       if (kopt.eq.2.and.kani.gt.10) then
@@ -685,8 +749,8 @@ cc 294        inew=inew+1
 
          else
 
-            ftol=1.d-4          ! desired fractional tolerance in function to be minimized
-            npars=7  ! max number of free params
+            ftol=1.d-5          ! desired fractional tolerance in function to be minimized
+            npars=11  ! max number of free params
             nfreefunc=nfreepar  ! passed through a common to function func
 
             do ixi=1,npars
@@ -716,7 +780,7 @@ cc 294        inew=inew+1
       else                      ! when there is only 1 free param call POWELL
 
          ftol=1.d-4             ! desired fractional tolerance in function to be minimized
-         npars=7                ! max number of free params
+         npars=11                ! max number of free params
          nfreefunc=nfreepar     ! passed through a common to function func
          
          do ixi=1,npars
@@ -742,66 +806,106 @@ cc 294        inew=inew+1
 				      !the minimum found
       
       call freepareva(nfreepar,freepar,r200new,rcnew,rsnew,cbnew,
-     & tmassnew,scrnew,cb0new)
-      
-      
-      if(kmp.eq.8.and.nhone.gt.1) ipar(6)=1 !set again the free parameter
+     & tmassnew,scrnew,dA3new,cb0new,rbetanew,rjafnew,xmsnew)
+      !At the end of the optimization, if Y2 was a free parameter,
+      !put it back to free
+      if(kmp.eq.8.and.nhone.gt.1) ipar(6)=1 
       call sigmaeva(npar,sigma) 
 
       
       
       write(*,*) 
-      write(*,*) 'optimiz. results: r200,rc,rs,beta,A1,A2,cbe0,-logL'
+      write(*,*) 'opt.results: r200,rc,rs,beta,A1,A2,rj,xmb,cbe0,-logL'
 
+
+      nfv=2 !dimension parameter for vmaxlik
+       
       rs=rsnew
       cbe=cbnew
       cbe0=cb0new
+      rbeta=rbetanew
       xfv(1)=rs
       xfv(2)=cbe
       r200=r200new
       tmass=tmassnew
       screen=scrnew
+      dA3 = dA3new
+      rjaf=rjafnew
+      xmstar=xmsnew
+      
+      if (kmp.eq.11.or.kmp.eq.12) then
+        xscCH=alimi
+        alimit=alimi
+        alimbc=0.0001
+        call find_xsc(xscCH,alimit)
+        
+      endif        
+      
+      !Environmental screening  - correct advanced modelling
+      if (kmp.eq.17) then
+       xlim = 1.0e-3
+       xscCH = ScreenGen(xlim)
+      endif
+      
+      
       call vmaxlik(nfv,xfv,fml2)
 
+
+       
       write(*,429) r200new, rcnew, rsnew, cbnew, tmassnew, scrnew, 
-     & cb0new, fml2
- 429  format(7(f6.3,2x),f10.3)
+     & dA3new, cb0new,rbetanew,rjafnew,xmsnew, fml2
+     
+ 429  format(11(f6.3,2x),f10.3)
       rs=rsg
       rc=rcg
       cbe=cbeg
       cbe0=cbe0g
+      rbeta=rbetag
+      xmstar=xmstarg
+      rjaf=rjafg
       xfv(1)=rs
       xfv(2)=cbe
       r200=temp
-
+      
+      dA3 = dA3g
       tmass=tmassg
       screen=screeg
+      if (kmp.eq.11.or.kmp.eq.12) then
+        xscCH=alimi
+        alimit=alimi
+        alimbc=0.0001
+        call find_xsc(xscCH,alimit)
 
+      endif
+      
+      
+      !Environmental screening  - correct advanced modelling
+      if (kmp.eq.17) then
+       xlim = 1.0e-3
+       xscCH = ScreenGen(xlim)
+      endif
+        
       call vmaxlik(nfv,xfv,fml3)
       write(*,*) 'likelihood of the initial value and Delta chi square:'
-      write(*,*) 'r200,rc,rs,beta,A1,A2, -logL, Delta chi square:'
-      write(*,439) r200,rc, rs, cbe,tmass,screen,cbe0,
+      write(*,*) 'parametrs, -logL, Delta chi square:'
+      write(*,439) r200,rc, rs, cbe,tmass,screen,cbe0,rjaf,xmstar,dA3,
      &   fml3, 2*(fml3-fml2)
- 439  format(7(f6.3,2x),(f10.3,2x),f6.3)
+ 439  format(10(f6.3,2x),(f10.3,2x),f6.3)
 
 
-c************ tepsilon values for istop (see option.txt) ***************      
-c      teps(1)=0.07
-c      teps(2)=0.07
-c      teps(3)=0.07
-c      teps(4)=0.07
-c      teps(5)=0.07
-c      teps(6)=0.07
-c      delik=2*0.15      
-c***********************************************************************            
+          
       
       rcdf=dabs((rc-rcnew)/rcnew)
       rsdf=dabs((rs-rsnew)/rsnew)
       r2df=dabs((r200-r200new)/r200new)
       cbdf=dabs((cbe-cbnew)/cbnew)
       cb2f=dabs((cbe0-cb0new)/cb0new)
+      rbdf=dabs((rbeta-rbetanew)/rbetanew)
       tmdf=dabs((tmass-tmassnew)/tmassnew)
+      dA3df=dabs((dA3-dA3new)/dA3new)
       scdf=dabs((screen-scrnew)/scrnew)
+      rjdf=dabs((rjaf-rjafnew)/rjafnew)
+      xmdf=dabs((xmstar-xmsnew)/xmsnew)
       dfm=2*(fml3-fml2)
       
       if (istop.eq.1) then  !stops if required
@@ -820,11 +924,29 @@ c***********************************************************************
 	     write(*,*) 'Initial guess not fulfilling the requirements'
          stop
        endif
-       if (cb2f.gt.teps(7)) then
+       if (cb2f.gt.teps(7).or.rbdf.gt.teps(11)) then
          write(*,*) ''
 	     write(*,*) 'Initial guess not fulfilling the requirements'
          stop
        endif
+       if (rjdf.gt.teps(8)) then
+         write(*,*) ''
+	     write(*,*) 'Initial guess not fulfilling the requirements'
+         stop
+       endif
+       if (xmdf.gt.teps(9)) then
+         write(*,*) ''
+	     write(*,*) 'Initial guess  not ',
+     &     'fulfilling the requirements'
+         stop
+       endif
+       if (dA3df.gt.teps(10)) then
+         write(*,*) ''
+	     write(*,*) 'Initial guess not fulfilling the requirements'
+         stop
+       endif       
+       
+       
       else
        kreq=0
        if(dfm.gt.(2*delik)) kreq=1
@@ -832,7 +954,12 @@ c***********************************************************************
        if(r2df.gt.teps(1).or.rcdf.gt.teps(2).or.scdf.gt.teps(6)) kreq=1
         
        if (rsdf.gt.teps(3).or.cbdf.gt.teps(4).or.tmdf.gt.teps(5)) kreq=1
-       if (cb2f.gt.teps(7)) kreq=1
+       if (cb2f.gt.teps(7).or.rbdf.gt.teps(11)) kreq=1
+       if (rjdf.gt.teps(8)) kreq=1
+       if (xmdf.gt.teps(9)) kreq=1
+       if (dA3df.gt.teps(10)) kreq=1
+       
+       
        if (kreq.eq.1) then 
         write(*,*) ''
         write(*,*) 'Initial guess not fulfilling the requirements'
@@ -853,10 +980,11 @@ c   if the best fit are out of the range, stop the code
        write(*,*) 'redefine the best "rs" fit as the average value'
        rsnew=(rsup+rslow)/2
       endif 
-      if(rcg.gt.rcup.or.rcg.lt.rclow) then
+      if(rcnew.gt.rcup.or.rcnew.lt.rclow) then
          write(*,*) 'Warning: best fit "rc" outside the prior range'
         write(*,*) 'redefine the best fit "rc" as the average value'
         rcnew=(rcup+rclow)/2
+        
       endif 
       if(cbnew.gt.bup.or.cbnew.lt.blow) then
         write(*,*) 'Warning: best fit "beta" outside the prior range'
@@ -873,14 +1001,37 @@ c   if the best fit are out of the range, stop the code
        write(*,*) 'Warning: best fit "screen" outside the prior range'
        write(*,*) 'redefine the best fit "screen"  as the average value'
        scrnew=(scrup+scrlow)/2
-       write(*,*) scrnew
+       
       endif
       if(cb0new.gt.cb0up.or.cb0new.lt.cb0low) then
         write(*,*) 'Warning: best fit "beta2" outside the prior range'
         write(*,*) 'redefine the best fit "beta2" as the average value'
         cb0new=(cb0up+cb0low)/2
       endif 
+
+      if(rbetanew.gt.rbetaup.or.rbetanew.lt.rbetalow) then
+        write(*,*) 'Warning: best fit "rbeta" outside the prior range'
+        write(*,*) 'redefine the best fit "rbeta" as the average value'
+        rbetanew=(rbetaup+rbetanew)/2
+      endif
       
+      if(rjafnew.gt.rjaup.or.rjafnew.lt.rjalow) then
+        write(*,*) 'Warning: best fit "rjaffe" outside the prior range'
+        write(*,*) 'redefine the best fit "rjaffe" as the average value'
+        rjafnew=(rjaup+rjalow)/2
+      endif 
+      
+      if(xmsnew.gt.xmaup.or.xmsnew.lt.xmalow) then
+        write(*,*) 'Warning: best fit "M*/L" outside the prior range'
+        write(*,*) 'redefine the best fit "M*/L" as the average value'
+        xmsnew=(xmaup-xmalow)/2
+      endif 
+      
+      if(dA3new.gt.dA3up.or.dA3new.lt.dA3low) then
+        write(*,*) 'Warning: best fit "dA3" outside the prior range'
+        write(*,*) 'redefine the best fit "dA3" as the average value'
+        dA3new=(dA3up-dA3low)/2
+      endif 
       
       
  732  continue  
@@ -892,131 +1043,347 @@ c   if the best fit are out of the range, stop the code
       write(*,*)  '**********************************'
       write(*,*)  ''
       itotal=0
+      
 
       call sigmaeva(npar,sigma)
-      !format(8(f13.5,2x),i2)
-      if(nlens.eq.0) then
-      WRITE(iu60,'(a,a12,2x,8(a13,2x))') '#','r200','rc','rs','cbe',
-     & 'A1','A2','cbe0','-log(P)', 'anisotropy'
-      WRITE(iu60,'(a,a12,2x,8(a13,2x))') '#','[Mpc]','[Mpc]','[Mpc]',
-     & '-','-','-','-','-', '-'
-      else
-      WRITE(iu60,'(a1,a12,2x,8(a13,2x))') '#','r200','rc','rs','cbe',
-     & 'A1','A2','cbe0','-log(P*Plens)', 'anisotropy'
-      WRITE(iu60,'(a,a12,2x,8(a13,2x))') '#','[Mpc]','[Mpc]','[Mpc]',
-     & '-','-','-','-','-', '-'
+      
+     
+
+      if(kbcg.eq.0.and.kmp.ne.13) then
+       if(nlens.eq.0) then
+         WRITE(iu60,'(11(a13,2x))') 'r200','rc','rs','cbe','A1','A2',
+     & 'A3','cbe0','rbeta','-log(P)', 'anisotropy'
+         WRITE(iu60,'(11(a13,2x))') '[Mpc]','[Mpc]','[Mpc]','-','-','-',
+     & '-','-','[Mpc]', '-' ,'-' 
+       else
+         WRITE(iu60,'(11(a13,2x))') 'r200','rc','rs','cbe','A1','A2',
+     & 'A3','cbe0','rbeta','-log(P*Plens)', 'anisotropy'
+        WRITE(iu60,'(11(a13,2x))') '[Mpc]','[Mpc]','[Mpc]','-','-','-',
+     & '-','','[Mpc]', '-', '-'      
+       endif
+       write(iu60, *) ''  
+      else  
+       if(nlens.eq.0) then
+         WRITE(iu60,'(13(a13,2x))') 'r200','rc','rs','cbe','A1','A2',
+     &   'A3','cbe0','rbeta','rjaffe','M/L','-log(P)', 'anisotropy'
+         WRITE(iu60,'(13(a13,2x))') '[Mpc]','[Mpc]','[Mpc]','-','-','-',
+     & '-','-','[Mpc]','[Mpc]','-', '-','-' 
+       else
+         WRITE(iu60,'(13(a13,2x))') 'r200','rc','rs','cbe','A1','A2',
+     & 'A3','cbe0','rbeta','rjaffe','M/L','-log(P*Plens)', 'anisotropy'
+        WRITE(iu60,'(13(a13,2x))') '[Mpc]','[Mpc]','[Mpc]','-','-','-',
+     & '-','-', '[Mpc]','[Mpc]','-', '-','-'      
+       endif
+       write(iu60, *) ''  
       endif
-      write(iu60, *) ''
+      
+      
+      nfv = 2
       if (nmcmc.eq.1) then  !Start the MCMC run 
        if (nsame.eq.0) then
-        icount=0
+        icount=0 !Steps in the MCMC
         call CPU_TIME(start) !uses cpu time for the random generator seed
-        nstar=int(100*start, kind=8)
+        nstar=int(10304*start, kind=8)
         nseed = 123434789+(-1)**nstar*nstar
-    
-        fmlb=f
+        
         if (kopt.lt.0) then
-          if (kmp.eq.9.and.nhone.eq.-1) scrnew=1./sqrt(6.0d0)
           rs=rsnew
           cbe=cbnew
           cbe0=cb0new
+          rbeta=rbetanew
           rc=rcnew
           xfv(1)=rs
           xfv(2)=cbe
           r200=r200new
           tmass=tmassnew
           screen=scrnew
-          
+          dA3 = dA3new
+          rjaf=rjafnew
+          xmstar=xmsnew
+        
 
-          call vmaxlik(nfv,xfv,f)
+         if (kmp.eq.11.or.kmp.eq.12) then
+            xscCH=alimi
+            alimit=alimi
+            alimbc=0.0001
+            call find_xsc(xscCH,alimit)
+         endif            
+
+
+      !Environmental screening  - correct advanced modelling
+         if (kmp.eq.17) then
+          xlim = 1.0e-3
+          xscCH = ScreenGen(xlim)
+        endif
+        
+        
+         call vmaxlik(nfv,xfv,f)
+         !write(*,*) r200,rs,cbe, f
+         
         endif
         fmlb=f
+        
+!********* add the BCG analysis ****************************************
+        if (kbcg.eq.1.and.kbdt.eq.1) then
+         rtbcg=20. !Max radius for the integration of the BCG integral
+         call vdplik(chibcg)
+         fmlb=fmlb+chibcg
+        endif
 
         nlonly=0    !do only lensing analysis 
 ! **********************************************************************
-        if (nlens.eq.1) then
-         if(kmp.eq.7.or.kmp.eq.9) then
-           fmlb=f-Plens(r200,rs)
+
+        if (nlens.eq.1.and.naddlens.eq.0) then
+        !If you have to add the lensing distribution, do it only 
+        !when you don't have it in an additional file
+
+         if (kmody.eq.1.and.kmp.ne.8) then
+           fmlb=fmlb-Plens(r200,rs)
            if (nlonly.eq.1) then
             fmlb=-Nclust*Plens(r200,rs)
-            
            endif
          endif
+         !TO ADD LENSING BCG (constraints on rjaffe and gamma)
+         !First attempt - only rs and r200
+         if (kmp.eq.17) then 
+           fmlb=fmlb-Plens(r200,rs)
+
+           if (nlonly.eq.1) then
+            fmlb=-Nclust*Plens(r200,rs)
+           endif
+         endif
+         
          if(kmp.eq.8) then
            call Likelens_bh(nplens,plen)
-           fmlb=f+plen
+           fmlb=fmlb+plen
            if (nlonly.eq.1) then
             fmlb=plen*Nclust
             
            endif
          endif
+         
+         
         endif
-c       cbnew=cbeg
+        
+c============ voglio trasformare i bounds  =============================
+c             trasformare tmass
+      
+      is_cham = (kmp.eq.9 .or. kmp.eq.11 .or. kmp.eq.12
+     &           .or. kmp.eq.15 .or. kmp.eq.16 .or. kmp.eq.17)
+
+      use_u = (is_cham .and. nLogP.eq.0 .and. nhone.le.0)
+      
+      if (is_cham .and. nhone.le.0) then
+       if (dabs(scrnew - 0.40d0) .le. 0.02d0) then
+          write(*,*) "Running in f(R) gravity: exploring log parameter"
+          nLogP = 0
+        endif
+      endif
+      
+            
+!       if (use_u .and. tmassnew.le.0.d0) then
+!         write(*,*) 'ERROR: tmassnew<=0 while using log10(tmass)'
+!         stop
+!      endif
+!      if (use_u) then
+!        dtm_log = dlog10(tmassnew)
+!        
+!      else 
+!        dtm_log = tmassnew
+!        
+!      endif
+      
+
 c****** defines temporary variables ************************************
         rsst=rsnew       
         cbt=cbnew
         cb0t=cb0new
+        rbt=rbetanew
         r2t=r200new
-        tmt=tmassnew
+        tmt= tmassnew
+        dA3t = dA3new
         rct=rcnew
         scrt=scrnew
+        rjat=rjafnew
+        xmst=xmsnew
+        
+        !Baryons
+        rhgta = rhog1
+        rhosta = rhost1
+        rsgnta = rsga1
+        rstnta = rst1
+    
+        !add the initial prior to the likelihood
+        if (ipriorGauss.ne.1) then
+          call priord(r2t,rct,rsst,cbt,tmt,scrt,dA3t,
+     &    cb0t,rbt,rjat,xmst,poini)
+        else
+          call priorG(r2t,rct,rsst,cbt,tmt,scrt,dA3t,
+     &    cb0t,rbt,rjat,xmst,poini) 
+        endif 
+        
+        !Add the distribution of the baryons
+        !If no baryons included, this is just a constant term
+        !call propose_baryons_rw_log(nseed, 0.05d0)
+        !call baryon_prior_penalty(pbar)
+        
+
+        fmlb = fmlb - poini !(at the beginning, the baryons posterior is always zero)
+        fml2 = fmlb !Check
+        
+        
         
 c********************************************************************** 
         write(*,*) 'MCMC over ', Nsample, 'trials'   
         cdc=0 !Dhost model with Y1=Y2=y
+
+        write (*,428) r2t, rct, rsst, cbt,
+     &       tmt, scrt, dA3t, cb0t,rbt, rjat,xmst,fml2, plen
+     !always accept the first trial
+c          if (kbcg.eq.1.or.kmp.eq.13) then
+c           write(iu60,274) r2t,rct,rsst,cbt,tmt,scrt,dA3t,cb0t,rbt,rjat,
+c     &      xmst,fmlb,kani
+c          else 
+c            write(iu60,674) r2t,rct,rsst,cbt,tmt,scrt,dA3t,
+c     &       cb0t,rbt,fmlb,kani 
+c          endif
+
         do while (icount<Nsample)
-         
-         if (mod(i,100).eq.0) then 
+
+         !if (mod(i,100).eq.0) then 
          !Change the seed for random generator
-            nseed=abs(nseed+(-1)**(nseed)*floor(nseed/4.))
-         endif
+         !   nseed=abs(nseed+(-1)**(nseed)*floor(nseed/4.))
+         !endif
+         
           r200n=r2t       
           rcn=rct
           rsn=rsst
           cbn=cbt
           cb0n=cb0t
+          rben=rbt
           tmassn=tmt
+          dA3n = dA3t
           scrn=scrt
+          rjan=rjat
+          xmsn=xmst
+          
           if (cdc.eq.1) scrn=tmt 
-          do i=1,6
-          if (float(itotal/500).lt.3) then
-           sigma(i)=(1+float(itotal/500))*sigma(i)
-          endif
-          enddo  
-          if (itotal.ge.2000) then
-            r200n=r200g
-            rcn=rcg
-            rsn=rsg
-            cbn=cbeg
-            cb0n=cbe0g
-            tmassn=tmassg
-            scrn=screeg
-          endif         
+c          do i=1,9
+c           if (float(itotal/500).lt.3) then
+c            sigma(i)=(1+float(itotal/500))*sigma(i)
+c           endif
+c          enddo 
+c ======== Check =======================================================
+c ====== DEBUG =====================================
+c         write(*,*) 'before'
+c          write (*,428) r200n, rcn, rsn, cbn,
+c     &       tmassn, scrn,dA3n,rjan,xmsn,fml2, fmlb !plen fml2
+c
+c           if(kbdt.eq.1) then
+c            write(*,*) 'r200,rc,rs,cbe,tmass,screen,A3,cbe0,rbeta,',
+c     &      'rjaf,xmstar, -log(Pmam), plen, -log(Lbcg)'
+c            write (*,418) r200n, rcn, rsn, cbn,
+c     &       tmassn, scrn, dA3n, cb0n,rben,rjan,xmsn,fml2, plen, chibcg2
+c           else
+c            write(*,*) 'r200,rc,rs,cbe,tmass,screen,A3,cbe0,rbeta,',
+c     &      'rjaf,xmstar, -log(Pmam), plen'
+c            write (*,428) r200n, rcn, rsn, cbn,
+c     &       tmassn, scrn, dA3n, cb0n,rben,rjan,xmsn,fml2, plen           
+c           endif     
+c           write(*,*) rgmass(3.2d0)
+c =================================================
          call tranmod(r200n,rcn,rsn,cbn,
-     &           tmassn,scrn,cb0n,sigma,7,nseed)
-         rs=rsn
-         cbe=cbn
-         cbe0=cb0n
-         r200=r200n
-         tmass=tmassn
-         screen=scrn
-         if(cdc.eq.1) screen=tmassn
-         rc=rcn
+     &           tmassn,scrn,dA3n,cb0n,rben,rjan,xmsn,sigma,npar,nseed)
+         
+c         write(*,*) 'after'
+c ==================================================
+         dlp = 0.0 ! lensing distribution
+         if (naddlens.eq.1) then
+          
+          if (nlens.eq.0) then
+           stop("ERROR! You selected nlens = 0, no lensing here")
+          endif
+          !Read the lensing data from the file 
+          select case(kmp)
+           case(9,11,12,15,16)
+              read(82,*, iostat=ios) r200_f, rs_f, dlp 
+               if(ios < 0) then
+                close(82)
+                exit
+              endif
+              rsn = rs_f
+              r200n = r200_f
+              
+           case(10,17) !when you have gamma as free parameter    
+              read(82,*, iostat=ios) r200_f, rs_f, dA3_f, dlp  
+              
+              if(ios < 0) then
+                close(82)
+                exit
+              endif
+              rsn = rs_f
+              r200n = r200_f
+              dA3n = dA3_f
+                                                                                             
+           case(8) !For DHOST, you read also the MG parameters
+              read(82,*, iostat=ios) r200_f, rs_f, dA1_f, dA2_f, dlp 
+              if(ios < 0) then
+                close(82)
+                exit
+              endif
+              rsn = rs_f
+              r200n = r200_f
+              tmassn = dA1_f
+              scrn  =  dA2_f
+              
+           case default
+              read(82,*, iostat=ios) r200_f, rs_f, dlp 
+              if(ios < 0) then
+                close(82)
+                exit
+              endif
+              rsn = rs_f
+              r200n = r200_f
+           end select
+          
+         endif 
 
-         omegal=Olam!6
-         omega0=Omegam!2.*(q0+omegal)
-         hz=h0*sqrt(omega0*(1.+za)**3+omegal)
-         rm200=100.*hz*hz/grav*r200**3
-         cmean=6.76*(rm200/1.e12)**(-0.098)
-         v200=10.*hz*r200
- 
-c         if (nrc.eq.-2) then
-
-c          write(*,*) ' Fit to N(R) up to R/r200=',rup/r200
-
-c          write(*,293) rc,r200/rc
-
-c         endif        
+        !Now add the baryons
+        rhgn = rhgta
+        rhosn = rhosta
+        rsgn = rsgnta
+        rstn = rstnta
+        
+        
+        call propose_baryons_rw_lin(rhgn, rhosn,rsgn,rstn,
+     &           nseed, 0.1d0)
+    
+        rs=rsn
+        cbe=cbn
+        cbe0=cb0n
+        rbeta=rben
+        r200=r200n
+        tmass=tmassn
+        dA3 = dA3n
+        rjaf=rjan
+        xmstar=xmsn
+        screen=scrn
+        !Redefine the baryons for the likelihood
+        rhog1 = rhgn
+        rhost1 = rhosn
+        rsga1 = rsgn
+        rst1 = rstn
+        if(cdc.eq.1) screen=tmassn
+        rc=rcn
+                  
+        omegal=Olam
+        omega0=Omegam
+        hz=h0*sqrt(omega0*(1.+za)**3+omegal)
+        rm200=100.*hz*hz/grav*r200**3
+        cmean=6.76*(rm200/1.e12)**(-0.098)
+        v200=10.*hz*r200
+        !Checkpoint 2
+        !write(*,*) r200, rs, rbeta, cbe, cbe0
 
 c     Mass follows light
 c
@@ -1027,6 +1394,9 @@ c
 c     concentration from c=c(M)
 c
           rs=r200/cmean
+
+c     Analysis of the Euclid sample. Ha-line galaxies, should have rc = 4*rs          
+          if (kfs2.eq.1) rc = 4 * rs
          endif
          
 c     a_ML forced = r_s
@@ -1049,34 +1419,46 @@ cc     in MBM for R<r200
 c
 cc               if (kintd.eq.1) rc=0.85*rs
 
-c++++++++++++++++++++ simple computation of the screening radius ++++
-c                     for f(R)= Hu&Sawicki with n=1 +++++++++++++++++             
-         if (kscr.eq.2) then
-          zb=za
-          Ric=5.44e-8*0.9*((1+zb)**3+4*Olam/Omegam)
-          n=nhs  !exp in H&S model
-          fr=Ric/(3*(n+1)*tmass*tmass+(n+2)*Ric)
-          intsuc=1
-          t=0.02d0
-          do while (intsuc.gt.0)
-           t=t+0.005d0
-           if (field(t).le.fr.or.t.ge.25.0d0) then
-             screen=t
-             
-             intsuc=0
-           endif
-          enddo 
-c                write(*,*) 'Screening radius found at ', screen
-c           scrn=screen !The screening parameter is the screening radius
-         endif         
-                        
+                            
          
          xfv(1)=rs
          xfv(2)=cbe
          
+c  Screening radius for Einasto or Burkert profile 
+         if (kmp.eq.11.or.kmp.eq.12) then
+            xscCH=alimi
+            alimit=alimi
+             alimbc=0.0001
+        
+            call find_xsc(xscCH,alimit) 
 
-         call vmaxlik(nfv,xfv,fml2)
-         Nrun=Nclust
+         endif         
+         
+      !Environmental screening  - correct advanced modelling
+        if (kmp.eq.17) then !.or.kmp.eq.9) then
+         xlim = 1.0e-3
+         xscCH = ScreenGen(xlim)
+       
+        endif         
+
+        
+    !        write (*,428) r200n, rcn, rsn, cbn,
+    ! &       tmassn, scrn, dA3n, cb0n,rben,rjan,xmsn,fml2, plen  
+        
+
+        call vmaxlik(nfv,xfv,fml2)
+       
+        
+        Nrun=Nclust
+
+!********* add the BCG analysis ****************************************
+
+         if (Nclust.eq.1.and.kbcg.eq.1.and.kbdt.eq.1) then
+          rtbcg=20. !Max radius for the integration of the BCG integral
+          call vdplik(chibcg2)
+          fml2=fml2+chibcg2
+          
+         endif
          if (nsingle.eq.1) then
           fml2=fml2*Nclust
           Nrun=1 !if nsingle=1 abort the cycle over Nrun different clusters
@@ -1129,9 +1511,7 @@ c           scrn=screen !The screening parameter is the screening radius
                 wiw(jgiu)=wpp(j)
                 if (did(jgiu).le.rlow) rlow=did(jgiu)
                 if (did(jgiu).ge.rup) rup=did(jgiu)
-c                write(*,*) did(jgiu),viv(jgiu),eie(jgiu)
-               endif
-               
+               endif               
               enddo
               ngam=jgiu
               
@@ -1139,48 +1519,103 @@ c                write(*,*) did(jgiu),viv(jgiu),eie(jgiu)
              fml2=fml2+fprova 
           enddo
 
-         
          plen=0.0d0
          if (nlens.eq.1) then  
-       
-          if(kmp.eq.7.or.kmp.eq.9) then
+          if (kmody.eq.1.and.kmp.ne.8) then !Chameleon modified gravity
+            plen=-Plens(r200n,rsn) 
+            if (naddlens.eq.1) plen = 0.0d0 !dlp do not resample twice!!
+            fml2=fml2 + Nclust*plen
+            
+            if (nlonly.eq.1) fml2= Nclust*plen
+          endif
+          !TO ADD BCG LENSING
+         !First attempt - only rs and r200
+         if (kmp.eq.17) then 
             fml2=fml2-Nclust*Plens(r200n,rsn)
             plen=-Plens(r200n,rsn)
-            if (nlonly.eq.1) fml2=-Nclust*Plens(r200n,rsn)
-          endif
+           if (nlonly.eq.1) then
+            fml2=-Nclust*Plens(r200n,rsn)
+           endif
+         endif
           if(kmp.eq.8) then
-           
-           call Likelens_bh(nplens,plen)
-
+           if (naddlens.eq.0) then
+            call Likelens_bh(nplens,plen)
+           else
+            plen = 0.0d0 !dlp do not resample twice!!
+           endif
            fml2=fml2+Nclust*plen
            if (nlonly.eq.1) fml2=plen*Nclust
           endif
          endif
+c**************** compute the priors (flat prior) **********************   
+         !Baryons
+         call baryon_prior_penalty(pbar) 
 
-         call priord(r200n,rcn,rsn,cbn,tmassn,scrn,cb0n,pout1)
-          
-         call acceptance(-fmlb,(-fml2+pout1),eval,nseed)
-
- !        write (*,428) r200n, rcn, rsn, cbn, 
- !    &   tmassn, scrn,fml2+pout1, fmlb 
+!MCMC WP        
+         if (ipriorGauss.ne.1) then
+          call priord(r200n,rcn,rsn,cbn,tmassn,scrn,dA3n,
+     &    cb0n,rben,rjan,xmsn,pout1)
+         else
+          call priorG(r200n,rcn,rsn,cbn,tmassn,scrn,dA3n,
+     &    cb0n,rben,rjan,xmsn,pout1) 
+         endif        
+         !acceptance criterium:
+         fml2 = fml2 - pout1 + pbar
+         call acceptance(-fmlb,(-fml2),eval,nseed)
+c ======== Check =======================================================
+C ========= DEBUG ==================================
+        
+c        write(*,*) rhosta/1e13,tmassn,scrn,dA3n, fml2, fmlb
+c           if(kbdt.eq.1) then
+c            write(*,*) 'r200,rc,rs,cbe,tmass,screen,A3,cbe0,rbeta,',
+c     &      'rjaf,xmstar, -log(Pmam), plen, -log(Lbcg)'
+c            write (*,418) r200n, rcn, rsn, cbn,
+c     &       tmassn, scrn, dA3n, cb0n,rben,rjan,xmsn,fml2, plen, chibcg2
+c           else
+c            write(*,*) 'r200,rc,rs,cbe,tmass,screen,A3,cbe0,rbeta,',
+c     &      'rjaf,xmstar, -log(Pmam), plen'
+c            write (*,428) r200n, rcn, rsn, cbn,
+c     &       tmassn, scrn, dA3n, cb0n,rben,rjan,xmsn,fml2, plen           
+c           endif     
+c           write(*,*) rsga1, rhog1, rst1, rhost1
+c        if (kmp.eq.13) then
+c            write (*,987) tmassn, scrn, dA3n, fml2, pout1
+c        endif
+c 987     format(3(f7.5,2x),f15.3,2x, f15.3)           
+c =================================================
          itotal=itotal+1
+            
+         ! make sigma smaller if you are not finding a new point
+         if (mod(itotal,500).eq.0) then
+
+           call CPU_TIME(start) !uses cpu time for the random generator seed
+           nstar=int(10040*start, kind=8)
+           nseed = nseed+(-1)**nstar*nstar
+           !do i=1,npar !test
+           ! sigma(i)=0.2*sigma(i)
+           !enddo
+         endif
          
-         if(eval.or.icount.eq.0) then !Always accept the first step of the chain
+         if(eval) then
           icount=icount+1
-          itotal=0 
-          call sigmaeva(npar,sigma)!sigmaeva(npar,r200n,rcn,rsn,cbn,tmassn,scrn,sigma) 
-          if (mod(icount,1000).eq.0) then
+          itotal=0 !number of total trials
+
+          call sigmaeva(npar,sigma)
+     
+          if (mod(icount,100).eq.0) then
            write(*,*) icount, 'trials accepted'
            write(*,*) ' '
-           write (*,428) r200n, rcn, rsn, cbn, cb0n,
-     &   tmassn, scrn,fml2, plen
-           write(*,*) ' '
-          endif
-          
-          if (mod(icount,500).eq.0) then
-          call CPU_TIME(start) !uses cpu time for the random generator seed
-          nstar=int(100*start, kind=8)
-          nseed = nseed+(-1)**nstar*nstar
+           if(kbdt.eq.1) then
+            write(*,*) 'r200,rc,rs,cbe,tmass,screen,A3,cbe0,rbeta,',
+     &      'rjaf,xmstar, -log(Pmam), plen, -log(Lbcg)'
+            write (*,418) r200n, rcn, rsn, cbn,
+     &       tmassn, scrn, dA3n, cb0n,rben,rjan,xmsn,fml2, dlp, chibcg2
+           else
+            write(*,*) 'r200,rc,rs,cbe,tmass,screen,A3,cbe0,rbeta,',
+     &      'rjaf,xmstar, -log(Pmam), plen'
+            write (*,428) r200n, rcn, rsn, cbn,
+     &       tmassn, scrn, dA3n, cb0n,rben,rjan,xmsn,fml2, dlp           
+           endif     
           endif
           
 c  trial accepted: update the temporary parameters *********************      
@@ -1189,16 +1624,36 @@ c  trial accepted: update the temporary parameters *********************
           rsst=rsn
           cbt=cbn
           cb0t=cb0n
+          rbt = rben
           tmt=tmassn
-          scrt=scrn  
-c          if(kmp.eq.9.and.nhone.gt.0) then 
-c            scprova=scrn/(1+scrn) 
-c          else
-            scprova=scrt
-c          endif
-          fmlb=fml2
-          write(iu60,674) r2t,rct,rsst,cbt,tmt,scprova,cb0t,fml2,kani
+          scrt=scrn
+          dA3t = dA3n
+          rjat=rjan
+          xmst=xmsn
+          scprova=scrt
           
+          !Baryons
+          rhgta = rhgn
+          rhosta  = rhosn
+          rsgnta = rsgn 
+          rstnta = rstn 
+          
+          fmlb = fml2
+c******************* write on the file *********************************          
+          if (kbcg.eq.1.or.kmp.eq.13) then
+           write(iu60,274) r2t,rct,rsst,cbt,tmt,scprova,dA3t,cb0t,rbt,
+     &      rjat,xmst,fml2+dlp,kani
+          else 
+            write(iu60,674) r2t,rct,rsst,cbt,tmt,scprova,dA3t,
+     &       cb0t,rbt,fml2+dlp,kani 
+          endif
+         
+c***************** Baryons ********************************************* 
+          if (kbary.eq.1) then
+           write(92,271) rhgta/1e13,rsgnta,rhosta/1e13,rstnta
+271        format(4(f15.5,2x))
+          endif
+c***********************************************************************              
           if (fml2.lt.fmlmingrid) then
                   plenmingrid=plen
                   fmlmingrid=fml2
@@ -1207,8 +1662,13 @@ c          endif
                   rcmingrid=rct
                   cbmingrid=cbt
                   cb0mingrid=cb0t
+                  rbmingrid=rbt
 	  	          tmingrid=tmt
                   smingrid=scprova
+                  dAmingrid = dA3t
+                  rjmingrid=rjat
+                  xmmingrid=xmst
+                  
                   xfn1best=rct
                   ngamin=nga
                   rlowmin=rlow
@@ -1219,15 +1679,12 @@ c          endif
                      vso(j)=v(j)
                   enddo        
             endif
-            
-          
           
          endif
-
- 428     format(7(f6.3,2x),f10.3,2x,f10.3)
-
+         
+ 428     format(11(f6.3,2x),f15.3,2x,f13.3)
+ 418     format(11(f6.3,2x),f15.3,2x,f10.3,2x,f10.3)
        enddo
-       
        
        write(*,*) icount, 'trials accepted'
        plenmin=plenmingrid
@@ -1237,15 +1694,27 @@ c          endif
        rcmin=rcmingrid
        cbmin=cbmingrid
        cb0min=cb0mingrid
+       rbmin=rbmingrid
        tmmin=tmingrid
        scmin=smingrid
+       dA3min = dAmingrid
+       rjmin=rjmingrid
+       xmmin=xmmingrid
+       
        rc=xfn1best
        nga=ngamin
        rlow=rlowmin
        rup=rupmin
        write(iu60,*) '.................................................'
-       write(iu60,674) r200min,rcmin,rsmin,cbmin,tmmin,
-     &                scmin,cb0min,fmlmin,kani
+       
+       if (kbcg.eq.1.or.kmp.eq.13) then
+           write(iu60,274) r200min,rcmin,rsmin,cbmin,tmmin,
+     &                scmin,dA3min,cb0min,rbmin,rjmin,xmmin,fmlmin,kani
+          else 
+           write(iu60,674) r200min,rcmin,rsmin,cbmin,tmmin,
+     &                scmin,dA3min,cb0min,rbmin,fmlmin,kani
+       endif
+       
        write(iu60,*) '.................................................'
       
       
@@ -1255,15 +1724,27 @@ c          endif
          rsnew=rsmin
          cbnew=cbmin
          cb0new=cb0min
+         rbetanew=rbmin
          scrnew=scmin
          tmassnew=tmmin
+         dA3new = dA3min
+         rjafnew=rjmin
+         xmsnew=xmmin
          plenew=plenmin
          f=fmlmin
        endif
-       write(iu60,674) r200new,rcnew,rsnew,cbnew,tmassnew,scrnew,cb0new,
-     &                 f,kani 
+       
+       if (kbcg.eq.1.or.kmp.eq.13) then
+           write(iu60,274) r200new,rcnew,rsnew,cbnew,tmassnew,scrnew,
+     &                 dA3new,cb0new,rbetanew,rjafnew,xmsnew,f,kani
+          else 
+           write(iu60,674) r200new,rcnew,rsnew,cbnew,tmassnew,scrnew,
+     &                 dA3new, cb0new,rbetanew,f,kani
+       endif       
+       
 
- 674           format(8(f13.5,2x),i2)
+ 674           format(10(f15.5,2x),i2)
+ 274           format(12(f15.5,2x),i2)
 c    
 c
 c    if requested, it compute the likelihood on fixed values of the
@@ -1282,34 +1763,44 @@ c    ClusterGEN code
        
   22  continue
       
-      READ (1,fmt="(7(f13.5,2x))",end=23) r200,rc,rs,cbe,
-     & tmass, screen,cbe0
+      READ (1,fmt="(11(f13.5,2x))",end=23) r200,rc,rs,cbe,
+     & tmass, screen, dA3, cbe0,rbeta,rjaf,xmstar
        
-c++++++++++++++++++++ simple computation of the screening radius ++++
-c                     for f(R)= Hu&Sawicki with n=1 +++++++++++++++++             
-         if (kscr.eq.2) then
-          zb=za
-          Ric=5.44e-8*0.9*((1+zb)**3+4*Olam/Omegam)
-          n=nhs  !exp in H&S model
-          fr=Ric/(3*(n+1)*tmass*tmass+(n+2)*Ric)
-          intsuc=1
-          t=0.02d0
-          do while (intsuc.gt.0)
-           t=t+0.005d0
-           if (field(t).le.fr.or.t.ge.25.0d0) then
-             screen=t
-             intsuc=0
-           endif
-          enddo 
-c                write(*,*) 'Screening radius found at ', screen
-         endif   
+
+         
+         if (kmp.eq.11.or.kmp.eq.12) then
+            xscCH=alimi
+            alimit=alimi
+            alimbc=0.0001
+            call find_xsc(xscCH,alimit)
+
+         endif              
+       
+        !Environmental screening  - correct advanced modelling
+         if (kmp.eq.17) then
+          xlim = 1.0e-3
+          xscCH = ScreenGen(xlim)
+         endif
+       
        xfv(1)=rs
        xfv(2)=cbe
        call vmaxlik(nfv,xfv,fml2)
-       write(*,fmt="(8(f13.5,2x))") r200,rc,rs,cbe,tmass,
-     & screen,cbe0,fml2
+       if (kbcg.eq.1.and.kbdt.eq.1) then
+          rtbcg=20. !Max radius for the integration of the BCG integral
+          call vdplik(chibcg2)
+          fml2=fml2+chibcg2
+       endif 
+       write(*,fmt="(12(f13.5,2x))") r200,rc,rs,cbe,tmass,
+     & screen,dA3,cbe0,rbeta,rjaf,xmstar,fml2
+
+          if (kbcg.eq.1.or.kmp.eq.13) then
+            write(iu60,274) r200,rc,rs,cbe,tmass,screen,dA3,cbe0,rbeta,
+     &          rjaf,xmstar,fml2,kani
+          else 
+            write(iu60,674) r200,rc,rs,cbe,tmass,screen,dA3,cbe0,rbeta,
+     &         fml2,kani
+          endif
        
-       write(iu60,673) r200,rc,rs,cbe,tmass,screen,cbe0,fml2,kani
           
            if (fml2.lt.fmlmingrid) then
                   fmlmingrid=fml2
@@ -1318,8 +1809,12 @@ c                write(*,*) 'Screening radius found at ', screen
                   rcmingrid=rc
                   cbmingrid=cbe
                   cb0mingrid=cbe0
+                  rbmingrid=rbeta
 	  	          tmingrid=tmass
-		           smingrid=screen
+                  smingrid=screen
+                  dAmingrid = dA3  
+                  rjmingrid=rjat
+                  xmmingrid=xmst
                   xfn1best=rc
                   ngamin=nga
                   rlowmin=rlow
@@ -1342,15 +1837,26 @@ c                write(*,*) 'Screening radius found at ', screen
        rcmin=rcmingrid
        cbmin=cbmingrid
        cb0min=cb0mingrid
+       rbmin=rbmingrid
        tmmin=tmingrid
        scmin=smingrid
+       dA3min = dAmingrid
+       rjmin=rjmingrid
+       xmmin=xmmingrid
        rc=xfn1best
        nga=ngamin
        rlow=rlowmin
        rup=rupmin
        write(iu60,*) '.................................................'
-       write(iu60,673) r200min,rcmin,rsmin,cbmin,tmmin,
-     &                scmin,cb0min,fmlmin,kani
+       if (kbcg.eq.1.or.kmp.eq.13) then
+           write(iu60,274) r200min,rcmin,rsmin,cbmin,tmmin,
+     &                scmin,dA3min,cb0min,rbmin,rjmin,xmmin,fmlmin,kani
+          else 
+           write(iu60,674) r200min,rcmin,rsmin,cbmin,tmmin,
+     &                scmin,dA3min,cb0min,rbmin,fmlmin,kani
+       endif
+       
+
        write(iu60,*) '.................................................'
       
       
@@ -1360,510 +1866,31 @@ c                write(*,*) 'Screening radius found at ', screen
          rsnew=rsmin
          cbnew=cbmin
          cb0new=cb0min
+         rbetanew=rbmin
          scrnew=scmin
          tmassnew=tmmin
+         dA3new = dA3min
+         rjafnew=rjmin
+         xmsnew=xmmin
          f=fmlmin
        endif
-       write(iu60,673) r200new,rcnew,rsnew,cbnew,tmassnew,scrnew,
-     &  cb0new,f,kani
-
+       if (kbcg.eq.1.or.kmp.eq.13) then
+           write(iu60,274) r200new,rcnew,rsnew,cbnew,tmassnew,scrnew,
+     &                 dA3new,cb0new,rbetanew,rjafnew,xmsnew,f,kani
+          else 
+           write(iu60,674) r200new,rcnew,rsnew,cbnew,tmassnew,scrnew,
+     &                 dA3new,cb0new,rbetanew,f,kani
+       endif  
       endif
-
-       
-******************************** end MCMC run ************************** 
-c In the following, there is a module devoted to the kinematic+lensing
-c analysis of MACSJ-1206   /RXJ2248  
-c this is a modification made by Pizzuti, 01/10/2021 to include the
-c lensing likelihood by Umetsu+16 in Vainsthein screening and in Chameleon
-c screening (01/03/2022). The module can be unlocked by setting kdata=1
-c at line 395 of the main soruce file gomamposstoptS.f.
-c It performs a MCMC run sampling the kinematic likelihood over the
-c lensing chains of Umetsu+16. Kinematic and lensing data can be made
-c available under reasonable request given the approval of the CLASH/
-c CLASH-VLT collaborations.
-
-      else if(nmcmc.ge.2) then
-       if(kmp.eq.8.and.nlens.eq.1) then
-       
-       call CPU_TIME(start) !uses cpu time for the random generator seed
-       nstar=int(100*start, kind=8)
-       nseed = 123434789+(-1)**nstar*nstar
-
-       if (nmcmc.eq.2) then
-         write(*,*) 'reading lensing file MACS1206_lens.txt'
-         open(1,file='MACS1206_lens.txt') !MACS1206_lens.txt !RXJ2248_lens.txt
-       else if (nmcmc.eq.3) then
-         write(*,*) 'reading lensing file RXJ2248_lens.txt'
-         open(1,file='RXJ2248_lens.txt') !MACS1206_lens.txt !RXJ2248_lens.txt
-       else if (nmcmc.eq.4) then
-         write(*,*) 'reading lensing file CLASH_chain.txt'
-         open(1,file='CLASH_chain.txt') !MACS1206_lens.txt !RXJ2248_lens.txt
-       endif
-       icount=0
-       READ (1,*) tm200,tc200,tmass,screen,Pl
-       Pl=-Pl
-       hz=h0*sqrt(Omegam*(1.+za)**3+Olam)
-       if (nmcmc.ne.4) then
-        r200=(grav*10**(tm200)*1e15/(0.01*h0)/(100.*hz*hz))**(1./3.)
-        rs=r200/(10**tc200)
-          if (kopt.lt.0) then 
-           cbe=cbnew
-           cbe0=cb0new
-           rc=rcnew
-          endif
-       else
-          if (kopt.lt.0) then 
-           r200=r200new
-           rs=rsnew
-           cbe=cbnew
-           cbe0=cb0new
-           rc=rcnew
-          endif
-       endif 
-       xfv(1)=rs
-       xfv(2)=cbe
-       call vmaxlik(nfv,xfv,fmb)
-       fmb=fmb+Pl !starting point of the chain
-       
-!    DEFINE TEMPORARY VARIABLES        CONTROL2
-       rsst=rs      
-       cbt=cbe
-       cb0t=cbe0
-       r2t=r200
-       tmt=tmass
-       rct=rc
-       scrt=screen
-!***********************************************************************       
-       
-  24   continue
-       if (mod(icount,100).eq.0) then 
-            nseed=abs(nseed+(-1)**(nseed)*floor(nseed/4.))
-       endif
-       r200n=r2t       
-       rcn=rct
-       rsn=rsst
-       cbn=cbt
-       cb0n=cb0t
-       tmassn=tmt
-       scrn=scrt
-       if (cdc.eq.1) scrn=tmt
-          
-        call tranmod(r200n,rcn,rsn,cbn,
-     &           tmassn,scrn,cb0n,sigma,7,nseed)
-         rc=rcn
-         cbe=cbn 
-         cbe0=cb0n      
-       READ (1,*,end=25) tm200,tc200,tmass,screen,Pl
-       Pl=-Pl
-       if (nmcmc.ne.4) then
-        r200=(grav*10**(tm200)*1e15/(0.01*h0)/(100.*hz*hz))**(1./3.)
-        rs=r200/(10**tc200) 
-       else
-         r200=r200n
-         rs=rsn
-       endif
-         omegal=Olam!6
-         omega0=Omegam!2.*(q0+omegal)
-         hz=h0*sqrt(omega0*(1.+za)**3+omegal)
-         rm200=100.*hz*hz/grav*r200**3
-         cmean=6.76*(rm200/1.e12)**(-0.098)
-         v200=10.*hz*r200
- 
-c         if (nrc.eq.-2) then
-
-c          write(*,*) ' Fit to N(R) up to R/r200=',rup/r200
-
-c          write(*,293) rc,r200/rc
-
-c         endif        
-
-c     Mass follows light
-c
-         if (kmfl.eq.1) then
-          rs=rc
-         elseif (klcdm.eq.1) then
-c
-c     concentration from c=c(M)
-c
-          rs=r200/cmean
-         endif
-         
-c     a_ML forced = r_s
-c
-         if (kaml.eq.1) cbe=rs
-
-c     
-c     Light follows Mass (TLM)
-c
-         if (klfm.eq.1) then
-            rc=rs  ! assume N(R) and M(r) chosen with same model
-            if (kmp.eq.1.and.knfit.eq.2) rc=2.*rs ! NFW M(r), Her N(R)
-            if (kmp.eq.2.and.knfit.eq.1) rc=rs/2. ! Her M(r), NFW N(R)
-         endif
-c     
-cc     If considering the universal distrib of interlopers
-cc     the surface density profile cannot be as concentrated
-cc     as the mass density profile; we use the factor found
-cc     in MBM for R<r200
-c
-cc               if (kintd.eq.1) rc=0.85*rs        
-                        
-         
-         xfv(1)=rs
-         xfv(2)=cbe
-         
-         call vmaxlik(nfv,xfv,fml2)
-         
-       
-         fml2=fml2+Pl
-
-         call priord(r200,rc,rs,cbe,tmass,screen,cbe0,pout1)
-
-         call acceptance(-fmb,(-fml2+pout1),eval,nseed)
-         
-c         write (*,428) r200, rc, rs, cbe, 
-c     &   tmass, screen,fml2+pout1 
-
-         if(eval.or.icount.eq.0) then !Always accept the first step of the chain
-          icount=icount+1 
-          if (mod(icount,1000).eq.0) then
-           write(*,*) icount, 'trials accepted'
-           write(*,*) ' '
-           write (*,422) r200, rc, rs, cbe, cbe0,
-     &   tmass, screen,fml2, Pl
-           write(*,*) ' '
-          endif 
-          
-          if (mod(icount,500).eq.0) then
-          call CPU_TIME(start) !uses cpu time for the random generator seed
-          nstar=int(100*start, kind=8)
-          nseed = nseed+(-1)**nstar*nstar
-          endif
-          
-c  trial accepted: update the temporary parameters *********************      
-          r2t=r200     
-          rct=rc
-          rsst=rs
-          cbt=cbe
-          cb0t=cbe0
-          tmt=tmass
-          scrt=screen  
-          scprova=scrt
-
-          fmb=fml2
-          write(iu60,675) r2t,rct,rsst,cbt,tmt,scprova,cb0t,fml2,kani
-          
-           if (fml2.lt.fmlmingrid) then
-                  plenmingrid=plen
-                  fmlmingrid=fml2
-                  r200mingrid=r2t
-                  rsmingrid=rsst
-                  rcmingrid=rct
-                  cbmingrid=cbt
-                  cb0mingrid=cb0t
-	  	          tmingrid=tmt
-                  smingrid=scprova
-                  xfn1best=rct
-                  ngamin=nga
-                  rlowmin=rlow
-                  rupmin=rup
-                  rcmin=rc
-                  do j=1,nga
-                     rso(j)=r(j)
-                     vso(j)=v(j)
-                  enddo        
-            endif
-
-         endif
-         
- 422     format(7(f6.3,2x),f10.3,2x,f10.3)
-
-       
-         
-         
-c       if(icount.gt.1e2) stop
-      goto 24
-  25  continue
-       
-      close(1)
-      
-       write(*,*) icount, 'trials accepted'
-       plenmin=plenmingrid
-       fmlmin=fmlmingrid
-       r200min=r200mingrid
-       rsmin=rsmingrid
-       rcmin=rcmingrid
-       cbmin=cbmingrid
-       cb0min=cb0mingrid
-       tmmin=tmingrid
-       scmin=smingrid
-       rc=xfn1best
-       nga=ngamin
-       rlow=rlowmin
-       rup=rupmin
-       write(iu60,*) '.................................................'
-       write(iu60,675) r200min,rcmin,rsmin,cbmin,tmmin,
-     &                scmin,cb0min,fmlmin,kani
-       write(iu60,*) '.................................................'
-      
-      
-       if (kopt.lt.0) then          ! optimization skipped
-         r200new=r200min
-         rcnew=rcmin
-         rsnew=rsmin
-         cbnew=cbmin
-         cb0new=cb0min
-         scrnew=scmin
-         tmassnew=tmmin
-         plenew=plenmin
-         f=fmlmin
-       endif
-       write(iu60,675) r200new,rcnew,rsnew,cbnew,tmassnew,scrnew,cb0new,
-     &                 f,kani 
-
- 675           format(8(f13.5,2x),i2)
-      
-      
-       else if (kmp.eq.9.and.nlens.eq.1) then
-       !Case of chameleon screening with data of MACS1206
-       
-        call CPU_TIME(start) !uses cpu time for the random generator seed
-        nstar=int(100*start, kind=8)
-        nseed = 123434789+(-1)**nstar*nstar
-
-        if (nmcmc.eq.2) then
-         write(*,*) 'reading lensing file MACS1206_lensCHAM.txt'
-         open(1,file='MACS1206_lensCHAM.txt')
-        else
-         stop('this setup has not yet implemented') 
-        endif
-        icount=0
-        READ (1,*) tm200,tc200,Pl
-        Pl=-Pl
-        r200= tm200/0.7  !this data are in unit of Mpc/h with h=0.7
-        rs=tc200/0.7 
-        if (kopt.lt.0) then 
-           cbe=cbnew
-           cbe0=cb0new
-           rc=rcnew
-           tmass=tmassnew
-           screen=scrnew
-        endif
-       
-       xfv(1)=rs
-       xfv(2)=cbe
-       call vmaxlik(nfv,xfv,fmb)
-       fmb=fmb+Pl
-
-       !    DEFINE TEMPORARY VARIABLES        CONTROL2
-       rsst=rs      
-       cbt=cbe
-       cb0t=cbe0
-       r2t=r200
-       tmt=tmass
-       rct=rc
-       scrt=screen
-!***********************************************************************       
-       
-  44   continue
-
-       if (mod(icount,100).eq.0) then 
-            nseed=abs(nseed+(-1)**(nseed)*floor(nseed/4.))
-       endif
-       r200n=r2t       
-       rcn=rct
-       rsn=rsst
-       cbn=cbt
-       cb0n=cb0t
-       tmassn=tmt
-       scrn=scrt
-       if (cdc.eq.1) scrn=tmt
-          
-        call tranmod(r200n,rcn,rsn,cbn,
-     &           tmassn,scrn,cb0n,sigma,7,nseed)
-         rc=rcn
-         cbe=cbn  
-         cbe0=cb0n
-         tmass=tmassn
-         screen=scrn     
-       READ (1,*,end=45) tm200,tc200, Pl
-       Pl=-Pl
-       r200=tm200/0.7
-       rs=tc200/0.7
-       
-         omegal=Olam!6
-         omega0=Omegam!2.*(q0+omegal)
-         hz=h0*sqrt(omega0*(1.+za)**3+omegal)
-         rm200=100.*hz*hz/grav*r200**3
-         cmean=6.76*(rm200/1.e12)**(-0.098)
-         v200=10.*hz*r200
- 
-c         if (nrc.eq.-2) then
-
-c          write(*,*) ' Fit to N(R) up to R/r200=',rup/r200
-
-c          write(*,293) rc,r200/rc
-
-c         endif        
-
-c     Mass follows light
-c
-         if (kmfl.eq.1) then
-          rs=rc
-         elseif (klcdm.eq.1) then
-c
-c     concentration from c=c(M)
-c
-          rs=r200/cmean
-         endif
-         
-c     a_ML forced = r_s
-c
-         if (kaml.eq.1) cbe=rs
-
-c     
-c     Light follows Mass (TLM)
-c
-         if (klfm.eq.1) then
-            rc=rs  ! assume N(R) and M(r) chosen with same model
-            if (kmp.eq.1.and.knfit.eq.2) rc=2.*rs ! NFW M(r), Her N(R)
-            if (kmp.eq.2.and.knfit.eq.1) rc=rs/2. ! Her M(r), NFW N(R)
-         endif
-c     
-cc     If considering the universal distrib of interlopers
-cc     the surface density profile cannot be as concentrated
-cc     as the mass density profile; we use the factor found
-cc     in MBM for R<r200
-c
-cc               if (kintd.eq.1) rc=0.85*rs        
-                        
-         
-         xfv(1)=rs
-         xfv(2)=cbe
-
-         call vmaxlik(nfv,xfv,fml2)
-         
-       
-         fml2=fml2+Pl
- 
-         call priord(r200,rc,rs,cbe,tmass,screen,cbe0,pout1)
-
-         call acceptance(-fmb,(-fml2+pout1),eval,nseed)
-
-         if(eval.or.icount.eq.0) then !Always accept the first step of the chain
-          icount=icount+1 
-          if (mod(icount,1000).eq.0) then
-           write(*,*) icount, 'trials accepted'
-           write(*,*) ' '
-           write (*,444) r200, rc, rs, cbe, cbe0,
-     &   tmass, screen,fml2, Pl
-           write(*,*) ' '
-          endif 
-          
-          if (mod(icount,500).eq.0) then
-          call CPU_TIME(start) !uses cpu time for the random generator seed
-          nstar=int(100*start, kind=8)
-          nseed = nseed+(-1)**nstar*nstar
-          endif
-          
-c  trial accepted: update the temporary parameters *********************      
-          r2t=r200     
-          rct=rc
-          rsst=rs
-          cbt=cbe
-          cb0t=cbe0
-          tmt=tmass
-          scrt=screen  
-          scprova=scrt
-
-          fmb=fml2
-          write(iu60,665) r2t,rct,rsst,cbt,tmt,scprova,cb0t,fml2,kani
-          
-           if (fml2.lt.fmlmingrid) then
-                  plenmingrid=plen
-                  fmlmingrid=fml2
-                  r200mingrid=r2t
-                  rsmingrid=rsst
-                  rcmingrid=rct
-                  cbmingrid=cbt
-                  cb0mingrid=cb0t
-	  	          tmingrid=tmt
-                  smingrid=scprova
-                  xfn1best=rct
-                  ngamin=nga
-                  rlowmin=rlow
-                  rupmin=rup
-                  rcmin=rc
-                  do j=1,nga
-                     rso(j)=r(j)
-                     vso(j)=v(j)
-                  enddo        
-            endif
-
-         endif
-         
- 444     format(7(f6.3,2x),f10.3,2x,f10.3)
-
-       
-         
-         
-c       if(icount.gt.1e2) stop
-      goto 44
-  45  continue
-       
-      close(1)
-      
-       write(*,*) icount, 'trials accepted'
-       plenmin=plenmingrid
-       fmlmin=fmlmingrid
-       r200min=r200mingrid
-       rsmin=rsmingrid
-       rcmin=rcmingrid
-       cbmin=cbmingrid
-       cb0min=cb0mingrid
-       tmmin=tmingrid
-       scmin=smingrid
-       rc=xfn1best
-       nga=ngamin
-       rlow=rlowmin
-       rup=rupmin
-       write(iu60,*) '.................................................'
-       write(iu60,665) r200min,rcmin,rsmin,cbmin,tmmin,
-     &                scmin,cb0min,fmlmin,kani
-       write(iu60,*) '.................................................'
-      
-      
-       if (kopt.lt.0) then          ! optimization skipped
-         r200new=r200min
-         rcnew=rcmin
-         rsnew=rsmin
-         cbnew=cbmin
-         cb0new=cb0min
-         scrnew=scmin
-         tmassnew=tmmin
-         plenew=plenmin
-         f=fmlmin
-       endif
-       write(iu60,665) r200new,rcnew,rsnew,cbnew,tmassnew,scrnew,cb0new,
-     &                 f,kani 
-
- 665           format(8(f13.5,2x),i2)
-       
-c       r200=r200new
-c       cbe=cbnew
-c       rs=rsnew
-c       rc=rcnew
-c       screen=scrnew
-c       tmass=tmassnew
-       
-       
-      else
-        write(*,*) 'this setup has not yet implemented'
-        stop
+      if (naddlens.eq.1) then
+       close(82) !Close the lensing file if it was open
       endif
-c******************* grid search mode **********************************       
+******************************** end MCMC run **************************        
       else if(nmcmc.eq.0) then
       
+       if (kmp.eq.13.or.kmp.eq.14.or.kmp.eq.17.or.kani.eq.8) then
+        stop('ERORR: RG,BS,BP and mTotal_GC setups work only with mcmc')
+       endif
       fmlb=f
 
       do j=1,nga
@@ -1874,6 +1901,38 @@ c******************* grid search mode **********************************
 c
 c     Grid search around the minimum found
 c
+c     Store the likelihood value for the initial guess parameters (true r200)
+
+      if (kfs2.eq.1) then      
+       nfv=2 !dimension parameter for vmaxlik
+       
+       r200=r200new
+       
+       omegal=Olam!6
+       omega0=Omegam!2.*(q0+omegal)
+       hz=h0*sqrt(omega0*(1.+za)**3+omegal)
+       rm200=100.*hz*hz/grav*r200**3
+cc      cduffy=5.78*(rm200/2.e12)**(-0.089)*1.1**(-0.52)
+cc      cgao=10.**(-0.138*dlog10(rm200*0.7)+2.646)
+cc      cmean=(cduffy+cgao)/2.
+       cmean=6.76*(rm200/1.e12)**(-0.098)
+       v200=10.*hz*r200
+       
+       rs=r200/cmean
+       cbe=cbnew
+       cbe0=cb0new
+       xfv(1)=rs
+       xfv(2)=cbe
+       rc = 4 * rs
+       tmass=tmassnew
+       screen=scrnew
+       dA3 = dA3new
+       rjaf=rjafnew
+       xmstar=xmsnew      
+       call vmaxlik(nfv,xfv,fml3)
+      endif
+      
+      
       klfm=0
       
       
@@ -1921,7 +1980,7 @@ c
 c***********************************************************************        
 c*********************************************************************** 
          if (kpro.eq.1.and.nhone.gt.1) then
-          if (kmp.ne.8.or.klin.ne.1) then !kscr.ne.-1.and.
+          if (kmp.ne.8.or.klin.ne.1) then 
          
             call test_bound(screeg,scrlow,scrup)
             if (scrlow.le.0) then
@@ -2104,27 +2163,73 @@ c******************************************************************+
          nb22=1
       endif
       
-      if (ntmass.ge.1) then
-          sigma(5)=0.9   !TEST
-          if (nskip.eq.0) tmassg=tmassnew !optimization value as guess value
+      
+      kxb=0
+      if (kbcg.eq.1.or.kmp.eq.13.or.kmp.eq.17) kxb=1
+      
+      if (njaf.ge.1.and.kxb.gt.0) then
 
-      if(kmp.eq.7) then !case linear Horndeski/f(R) gravity
+         sigma(8)=0.5   
+	     if (nskip.eq.0) rjaf=rjafg
+         dd=0.9*(500./nga)**(0.2)
+         if (nres.eq.1) dd=0.4*(500./nga)**(0.2)
+         if (nequ.eq.1) then
+           dd=0.9 !equal grid points 
+           if (nres.eq.1) dd=0.4d0
+         endif
+         deljaf=dd/njaf
+         njaf1=-njaf/2
+         njaf2=njaf/2
          
-          dd=4.2*(500./nga)**(0.2)  ! this adjust the grid width to the number of galaxies
-          if (nres.eq.1) dd=3.4*(500./nga)**(0.2)  !finer grid
-          if (nequ.eq.1) then 
-	       dd=4.2d0 !equal grid points 
-           if (nres.eq.1) dd=3.4d0 !equal grid points and finer grid
-          endif
-          deltam=dd/ntmass
+         if (kpro.eq.1.and.njaf.gt.1) then
+          call test_bound(rjafg,rjalow,rjaup)
+          deltjam=dlog10(rjalow/rjafg)/njaf1
+          deltjap=dlog10(rjaup/rjafg)/njaf2
+         endif
+      else
+         sigma(8)=0.0d0
+         deljaf=0.
+         deltjam=0.0
+         deltjap=0.0
+         njaf1=1
+         njaf2=1
+      endif
+      
+      if (nxmas.ge.1.and.kxb.gt.0) then
+
+         sigma(9)=0.2   
+	     if (nskip.eq.0) xmstar=xmstarg
+         dd=0.6*(500./nga)**(0.2)
+         if (nres.eq.1) dd=0.4*(500./nga)**(0.2)
+         if (nequ.eq.1) then
+           dd=0.7 !equal grid points 
+           if (nres.eq.1) dd=0.4d0
+         endif
+         delxm=dd/nxmas
+         nxm1=-nxmas/2
+         nxm2=nxmas/2
+
+         if (kpro.eq.1.and.nxmas.gt.1) then
+          call test_bound(xmstarg,xmalow,xmaup)
+          delxmm=dlog10(xmalow/xmstarg)/nxm1
+          delxmp=dlog10(xmaup/xmstarg)/nxm2
+         endif
+      else
+         sigma(9)=0.0d0
+         delxm=0.
+         delxmm=0.0
+         delxmp=0.0
+         nxm1=1
+         nxm2=1
+      endif      
+      
+      
+      
+      if (ntmass.ge.1) then
+        sigma(5)=0.9   
+        if (nskip.eq.0) tmassg=tmassnew 
           
-          if (kpro.eq.1.and.ntmass.gt.1) then
-           call test_bound(tmassg,tmlow,tmup)
-           deltmm=dlog10(tmlow/tmassg)/(-ntmass/2)
-           deltmp=dlog10(tmup/tmassg)/(ntmass/2)
-          endif
-          
-       elseif(kmp.eq.8) then !case Beyond Horndeski
+        if(kmp.eq.8) then !case Beyond Horndeski
            !in this case the grid is by default equally spaced
            if(tmassg.lt.1) then      
 	        deltam=14.4/ntmass
@@ -2132,17 +2237,17 @@ c******************************************************************+
             deltam=10.0/ntmass
            endif 
            
-          if (kpro.eq.1.and.ntmass.gt.1) then
-           call test_bound(tmassg,tmlow,tmup)
-           tsafe=(dabs(tmlow)+0.05*dabs(tmlow))
-           tl1=tmlow+tsafe
-           tmt=tmassg+tsafe
-           tl2=tmup+tsafe
-            deltmm=dlog10(tl1/tmt)/(-ntmass/2)
-            deltmp=dlog10(tl2/tmt)/(ntmass/2)
-          endif
+           if (kpro.eq.1.and.ntmass.gt.1) then
+             call test_bound(tmassg,tmlow,tmup)
+             tsafe=(dabs(tmlow)+0.05*dabs(tmlow))
+             tl1=tmlow+tsafe
+             tmt=tmassg+tsafe
+             tl2=tmup+tsafe
+             deltmm=dlog10(tl1/tmt)/(-ntmass/2)
+             deltmp=dlog10(tl2/tmt)/(ntmass/2)
+           endif
        
-       else !case general Chameleon 
+        else !case general Chameleon 
           dd=3.9*(500./nga)**(0.2)  ! this adjust the grid width to the number of galaxies
           if (nres.eq.1) dd=3.8*(500./nga)**(0.2)
           if (nequ.eq.1) then
@@ -2154,7 +2259,6 @@ c******************************************************************+
            call test_bound(tmassg,tmlow,tmup)
            deltmm=dlog10(tmlow/tmassg)/(-ntmass/2)
            deltmp=dlog10(tmup/tmassg)/(ntmass/2)
-
           endif
           
       endif
@@ -2162,13 +2266,6 @@ c******************************************************************+
          ntm1=-ntmass/2
          ntm2=ntmass/2
          
-c ************************ probably useless ****************************         
-c       if (kmp.eq.8) then !case Beyond Horndeski shift towards positive values
-c                          !Saltas+16 set lower limit Y>-0.51 for stability reasons
-c		ntm1=-ntmass/2+4
-c        ntm2=ntmass/2+4
-c       endif
-c **********************************************************************
       else
          sigma(5)=0.0d0
          deltam=0.
@@ -2186,7 +2283,8 @@ c **********************************************************************
       
       
       if (nr200.le.1.and.nrc.le.1.and.nrs.le.1.and.
-     &   nbs.le.1.and.ntmass.le.1.and.nhone.le.1.and.nb2.le.1) goto 891
+     &   nbs.le.1.and.ntmass.le.1.and.nhone.le.1.and.nb2.le.1.and.
+     &   njaf.le.1.and.nxmas.le.1) goto 891
       
  727  continue
 
@@ -2289,24 +2387,33 @@ c        write(*,293) rc,r200/rc
           if (kb2.lt.0)  cbe0=10.**(dlog10(cbe0g)+kb2*deltb0m)
           if (kb2.ge.0)  cbe0=10.**(dlog10(cbe0g)+kb2*deltb0p)
          endif
+         
+         do kjaf=njaf1,njaf2         
+         rjaf=10.**(dlog10(rjafg)+kjaf*deljaf)
+         if (kpro.eq.1.and.njaf.gt.1) then
+          if (kjaf.lt.0)  rjaf=10.**(dlog10(rjafg)+kjaf*deltjam)
+          if (kjaf.ge.0)  rjaf=10.**(dlog10(rjafg)+kjaf*deltjap)
+         endif
+         
 
+         do kxm=nxm1,nxm2         
+         xmstar=10.**(dlog10(xmstarg)+kxm*delxm)
+
+         if (kpro.eq.1.and.nxmas.gt.1) then
+          if (kxm.lt.0)  xmstar=10.**(dlog10(xmstarg)+kxm*delxmm)
+          if (kxm.ge.0)  xmstar=10.**(dlog10(xmstarg)+kxm*delxmp)
+
+         endif         
+
+c         write(*,*) 'M/L of the BCG:', xmstar
          
  249     format(//'lambda, anisotropy =', f8.3,2x,f6.3)
  248     format(//'Y_1, anisotropy =', f8.3,2x,f6.3)
  247     format(//'Y_1, Y_2, anisotropy =', f8.3,2x,f8.3,2x,f6.3)
  246     format(//'Phi_infty, Q, anisotropy =', f8.3,2x,f8.3,2x,f6.3)
-c	     if (kmp.eq.7) then
-c          write(*,249) 1/tmass,cbe
-c         elseif (kmp.eq.8) then
-c          if(nlens.eq.0) write(*,248) tmass,cbe
-c          if(nlens.eq.1) write(*,247) tmass,screen,cbe
-           
-c         elseif(kmp.eq.9) then
-c           write(*,246) tmass,screen,cbe
-c         else
-c          write(*,259) cbe
+
  259      format(//'anisotropy =', f6.3)
-c         endif
+
          do ictr=nrc1,nrc2
             rc=10.**(dlog10(rcg)+ictr*deltarc)
             if (kpro.eq.1.and.nrc.gt.1) then
@@ -2327,6 +2434,11 @@ c
 c     concentration from c=c(M)
 c
                   rs=r200/cmean
+                  !Flagship: assumes a specific value for rc
+                  if (kfs2.eq.1) rc = 4 * rs
+                  
+                  write(*,*) 'with rc, rs: ', rc, rs
+                  
                else
 c
 c     r_s as a free parameter
@@ -2359,30 +2471,25 @@ cc     in MBM for R<r200
 c
 cc               if (kintd.eq.1) rc=0.85*rs
 
-c++++++++++++++++++++ simple computation of the screening radius ++++
-c                     for f(R)= Hu&Sawicki with n=1 +++++++++++++++++             
-               if (kscr.eq.2) then
-	            zb=za
-                Ric=5.44e-8*0.9*((1+zb)**3+4*Olam/Omegam)
-                n=nhs  !exp in H&S model
-                fr=Ric/(3*(n+1)*tmass*tmass+(n+2)*Ric)
-                intsuc=1
-                t=0.02d0
-                do while (intsuc.gt.0)
-	             t=t+0.005d0
-                 if (field(t).le.fr.or.t.ge.25.0d0) then
-	               screen=t
-                   intsuc=0
-                 endif
-                enddo 
-c                write(*,*) 'Screening radius found at ', screen
-	            endif
-c+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  
+               if (kmp.eq.11.or.kmp.eq.12) then
+                xscCH=alimi
+                alimit=alimi
+                alimbc=0.0001
+                call find_xsc(xscCH,alimit)
+
+               endif
+               
+              !Environmental screening  - correct advanced modelling
+               if (kmp.eq.17) then
+                xlim = 1.0e-3
+                xscCH = ScreenGen(xlim)
+               endif
+                                
                xfv(1)=rs
                xfv(2)=cbe
 
                call vmaxlik(nfv,xfv,fml)
+                             
                nstar=0
                Nrun=Nclust
                if (nsingle.eq.1) then
@@ -2445,24 +2552,40 @@ c+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                call vmaxSUM(nfv,xfv,fprova,did,viv,eie,wiw,ngam)
                fml=fml+fprova 
               enddo
-
-               
-               
+   
                
             if (Nclust.eq.0) Nclust=1 !avoid problems in cluster number
-               
-            if (nlens.eq.1) then         
-             if(kmp.eq.7.or.kmp.eq.9) then
+                
+            if (nlens.eq.1) then
+             if(kmody.eq.1.and.kmp.ne.8) then
               fml=fml-Nclust*Plens(r200,rs)
               if (nlonly.eq.1) fml=-Plens(r200,rs)*Nclust
              endif
+             !TO ADD BCG LENSING
+             !First attempt - only rs and r200
+             if (kmp.eq.17) then 
+              fml2=fml2-Nclust*Plens(r200n,rsn)
+              plen=-Plens(r200n,rsn)
+              if (nlonly.eq.1) then
+               fml2=-Nclust*Plens(r200n,rsn)
+              endif
+             endif
              if(kmp.eq.8) then
-              call Likelens_bh(nplens,plen)
+              if (naddlens.eq.0) then
+               call Likelens_bh(nplens,plen)
+              else
+                plen = dlp
+              endif
               fml=fml+Nclust*plen
               if (nlonly.eq.1) fml=plen*Nclust
              endif
             endif
-               
+            
+            if (kbcg.eq.1.and.kbdt.eq.1) then
+                rtbcg=20. !Max radius for the integration of the BCG integral
+                call vdplik(chibcg2)
+                fml=fml+chibcg2
+            endif                
                
                
 cc     If r200 changes, the number of objects selected changes
@@ -2472,10 +2595,20 @@ c      and not in units of r200 that may change]
 cc               fml=fml*float(ngaref)/float(nga)
                scprova=screen
 c               if(kmp.eq.9.and.nhone.gt.0) scprova=screen/(1+screen)
-            write(iu60,673) r200,rc,rs,cbe,tmass,scprova,cbe0,fml,kani
- 673           format(8(f13.5,2x),i2)
 
-
+            if(kbcg.eq.1.or.kmp.eq.13) then
+            
+            write(iu60,173) r200,rc,rs,cbe,tmass,scprova,cbe0,rjaf,
+     &      xmstar,fml,kani
+           
+            else
+             write(iu60,673) r200,rc,rs,cbe,tmass,scprova,cbe0,fml,kani 
+            endif
+            
+            
+ 673           format(8(f13.5,2x),i2)            
+ 173           format(10(f13.5,2x),i2)            
+            
                if (fml.lt.fmlmingrid) then
                   fmlmingrid=fml
                   r200mingrid=r200
@@ -2484,7 +2617,9 @@ c               if(kmp.eq.9.and.nhone.gt.0) scprova=screen/(1+screen)
                   cbmingrid=cbe
                   cb0mingrid=cbe0
 	  	          tmingrid=tmass
-		           smingrid=screen
+                  smingrid=screen
+                  rjmingrid=rjaf
+                  xmmingrid=xmstar
                   xfn1best=rc
                   ngamin=nga
                   rlowmin=rlow
@@ -2500,6 +2635,8 @@ c               if(kmp.eq.9.and.nhone.gt.0) scprova=screen/(1+screen)
          enddo
         enddo
        enddo
+       enddo !rjaffe!!
+       enddo !xmstar!!
       enddo
       if (kr200.lt.nr200/2) goto 727
       
@@ -2513,13 +2650,21 @@ c               if(kmp.eq.9.and.nhone.gt.0) scprova=screen/(1+screen)
       cb0min=cb0mingrid
       tmmin=tmingrid
       scmin=smingrid
+      rjmin=rjmingrid
+      xmmin=xmmingrid
       rc=xfn1best
       nga=ngamin
       rlow=rlowmin
       rup=rupmin
       write(iu60,*) '.................................................'
-      write(iu60,673) r200min,rcmin,rsmin,cbmin,tmmin,
+      
+      if(kbcg.eq.1.or.kmp.eq.13) then
+       write(iu60,173) r200min,rcmin,rsmin,cbmin,tmmin,
+     &                scmin,cb0min,rjmin,xmmin,fmlmin,kani
+      else
+       write(iu60,673) r200min,rcmin,rsmin,cbmin,tmmin,
      &                scmin,cb0min,fmlmin,kani
+      endif
       write(iu60,*) '.................................................'
       
       
@@ -2533,14 +2678,36 @@ c               if(kmp.eq.9.and.nhone.gt.0) scprova=screen/(1+screen)
          cbnew=cbmin
          cb0new=cb0min
          scrnew=scmin
+         rjafnew=rjmin
+         xmsnew=xmmin
 	     tmassnew=tmmin
          fmlb=fmlmin
       endif
-      write(iu60,673) r200new,rcnew,rsnew,cbnew,
-     & tmassnew,scrnew,cb0new,fmlb,kani
+      
+
+      
+      
+      if(kbcg.eq.1.or.kmp.eq.13) then
+       write(iu60,173) r200new,rcnew,rsnew,cbnew,
+     & tmassnew,scrnew,cb0new,rjafnew,xmsnew,fmlb,kani
+      else
+       if(kfs2.eq.0) then
+        write(iu60,673) r200new,rcnew,rsnew,cbnew,
+     &  tmassnew,scrnew,cb0new,fmlb,kani
+       else !this is for fs2 to save the likelihood of true r200
+         write(iu60,673) r200g,rcnew,rsnew,cbnew,
+     &  tmassnew,scrnew,cb0new,fml3,kani
+       endif
+      
+      endif
       
       endif !END OF MCMC SAMPLING
+      
+      if (kbary.eq.1) close(92)
+      
       call CPU_TIME(fine)
+      
+
 c      write(*,*) 'time of execution: ', fine-astar
       
       r200=r200new
@@ -2550,67 +2717,95 @@ c      write(*,*) 'time of execution: ', fine-astar
       cbe0=cb0new
       screen=scrnew
       tmass=tmassnew
+      dA3 = dA3new
+      xmstar=xmsnew
+      rjaf=rjafnew
+      
       f=fmlb
       if (nlonly.eq.0) then
-       write(*,292) r200,rc,r200/rc,rs,r200/rs,cbe,tmass,screen,cbe0,f
-      write(11,292) r200,rc,r200/rc,rs,r200/rs,cbe,tmass,screen,cbe0,f
+       write(*,292) r200,rc,r200/rc,rs,r200/rs,cbe,tmass,screen,dA3,
+     &  cbe0,rjaf,xmstar,f 
+       write(11,292) r200,rc,r200/rc,rs,r200/rs,cbe,tmass,screen,dA3,
+     &  cbe0,rjaf,xmstar,f      
       else
-       write(*,290) r200,rc,r200/rc,rs,r200/rs,cbe,tmass,screen,cbe0,f 
-      write(11,290) r200,rc,r200/rc,rs,r200/rs,cbe,tmass,screen,cbe0,f 
+       write(*,290) r200,rc,r200/rc,rs,r200/rs,cbe,tmass,screen,dA3,
+     &  cbe0,rjaf,xmstar,f  
+       write(11,290) r200,rc,r200/rc,rs,r200/rs,cbe,tmass,screen,dA3,
+     &  cbe0,rjaf,xmstar,f        
       endif
  292  format(/' Best-fit from optimization ',
      &       /'   r_200    = ',f6.3,
      &       /'   r_tracer = ',f6.3,' (c_tracer= ',f7.2,')'
      &       /'   r_mass   = ',f6.3,' (c_mass=   ',f7.2,')'
      &       /'   Anisotropy parameter = ',f8.4,
-     &       /'   First MG parameter ='f8.4,
-     &       /'   Second MG parameter ='f8.4,
-     &       /'   Second Anisotropy parameter ='f8.4,
-     &       /' Likelihood =', f13.5,/)
+     &       /'   First MG parameter =',f8.4,
+     &       /'   Second MG parameter =',f8.4,
+     &       /'   Third MG parameter = ',f8.4,
+     &       /'   Second Anisotropy parameter =',f8.4,
+     &       /'   BCG Jaffe radius =',f8.4,
+     &       /'   BCG stellar M/L =',f8.4,
+     &       /' Likelihood =',f13.5,/)
      
  290  format(/' Best-fit from optimization (kinematic only) ',
      &       /'   r_200    = ',f6.3,
      &       /'   r_tracer = ',f6.3,' (c_tracer= ',f7.2,')'
      &       /'   r_mass   = ',f6.3,' (c_mass=   ',f7.2,')'
      &       /'   Anisotropy parameter = ',f8.4,
-     &       /'   First MG parameter ='f8.4,
-     &       /'   Second MG parameter ='f8.4,
-     &       /'   Second Anisotropy parameter ='f8.4,     
-     &       /' Likelihood =', f13.5,/)
+     &       /'   First MG parameter =',f8.4,
+     &       /'   Second MG parameter =',f8.4,
+     &       /'   Third MG parameter = ',f8.4,     
+     &       /'   Second Anisotropy parameter =',f8.4,   
+     &       /'   BCG Jaffe radius =',f8.4,
+     &       /'   BCG stellar M/L =',f8.4,
+     &       /' Likelihood =',f13.5,/)
      
 c     output results for N(R) in a file
 
  737  continue
       sigma0=0.
-      write(iu30,'(a2,a4,1x,a13,1x,a9)') '# ','N(R)','rc','al'
-      write(iu30,'(a2,a4,1x,a13,1x,a9)') '# ','-','[Mpc]','-'
-      write(iu30,*) ''    
+            
       write(iu30,330) knfit,rc,al !sigma0,
       
  330  format(i2,1x,e13.5,1x,f6.3) !e11.4,1x,
 
 c     output file of probs
+
+         if (kmp.eq.11.or.kmp.eq.12) then
+            xscCH=alimi
+            alimit=alimi
+            alimbc=0.0001
+            call find_xsc(xscCH,alimit)
+
+         endif        
       
-      xfv(1)=rs
-      xfv(2)=cbe
+      
+        !Environmental screening  - correct advanced modelling
+         if (kmp.eq.17) then
+            xlim = 1.0e-3
+            xscCH = ScreenGen(xlim)
+        endif      
+      
+        xfv(1)=rs
+        xfv(2)=cbe
 
       call vmaxlik(nfv,xfv,fml)
-      !header
-      write(iu20,'(a1,a12,2x,2(a13,2x))') '#','Ri', 'vz,i','p(Ri,vz,i)'
-      write(iu20,'(a1,a12,2x,2(a13,2x))') '#','[Mpc]', '[km/s]','-'
-      write(iu20,*) ''
+
       do jp=1,npv
-         write(iu20,'(3(f13.5,2x))') rpv(jp),vpv(jp),pv(jp)
+         write(iu20,*) rpv(jp),vpv(jp),pv(jp)
       enddo
       close(iu20)
       close(11) !file of log
+      
       r200=r200min
       rc=rcmin
       rs=rsmin
       cbe=cbmin
       cbe0=cb0min
       tmass=tmmin
+      xmstar=xmmin
+      rjaf=rjmin
       screen=scmin
+      dA3 = dA3min
       f=fmlmin
       
  777  continue
@@ -2619,11 +2814,183 @@ c     output file of probs
       end
 
 
+      subroutine baryon_prior_penalty(pbar)
+       implicit real*8 (a-h,o-z)
+       implicit integer*4 (i-n)
+       include 'paramsoptS.i'
+       ! Returns pbar = prior "penalty" (positive), in log-space
+       ! We use lognormal-style prior: log(param) ~ N(log(mu), sigma_log)
+       ! Here we omit additive constants (fine for MCMC).
+       real*8 pbar, siglog, z, mu0, eps
+       eps = 1.d-30
+       pbar = 0.d0
+       
+       if (rho0gas.gt.0.d0.and.srhoga.gt.0.d0) then
+        siglog = dsqrt(dlog(1.d0 + (srhoga/rho0gas)**2))
+        mu0    = dlog(rho0gas)
+        z      = (dlog(max(rhog1,eps)) - mu0)/siglog
+        pbar   = pbar + 0.5d0*z*z
+        
+       endif
+
+       if (rsgas.gt.0.d0.and.srsga.gt.0.d0) then
+        siglog = dsqrt(dlog(1.d0 + (srsga/rsgas)**2))
+        mu0    = dlog(rsgas)
+        z      = (dlog(max(rsga1,eps)) - mu0)/siglog
+        pbar   = pbar + 0.5d0*z*z
+       endif
+
+       if (rhostar.gt.0.d0.and.srhost.gt.0.d0) then
+        siglog = dsqrt(dlog(1.d0 + (srhost/rhostar)**2))
+        mu0    = dlog(rhostar)
+        z      = (dlog(max(rhost1,eps)) - mu0)/siglog
+        pbar   = pbar + 0.5d0*z*z
+       endif
+
+       if (rstar.gt.0.d0.and.srstar.gt.0.d0) then
+        siglog = dsqrt(dlog(1.d0 + (srstar/rstar)**2))
+        mu0    = dlog(rstar)
+        z      = (dlog(max(rst1,eps)) - mu0)/siglog
+        pbar   = pbar + 0.5d0*z*z
+       endif
+      end subroutine baryon_prior_penalty
+
+
+!=======================================================================
+!> @brief Propose new baryonic parameters using a random walk in log-space
+!!
+!> @details
+!> This routine performs a symmetric Gaussian random walk in logarithmic
+!> space for the baryonic nuisance parameters:
+!>  - gas density normalization (rhog1)
+!>  - gas scale radius (rsga1)
+!>  - stellar density normalization (rhost1)
+!>  - stellar scale radius (rst1)
+!>
+!> The proposal has the form:
+!>   log(x_new) = log(x_old) + N(0, s_rw)
+!> ensuring strict positivity of all parameters after exponentiation.
+!>
+!> This proposal is appropriate when the prior on the baryonic parameters
+!> is defined in log-space (i.e. lognormal prior). If the prior is Gaussian
+!> in linear space, this routine may lead to large prior penalties and low
+!> acceptance rates.
+!>
+!> The proposed values are written directly to the global baryonic state
+!> variables defined in 'paramsoptS.i'.
+!>
+!> @param[in,out] nseed Random number generator seed (must be updated externally)
+!> @param[in]     s_rw  Standard deviation of the Gaussian step in log-space
+!>
+!> @note
+!> Typical values for s_rw are in the range 0.01–0.10. Larger values may
+!> cause runaway behaviour due to multiplicative jumps.
+!>
+!> @warning
+!> This routine assumes that the current baryonic parameters are strictly
+!> positive. A small numerical floor (eps) is enforced to avoid log(0).
+!=======================================================================
+        subroutine propose_baryons_rw_log(nseed, s_rw)
+          implicit real*8 (a-h,o-z)
+          implicit integer*4 (i-n)
+          include 'paramsoptS.i'
+          ! Symmetric RW in log-space for each positive baryon param.
+          ! s_rw is a *fractional* step scale (e.g. 0.05-0.20 typical).
+          ! Use your r_normal_ab(mu, sigma, seed).
+          real*8 s_rw, lg, eps
+          integer*4 nseed
+          eps = 1.d-30
+
+          if (rho0gas.gt.0.d0) then
+            lg   = dlog(max(rhog1,eps))
+            lg   = r_normal_ab(lg, s_rw, nseed)
+            rhog1 = dexp(lg)
+          endif
+
+          if (rsgas.gt.0.d0) then
+            lg   = dlog(max(rsga1,eps))
+            lg   = r_normal_ab(lg, s_rw, nseed)
+            rsga1 = dexp(lg)
+          endif
+
+          if (rhostar.gt.0.d0) then
+            lg    = dlog(max(rhost1,eps))
+            lg    = r_normal_ab(lg, s_rw, nseed)
+            rhost1 = dexp(lg)
+          endif
+
+          if (rstar.gt.0.d0) then
+            lg   = dlog(max(rst1,eps))
+            lg   = r_normal_ab(lg, s_rw, nseed)
+            rst1 = dexp(lg)
+          endif
+        end subroutine propose_baryons_rw_log
 
 
 
+!=======================================================================
+!> @brief Propose new baryonic parameters using a random walk in linear space
+!!
+!> @details
+!> This routine performs a Gaussian random walk directly in linear space
+!> for the baryonic nuisance parameters:
+!>  - gas density normalization (rhog1)
+!>  - gas scale radius (rsga1)
+!>  - stellar density normalization (rhost1)
+!>  - stellar scale radius (rst1)
+!>
+!> The step size is expressed in units of the corresponding observational
+!> uncertainty (sigma), i.e.:
+!>   x_new = x_old + N(0, s_abs * sigma_x)
+!>
+!> Positivity is enforced by reflecting negative proposals using abs(x)
+!> and applying a small numerical floor.
+!>
+!> This proposal is particularly suitable when the prior on the baryonic
+!> parameters is Gaussian in linear space.
+!>
+!> The proposed values are written directly to the global baryonic state
+!> variables defined in 'paramsoptS.i'.
+!>
+!> @param[in,out] nseed Random number generator seed (must be updated externally)
+!> @param[in]     s_abs Step size in units of the prior standard deviation
+!!
+!> @note
+!> Typical values for s_abs are in the range 0.1–1.0, corresponding to
+!> 0.1–1 sigma jumps.
+!>
+!> @warning
+!> The reflection via abs(x) slightly distorts the proposal near zero.
+!> This effect is negligible when the probability mass is far from zero.
+!=======================================================================
+        subroutine propose_baryons_rw_lin(rhgn, rhosn,rsgn,rstn,
+     &           nseed, s_abs)
+          implicit real*8 (a-h,o-z)
+          include 'paramsoptS.i'
+          integer*4 nseed
+          real*8 s_abs, xnew, eps
+          eps = 0.01d0
 
+          if (rho0gas.gt.0.d0 .and. srhoga.gt.0.d0) then
+            xnew = r_normal_ab(rhgn, s_abs*srhoga, nseed)   ! step in unità di sigma
+            rhgn = max(abs(xnew), eps)
+          endif
 
+          if (rsgas.gt.0.d0 .and. srsga.gt.0.d0) then
+            xnew = r_normal_ab(rsgn, s_abs*srsga, nseed)
+            rsgn = max(abs(xnew), eps)
+          endif
+
+          if (rhostar.gt.0.d0 .and. srhost.gt.0.d0) then
+            xnew = r_normal_ab(rhosn, s_abs*srhost, nseed)
+            rhosn = max(abs(xnew), eps)
+          endif
+
+          if (rstar.gt.0.d0 .and. srstar.gt.0.d0) then
+            xnew = r_normal_ab(rstn, s_abs*srstar, nseed)
+            rstn = max(abs(xnew), eps)
+          endif
+        end subroutine
 
 
 C
@@ -2966,7 +3333,7 @@ c     no interlopers considered
 
       return
       end
-
+     
 c
 c     N(R) - projected Hernquist - see Hernquist (1990)
 c
@@ -3064,9 +3431,7 @@ c
 
 !>    It requires the inclusion of the COMMON parameters defined in paramsoptS.i,
 !! the values of all the paramters r200, rs, rc, cbe, cbe0, 
-!! tmass, screen, rcut, al, kani, kmp, knfit, kscr, v200=10.*hz*r200.
-!> if kmp=7 and kscr>0, one needs to specify also nhs, the exponent for
-!> the Hu&Sawicki model of \f$ f(R) \f$, and the redshift parameter zb.
+!! tmass, screen, rcut, al, kani, kmp, knfit, v200=10.*hz*r200.
 !> A special case corresponds to the number of steps in the anisotropy
 !! parameter nbs=-1, where the Hansen & Moore model is selected
 !! (the anisotropy depends on the mass density profile \f$ \beta(r)=
@@ -3094,14 +3459,12 @@ c
 !>       cbe0=1.0 !not used unless kani=21, 41
 !>       tmass=0.10
 !>       screen=0.4
-!>       kmp=7    !mass profile model. kmp=7 corresponds to mNFW_LH
+!>       kmp=8    !mass profile model. kmp=7 corresponds to mNFW_BH
 !>       v200=r200*10*85
 !>       knfit=1  !Number density profile model. knfit=1 Corresponds to pNFW
 !>       kani=4   !Anisotropy model. kani=4 corresponds to Tiret profile
 !>       kscr=1   !screening option
 !>       rcut=1.0
-!>       zb=0.3
-!>       nhs=2
 !>       alr=dlog(2.5d0) 
 !>       sint=sr2int(alr)  
 !>       write(*,*)  sint
@@ -3113,6 +3476,7 @@ c
       complex gamma,z,hypgeo,z200m, hfz
       dimension rsvalues(28),r100values(28)
       include 'paramsoptS.i'
+      include 'barions.i'
       data rsvalues/0.01,0.05,0.06,0.07,0.08,0.09,0.10,0.11,0.12,0.13,
      ,     0.14,0.15,0.16,0.17,0.18,0.19,0.20,0.21,0.22,0.23,0.24,0.25,
      ,     0.30,0.35,0.40,0.45,0.50,1.00/
@@ -3122,6 +3486,7 @@ c
       external gammarec
       external frLin
       external hypgeo
+      external fbars
 c    
       gm200=r200*v200*v200
 
@@ -3201,46 +3566,32 @@ c
 c     attempt to insert generalized NFW model         
       elseif (kmp.eq.10) then
 
-       call hygfx ( 3-tmass, 3-tmass, 4-tmass, -t/rs, hfx ) 
-       call hygfx ( 3-tmass, 3-tmass, 4-tmass, -r200/rs, hfy)
+c       call hygfx ( 3-tmass, 3-tmass, 4-tmass, -t/rs, hfx ) 
+c       call hygfx ( 3-tmass, 3-tmass, 4-tmass, -r200/rs, hfy)
        
-       xm =  hfx/hfy*(t/r200)**(3-tmass)
+c       xm =  hfx/hfy*(t/r200)**(3-tmass)
 
-
-      elseif (kmp.eq.7) then
-c     M(r) is the modified NFW profile with tmass=m (mass of the   
-c     scalaron field) as an additional free parameter 
-       timar=tmass
+       call hygfx ( 3-dA3, 3-dA3, 4-dA3, -t/rs, hfx ) 
+       call hygfx ( 3-dA3, 3-dA3, 4-dA3, -r200/rs, hfy)
        
-       ainteg=frLin(t) !fifth force contribution     
-       ascr=1.0d0      !it is different form 1 only in kscr=1,2     
-       
-       if (kscr.eq.1) then  !screening model: istantaneous transition 
-			    !between linear and screened regime   
-	     alim=field(t)
-         Ric=5.44e-8*0.9*((1+zb)**3+4*Olam/Omegam)
-         !nhs=1  !exp in H&S model (added as external parameter)
-         
-c       background field value with that tmass
-	     fr=Ric/(3*(nhs+1)*tmass*tmass+(nhs+2)*Ric)
+       xm =  hfx/hfy*(t/r200)**(3-dA3)
+c     Clustering Dark Energy 
+c     dA3 = exponent of gNFW
+c     dA2 = f(cs,w)
+c     dA1 = cs2 (in unit of c**2)        
+      elseif (kmp.eq.18) then
 
-c       if field fluctuations are larger than the background value,
-c       it means that the field reaches the value f_R=0 inside the 
-c       overdensity; thus the fifth force is zero
-	     if(alim.ge.fr) ainteg=0d0
-
-c       smoothed transition between the screened and linear regime
-c       the transition is performed with atan function and the sharpness
-c       is controlled by an exponent nsharp (default=10)
-       elseif(kscr.eq.2) then
-         nsharp=7 
-         ascr=(datan(nsharp*(t-screen))*2.0d0/pig+1.0d0)/2.0d0
-       endif     
-  
-       fac200=1./(dlog(1.d0+r200/rs)-(r200/rs)/(1.d0+r200/rs))
-       xm=((dlog(1.d0+t/rs)-t/rs/(1.d0+t/rs))+ainteg*ascr)*fac200
+c       call hygfx ( 3-tmass, 3-tmass, 4-tmass, -t/rs, hfx ) 
+c       call hygfx ( 3-tmass, 3-tmass, 4-tmass, -r200/rs, hfy)
        
-        
+c       xm =  hfx/hfy*(t/r200)**(3-tmass)
+
+       call hygfx ( 3-dA3, 3-dA3, 4-dA3, -t/rs, hfx ) 
+       call hygfx ( 3-dA3, 3-dA3, 4-dA3, -r200/rs, hfy)
+                                                 
+       xm=hfx/hfy*(t/r200)**(3-dA3)*(1.0d0+3*10**(screen-3.5)*(1+tmass))
+
+      
       elseif (kmp.eq.8)  then	
 c     M(r) is the modified NFW profile with a beyond Horndeski model 
 c     See Saltas+16, Sakestein+16
@@ -3249,13 +3600,33 @@ c     the free parameter tmass is now the coupling constant Y
        fac200=1./(dlog(1.d0+r200/rs)-(r200/rs)/(1.d0+r200/rs))
        abey=tmass*t*t*(rs-t)/(rs+t)**3
        xm=((dlog(1.d0+t/rs)-t/rs/(1.d0+t/rs))+abey/4)*fac200
-      
+        
       elseif (kmp.eq.9) then
 c     M(r) is the modified NFW profile in chameleon screening 
 c      (Pizzuti et al.,2021)    
-       fac200=1./(dlog(1.d0+r200/rs)-(r200/rs)/(1.d0+r200/rs))
-       xm=(dlog(1.d0+t/rs)-t/rs/(1.d0+t/rs))*fac200+dphidr(t/rs)
        
+       !fac200=1./(dlog(1.d0+r200/rs)-(r200/rs)/(1.d0+r200/rs))
+       !xm=(dlog(1.d0+t/rs)-t/rs/(1.d0+t/rs))*fac200+dphidr(t/rs)
+       xm = tM_bnfw_CS(t)
+       
+      
+      elseif (kmp.eq.15) then
+c     M(r) is the modified gNFW profile in chameleon screening 
+c     gamma for now is fixed to eim
+        xm = tM_gnfw_CS(t)
+        
+      elseif (kmp.eq.16) then
+c     M(r) is the modified Isothermal profile in chameleon screening 
+c     the exponent is 3/2       
+       xm = tM_iso_CS(t)
+
+      elseif (kmp.eq.17) then 
+      !M(r) is multicomponent general Chameleon. gNFW+Jaffe+beta+NFW
+        xm = grav*tmass_Gen(t)/gm200 ! To divide by gm200 as this is already
+                                ! including the normalization factor
+        
+        
+       !Check the dA3
       elseif (kmp.eq.2) then
 c
 c     M(r) is Hernquist; no gas contribution allowed for the time being
@@ -3279,6 +3650,30 @@ c
          rvrs=r200/rs
          fac200=1./(dlog(1+rvrs*rvrs)+2.*dlog(1.+rvrs)-2.*datan(rvrs))
          xm=fac200*(dlog(1+trs*trs)+2.*dlog(1.+trs)-2.*datan(trs))
+c
+c
+      elseif (kmp.eq.11) then
+c        mass is modified Burkert in Chameleon Gravity   
+         trs=t/rs
+         rvrs=r200/rs
+         fac200=1./(dlog(1+rvrs*rvrs)+2.*dlog(1.+rvrs)-2.*datan(rvrs))
+         xm1=fac200*(dlog(1+trs*trs)+2.*dlog(1.+trs)-2.*datan(trs))
+         xm=xm1+dphib(trs)
+         
+      elseif (kmp.eq.12) then
+c     mass is modified Einasto in Chameleon Gravity
+      !   eim=5.
+         agp=3.*eim
+         xgp=2.*eim*(r200/rs)**(1./eim)
+         call dincog(agp,xgp,gin,gim,gip200)
+         fac200=1./gip200
+         xgp=2.*eim*(t/rs)**(1./eim)
+         call dincog(agp,xgp,gin,gim,gip)
+         xm1=fac200*gip
+         
+         xm=xm1+dphiE(t/rs)            
+                  
+         
       elseif (kmp.eq.5) then
 c
 c     M(r) is Soft Isoth Sph; no gas contribution allowed for the time begin
@@ -3286,12 +3681,40 @@ c     Normalisation set to 1 at r/r200=1
 c
          fac200=1./(r200-rs*datan(r200/rs))
          xm=fac200*(t-rs*datan(t/rs))
+      
+      elseif (kmp.eq.13) then
+c     M(r) is Refracted Gravity; no DM contribution allowed for the time begin
+c     only BCG parameters kept free
+c
+        !refracted gravity with the function of Valeria
+        xm= grav*rgmass(t)/gm200
+        !fbarr=0.0
+        !if (kbary.eq.1) fbarr=fbars(t)
+        
+        !Covariant formulation. It is not good for the moment
+        !xm=grav*(xmstar*xlumbcg*t**2/(t+rjaf)**2+fbarr)/fmodRG(t)/gm200
+      
+      elseif (kmp.eq.14) then
+      
+        !M(r) is boson star + gas and galaxies
+        fbarr=0.0
+        if (kbary.eq.1) fbarr=fbars(t)
+         
+        xt = t/rs
+        if (xt.le.2.0d0) then 
+         xm = dtanh((t/rs)**tmass) + 1.0e-3*dA3*(t/rs)**screen
+        else
+         xm =  dtanh((2.0d0)**tmass) + 1.0e-3*dA3*(2.0d0)**screen
+        endif 
+        xm = xm + grav*fbarr/gm200
+      
       else
 c
-c     M(r) is Einasto m=5; no gas contribution allowed for the time begin
+c     M(r) is Einasto ; no gas contribution allowed for the time begin
 c     Normalisation set to 1 at r/r200=1
 c
-         eim=5.
+       !  eim=5.
+
          agp=3.*eim
          xgp=2.*eim*(r200/rs)**(1./eim)
          call dincog(agp,xgp,gin,gim,gip200)
@@ -3299,6 +3722,7 @@ c
          xgp=2.*eim*(t/rs)**(1./eim)
          call dincog(agp,xgp,gin,gim,gip)
          xm=fac200*gip
+
 cc         write(*,999) r200,rs,t,3.*eim,2.*eim*(r200/rs)**(1./eim),
 cc     &        2.*eim*(t/rs)**(1./eim),gip200,gip,xm
 cc 999     format(4(1x,f5.2),2(1x,f6.2),3(1x,d11.3))
@@ -3306,6 +3730,57 @@ cc         eim=5.
 cc         fac200=1./dgammp(3.*eim,2.*eim*(r200/rs)**(1./eim))
 cc         xm=fac200*dgammp(3.*eim,2.*eim*(t/rs)**(1./eim))
       endif
+
+C******************* BCG ***********************************************      
+ 
+c  test
+
+      fbarr=0.0
+      if (kbary.eq.1) fbarr=fbars(t)
+      
+      if (kbcg.eq.1) then
+
+       !GR setup
+       if(kmp.eq.10.or.kmp.eq.18.or.kmp.le.6) then !attempt to add clustering DE
+        fjaffe=grav*(xmstar*xlumbcg*t/rjaf/(1.+t/rjaf)+fbarr)/gm200
+        xm=xm+fjaffe !inclusion of gas,galaxies and bcg
+        
+        
+        !Chameleon setup
+       !elseif (kmody.eq.1) then 
+        !dpj=dphiJ(t/rjaf) !Include the chameleon field of the BCG
+      !fjaffe=grav*(xmstar*xlumbcg*(t/rjaf/(1.+t/rjaf)+dpj)+fbarr)/gm200
+        !xm=xm+fjaffe !inclusion of gas,galaxies and bcg
+        
+        !Refracted gravity setup
+       elseif (kmp.eq.13) then
+       
+       !refracted gravity with the function of Valeria
+        xm= grav*rgmass(t)/gm200
+        
+        !Covariant formulation. It is not good for the moment
+        !the mass is all given by the BCG and gas+baryons, no DM
+        !xm=grav*(xmstar*xlumbcg*t**2/(t+rjaf)**2+fbarr)/fmodRG(t)/gm200
+       elseif (kmp.eq.14) then
+        !Boson star + BCG
+        fjaffe=grav*(xmstar*xlumbcg*t/rjaf/(1.+t/rjaf)+fbarr)/gm200
+        
+        xt = t/rs
+        if (xt.le.2.0d0) then 
+         xm = dtanh((t/rs)**tmass) + 1.0e-3*dA3*(t/rs)**screen
+        else
+         xm =  dtanh((2.0d0)**tmass) + 1.0e-3*dA3*(2.0d0)**screen
+        endif 
+        
+        xm = fjaffe + xm
+        
+        
+       endif 
+       
+        
+        
+      endif
+c***********************************************************************
 c
 c     nu(r) is beta-model, NFW or Hernquist
 c
@@ -3361,16 +3836,25 @@ c     the inner anisotropy for r=0, cbe0
       elseif (kani.eq.21) then
          rm2=rs                     ! NFW or other mass profiles
          if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
-         if (kmp.eq.4) rm2=1.521*rs ! Burkert
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2 - dA3) *rs
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+         !avoid unphyiscal values 
+         if (rm2.lt.0) rm2=1e-4
+         if(ifreeBeta.gt.0) rm2 = rbeta !rbeta free
+         
          bec=1.-1./(cbe*cbe)
          bec0=1.-1./(cbe0*cbe0)
          if (bec.ge.1.) bec=0.999d0  ! avoid unphysical values
          if (bec0.ge.1.) bec0=0.999d0  ! avoid unphysical values
          
          if (dabs((2*bec0-2)*dlog10(t)).gt.60) then
+          write(*,*) 'problem in cbe0 = ', cbe0
           stop('ABORTED: value of anisotropy makes overflow')
          endif   
          if (dabs(((bec-bec0))*dlog10(t+rm2)).gt.60) then
+          write(*,*) 'problem in cbe = ', cbe, 'and cbe0=', cbe0
           stop('ABORTED: value of anisotropy makes overflow')
          endif
          
@@ -3392,7 +3876,12 @@ c
       elseif (kani.eq.4) then
          rm2=rs                     ! NFW or other mass profiles
          if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
-         if (kmp.eq.4) rm2=1.521*rs ! Burkert
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2-dA3)*rs
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+         !avoid unphyiscal values 
+         if (rm2.lt.0) rm2=1e-4
          bec=1.-1./(cbe*cbe)
          if (bec.ge.1.) bec=0.999d0  ! avoid unphysical values
          sr2int=xnu*xm*(t+rm2)**(2.*bec)/(t*t)
@@ -3403,25 +3892,62 @@ c
       elseif (kani.eq.41) then
          rm2=rs                     ! NFW or other mass profiles
          if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
-         if (kmp.eq.4) rm2=1.521*rs ! Burkert
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+         !avoid unphyiscal values 
+         if (rm2.lt.0) rm2=1e-4
+         
+         if(ifreeBeta.gt.0) rm2 = rbeta
+         
          bec=1.-1./(cbe*cbe)
          bec0=1.-1./(cbe0*cbe0)
          if (bec.ge.1.) bec=0.999d0  ! avoid unphysical values
          if (bec0.ge.1.) bec0=0.999d0  ! avoid unphysical values
 
          if (dabs((2*bec0-2)*dlog10(t)).gt.60) then
+          write(*,*) 'problem in cbe0 = ', cbe0
           stop('ABORTED: value of anisotropy makes overflow')
           
          endif 
          if (dabs((2.*(bec-bec0))*dlog10(t+rm2)).gt.60) then
-          
+          write(*,*) 'problem in cbe=', cbe, 'and cbe0=', cbe0
           stop('ABORTED: value of anisotropy makes overflow')
          endif
-         
          !if ((bec-bec0).lt.-6.) bec=-5.999d0+bec0
          
          sr2int=xnu*xm*t**(2*bec0-2.)*(t+rm2)**(2.*(bec-bec0))
- 
+
+      elseif (kani.eq.8) then
+c     WORK IN PROGRESS
+c     Biviano&Pizzuti model
+         bi=1.-1./(cbe*cbe)
+         b0=1.-1./(cbe0*cbe0)
+         if (bi.ge.1.) bec=0.999d0  ! avoid unphysical values
+         if (b0.ge.1.) bec0=0.999d0  ! avoid unphysical values
+
+         rm2=rs                     ! NFW or other mass profiles
+         if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+        
+         if(ifreeBeta.gt.0) rm2 = rbeta !rbeta free 
+
+        
+        db1 =dexp(-(bi-b0)*dexp(-(t**2)/(rm2**2)))
+        db2 = t**(2.0*b0-2)*(t+rm2)**(2.0*bi-2.0*b0)
+        
+        if (dabs((2.*(bec-bec0))*dlog10(t+rm2)).gt.60) then
+          write(*,*) 'problem in cbe=', cbe, 'and cbe0=', cbe0
+          stop('ABORTED: value of anisotropy makes overflow')
+        endif
+        
+        sr2int=xnu*xm*db1*db2
+
+        
 c fare poi un check!
          
 c
@@ -3430,7 +3956,12 @@ c
       elseif (kani.eq.5) then
          rm2=rs                     ! NFW or other mass profiles
          if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
-         if (kmp.eq.4) rm2=1.521*rs ! Burkert
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+         !avoid unphyiscal values 
+         if (rm2.lt.0) rm2=1e-4
          bec=1.-1./(cbe*cbe)
          if (bec.ge.1.) bec=0.999d0  ! avoid unphysical values
          if (bec.le.-1.) bec=-0.999d0  ! avoid unphysical values
@@ -3444,7 +3975,9 @@ cc         rhm=rs ! use rho(r)
          sr2int=xnu*xm*t**(2.*(ahm-bhm-1.))*(rhm+t)**(-4.*bhm)
       endif
       sr2int = t*sr2int*gm200    ! integral in dlog and G*M scaling
-
+      
+      
+      !write(*,*) sr2int
 c     
       return
       end
@@ -3544,7 +4077,14 @@ c     the inner anisotropy for r=0, cbe0
       elseif (kani.eq.21) then
          rm2=rs                     ! NFW or other mass profiles
          if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
-         if (kmp.eq.4) rm2=1.521*rs ! Burkert
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+         !avoid unphyiscal values 
+         if (rm2.lt.0) rm2=1e-4
+         if(ifreeBeta.gt.0) rm2 = rbeta !rbeta free
+         
          bec=1.-1./(cbe*cbe)
          bec0=1.-1./(cbe0*cbe0)
          if (bec.ge.1.) bec=0.999d0  ! avoid unphysical values
@@ -3570,7 +4110,13 @@ c
       elseif (kani.eq.4) then
          rm2=rs                     ! NFW or other mass profiles
          if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
-         if (kmp.eq.4) rm2=1.521*rs ! Burkert
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+         !avoid unphyiscal values 
+         if (rm2.lt.0) rm2=1e-4
+         
          bec=1.-1./(cbe*cbe)
          if (bec.ge.1.) bec=0.999d0  ! avoid unphysical values
          sr2out=(t+rm2)**(-2.*bec)
@@ -3583,7 +4129,14 @@ c
       elseif (kani.eq.41) then
          rm2=rs                     ! NFW or other mass profiles
          if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
-         if (kmp.eq.4) rm2=1.521*rs ! Burkert
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+         !avoid unphyiscal values 
+         if (rm2.lt.0) rm2=1e-4
+         if(ifreeBeta.gt.0) rm2 = rbeta
+         
          bec=1.-1./(cbe*cbe)
          bec0=1.-1./(cbe0*cbe0)
          if (bec.ge.1.) bec=0.999d0  ! avoid unphysical values
@@ -3591,14 +4144,39 @@ c
          
          sr2out=t**(-2.*bec0)*(t+rm2)**(-2.*(bec-bec0))
          
+      elseif (kani.eq.8) then
+c     WORK IN PROGRESS
+c     Biviano&Pizzuti model
+         bi=1.-1./(cbe*cbe)
+         b0=1.-1./(cbe0*cbe0)
+         if (bi.ge.1.) bec=0.999d0  ! avoid unphysical values
+         if (b0.ge.1.) bec0=0.999d0  ! avoid unphysical values
          
+         rm2=rs                     ! NFW or other mass profiles
+         if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+        
+         if(ifreeBeta.gt.0) rm2 = rbeta !rbeta free 
+        db1 =dexp((bi-b0)*dexp(-(t**2)/(rm2**2)))
+        db2 = t**(-2.0*b0)*(t+rm2)**(-2.0*bi+2.0*b0)
+        sr2out = db1*db2
+        
 c
 c     modfied Tiret (non-zero central anisotropy)
 c
       elseif (kani.eq.5) then
          rm2=rs                     ! NFW or other mass profiles
          if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
-         if (kmp.eq.4) rm2=1.521*rs ! Burkert
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+         !avoid unphyiscal values 
+         if (rm2.lt.0) rm2=1e-4
+         
          bec=1.-1./(cbe*cbe)
          if (bec.ge.1.) bec=0.999d0  ! avoid unphysical values
          if (bec.le.-1.) bec=-0.999d0  ! avoid unphysical values
@@ -3683,7 +4261,14 @@ c     the inner anisotropy for r=0, cbe0
       elseif (kani.eq.21) then
          rm2=rs                     ! NFW or other mass profiles
          if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
-         if (kmp.eq.4) rm2=1.521*rs ! Burkert
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+         !avoid unphyiscal values 
+         if (rm2.lt.0) rm2=1e-4
+         if(ifreeBeta.gt.0) rm2 = rbeta !rbeta free
+         
          becin=1.-1./(cbe*cbe)
          bec0=1.-1./(cbe0*cbe0)
          if (becin.ge.1.) becin=0.999d0  ! avoid unphysical values
@@ -3708,7 +4293,13 @@ c
       elseif (kani.eq.4) then
          rm2=rs                     ! NFW or other mass profiles
          if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
-         if (kmp.eq.4) rm2=1.521*rs ! Burkert
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+         !avoid unphyiscal values 
+         if (rm2.lt.0) rm2=1e-4
+         
          bec=(1.-1./(cbe*cbe))*t/(t+rm2)
          if (bec.ge.1.) bec=0.999d0  ! avoid unphysical values
 
@@ -3718,7 +4309,14 @@ c     Generalized Tiret
       elseif (kani.eq.41) then
          rm2=rs                     ! NFW or other mass profiles
          if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
-         if (kmp.eq.4) rm2=1.521*rs ! Burkert
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+         !avoid unphyiscal values 
+         if (rm2.lt.0) rm2=1e-4
+         if(ifreeBeta.gt.0) rm2 = rbeta
+         
          becin=1.-1./(cbe*cbe)
          bec0=1.-1./(cbe0*cbe0)
          if (becin.ge.1.) becin=0.999d0  ! avoid unphysical values
@@ -3727,13 +4325,45 @@ c     Generalized Tiret
          bec=bec0+(becin-bec0)*t/(t+rm2)   
          if (bec.ge.1.) bec=0.999d0  ! avoid unphysical values
 
+
+      elseif (kani.eq.8) then
+c     WORK IN PROGRESS
+c     Biviano&Pizzuti model
+         bi=1.-1./(cbe*cbe)
+         b0=1.-1./(cbe0*cbe0)
+         if (bi.ge.1.) bec=0.999d0  ! avoid unphysical values
+         if (b0.ge.1.) bec0=0.999d0  ! avoid unphysical values
+         
+         rm2=rs                     ! NFW or other mass profiles
+         if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+        
+         rm2=rs                     ! NFW or other mass profiles
+         if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+        
+         if(ifreeBeta.gt.0) rm2 = rbeta !rbeta free 
+         bec = b0+(bi-b0)*(t/(t+rm2)+t**2/rm2**2*dexp(-(t/rm2)**2) )
+         if (bec.ge.1.) bec=0.999d0  ! avoid unphysical values
 c
 c
       elseif (kani.eq.5) then
 c     modified Tiret (non-zero central anisotropy)
          rm2=rs                     ! NFW or other mass profiles
          if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
-         if (kmp.eq.4) rm2=1.521*rs ! Burkert
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+         !avoid unphyiscal values 
+         if (rm2.lt.0) rm2=1e-4
+         
          bec=(1.-1./(cbe*cbe))*(t-rm2)/(t+rm2)
          if (bec.ge.1.) bec=0.999d0  ! avoid unphysical values
          if (bec.le.-1.) bec=-0.999d0  ! avoid unphysical values
@@ -3884,7 +4514,14 @@ c     the inner anisotropy for r=0, cbe0
       elseif (kani.eq.21) then
          rm2=rs                     ! NFW or other mass profiles
          if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
-         if (kmp.eq.4) rm2=1.521*rs ! Burkert
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+         !avoid unphyiscal values 
+         if (rm2.lt.0) rm2=1e-4
+         if(ifreeBeta.gt.0) rm2 = rbeta !rbeta free
+         
          becin=1.-1./(cbe*cbe)
          bec0=1.-1./(cbe0*cbe0)
          if (becin.ge.1.) becin=0.999d0  ! avoid unphysical values
@@ -3909,7 +4546,13 @@ c
       elseif (kani.eq.4) then
          rm2=rs                     ! NFW or other mass profiles
          if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
-         if (kmp.eq.4) rm2=1.521*rs ! Burkert
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+         !avoid unphyiscal values 
+         if (rm2.lt.0) rm2=1e-4
+         
          bec=(1.-1./(cbe*cbe))*t/(t+rm2)
          if (bec.ge.1.) bec=0.999d0  ! avoid unphysical values
          
@@ -3920,7 +4563,14 @@ c     the inner anisotropy for r=0, cbe0
       elseif (kani.eq.41) then
          rm2=rs                     ! NFW or other mass profiles
          if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
-         if (kmp.eq.4) rm2=1.521*rs ! Burkert
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+         !avoid unphyiscal values 
+         if (rm2.lt.0) rm2=1e-4
+         if(ifreeBeta.gt.0) rm2 = rbeta
+         
          becin=1.-1./(cbe*cbe)
          bec0=1.-1./(cbe0*cbe0)
          if (becin.ge.1.) becin=0.999d0  ! avoid unphysical values
@@ -3928,14 +4578,38 @@ c     the inner anisotropy for r=0, cbe0
          
          bec=bec0+(becin-bec0)*t/(t+rm2)        
          if (bec.ge.1.) bec=0.999d0  ! avoid unphysical values         
-         
+
+      elseif (kani.eq.8) then
+c     WORK IN PROGRESS
+c     Biviano&Pizzuti model
+         bi=1.-1./(cbe*cbe)
+         b0=1.-1./(cbe0*cbe0)
+         if (bi.ge.1.) bec=0.999d0  ! avoid unphysical values
+         if (b0.ge.1.) bec0=0.999d0  ! avoid unphysical values
+                
+         rm2=rs                     ! NFW or other mass profiles
+         if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+        
+         if(ifreeBeta.gt.0) rm2 = rbeta !rbeta free 
+         bec = b0+(bi-b0)*(t/(t+rm2)+t**2/rm2**2*dexp(-(t/rm2)**2) )
+         if (bec.ge.1.) bec=0.999d0  ! avoid unphysical values
 c
 c     modified Tiret (non-zero central anisotropy)
 c
       elseif (kani.eq.5) then
          rm2=rs                     ! NFW or other mass profiles
          if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
-         if (kmp.eq.4) rm2=1.521*rs ! Burkert
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+         !avoid unphyiscal values 
+         if (rm2.lt.0) rm2=1e-4
+         
          bec=(1.-1./(cbe*cbe))*(t-rm2)/(t+rm2)
          if (bec.ge.1.) bec=0.999d0  ! avoid unphysical values
          if (bec.le.-1.) bec=-0.999d0  ! avoid unphysical values
@@ -4025,11 +4699,83 @@ c
       include 'datarv.i'
       include 'tsallis.i'
       include 'probs.i'
+      include 'barions.i'
       external sr2int,sr2out,sigmar1,sigmar2,gwenu
       external sigmarnorm
       external sdint
+       
+       
+      !generate the value or rho0gas and rsgas
+      !According to their uncertainties
+      
+c      if (rho0gas.gt.0) then
+c        call CPU_TIME(start) !uses cpu time for the random generator seed
+c        nst=int(134023213*start, kind=8)
+c        nseed = 123434789+((-1)**nst)*nst
+c        rhog1 = dabs(r_normal_ab (rho0gas,srhoga,nseed) )
+      
+c        coo = 0
+c        do while (rhog1.le.0)
+c            coo = coo + 1
+c            nseed = 123434789+((-1)**nst)*(nst+coo)
+c            rhog1 = dabs(r_normal_ab(rho0gas,srhoga,nseed)) 
+c        end do
+c      endif      
+      
+c      if (rsgas.gt.0) then
+c        call CPU_TIME(start) !uses cpu time for the random generator seed
+c        nst=int(14451231*start, kind=8)
+c        nseed = 123462714+(-1)**nst*nst
+       
+c        rsga1 =  dabs(r_normal_ab (rsgas,srsga,nseed) )
+c        coo = 0
+c        do while (rsga1.le.0)
+c            coo = coo + 1
+c            nseed = 123434789+((-1)**nst)*(nst+coo)
+c            rsga1 =  dabs(r_normal_ab (rsgas,srsga,nseed) )
+c        end do
+      
+c      endif
+c      !check
+c      !write(*,*) rhog1, rsga1, coo
+      
+c      if(rhostar.gt.0) then
+c        call CPU_TIME(start) !uses cpu time for the random generator seed
+c        nst=int(1343000*start, kind=8)
+c        nseed = 123434789+((-1)**nst)*nst
+c        rhost1 = dabs(r_normal_ab(rhostar,srhost,nseed))
+    
+c        coo = 0
+c        do while (rhost1.le.0)
+c            coo = coo + 1
+c            nseed = 123434789+((-1)**nst)*(nst+coo)
+c            rhost1 = r_normal_ab(rhostar,srhost,nseed) 
+c        end do
+c      endif
+      
+c      if (rstar.gt.0) then
+c        call CPU_TIME(start) !uses cpu time for the random generator seed
+c        nst=int(144231325*start, kind=8)
+c        nseed = 123462714+(-1)**nst*nst
+       
+c        rst1 =  dabs(r_normal_ab ((rstar),srstar,nseed) )
+c        coo = 0
+c        do while (rst1.le.0)
+c            coo = coo + 1
+c            nseed = 123434789+((-1)**nst)*(nst+coo)
+c            rst1 =  dabs(r_normal_ab ((rstar),srstar,nseed) ) 
+c        end do
+c      endif
 
+      !check
+      !write(*,*) rhost1, rst1, coo
+c      do i = 1, 100
+c       xt = i*0.025
+c       write(*,*) xt, fbars(xt)
+c      enddo
+c      stop('check')
 
+      
 
 c     Max Lik fit: start by computing the sigma_r(r) function in 
 c     Ninterp points logarithmically spaced between 0.001 and 20
@@ -4048,14 +4794,14 @@ c     Ninterp points logarithmically spaced between 0.001 and 20
          embm(j)=e(j)
          wmbm(j)=w(j)
       enddo
-
       irule=2
-      errabs=0.d0
+      errabs=0.0d0
       errrel=0.001d0
       rismin=1.d-190
       rismax=1.d190
       rinfinity=25.0d0
 c      rlow=0.051
+
       do i=1,ninterp
          xx2=2.d0*rinfinity
          xris(i) = dlog(rlow)+dfloat(i-1)*
@@ -4070,6 +4816,7 @@ c      rlow=0.051
          if (risl.gt.1.8d195) risok=rismax 
          if (risl.le.0.d0) risok=rismin
          yris(i)=dlog(risok)
+         !write(*,*) xris(i),yris(i)
 
       enddo
 
@@ -4096,9 +4843,9 @@ c     initialize psum = Sum[-log(lik)] and wsum = Sum[galaxy_weights]
 c     If interlopers are required, the g function is composed
 c     of 2 parts; one is the usual integral, truncated to r200
 
-      if (kintd.eq.1) then
-         rinfinity=0.99999*r200
-      endif
+      !if (kintd.eq.1) then
+       !  rinfinity=0.99999*r200 
+      !endif
 
 c     Now compute the distribution function at the radial distance of
 c     each galaxy by interpolating the sigma_r(r) and then
@@ -4152,7 +4899,11 @@ c
 c     re-define rinfinity as the radius where v_z/sigma_r<0.1
 c     to avoid a problem in v_z=0
 c
-               if (kintd.eq.0) call rinf(rinfinity)
+               !if (kintd.eq.0) call rinf(rinfinity)
+               
+               !NOTE: to speed up the code, I keep rinfinity at 25 Mpc
+               !otherwise it will be way slower
+               !call rinf(rinfinity)
 c
 c
                umax = dacosh(rinfinity/rj)
@@ -4201,7 +4952,7 @@ c     the other is for the case in which c_nu is fitted externally
                if (nrc.gt.0.5) then
 
                   call sigmarnorm(rc,fnorm)
-                  if (kintd.eq.1) fnorm=fnorm*(xnh+xni)/xnh
+                  !if (kintd.eq.1) fnorm=fnorm*(xnh+xni)/xnh
                   p=2.*pig*rj*g/fnorm
 
 
@@ -4229,6 +4980,7 @@ c     The log(probability) is stored in z(j,i)
             enddo
             
          enddo
+         
          npv=k
 
 c     Bi-spline 2-d interpolation to obtain the p values
@@ -4264,8 +5016,12 @@ c     re-define rinfinity as the radius where v_z/sigma_r leq 0.1
 c     to avoid a problem in v_z=0; if we require to consider the 
 c     interloper contribution, rinfinity is set to 1 already
 
-            if (kintd.eq.0) call rinf(rinfinity)
 
+            !for now no recomputation of rinfinity
+            !if (kintd.eq.0) call rinf(rinfinity)
+
+            
+            
 c     check the limits of the integral
 
             if (rj.lt.rinfinity) then
@@ -4367,6 +5123,8 @@ c     Ngr is the average number of galaxies per group, since
 c     the likelihood we want to estimate is the Sum of the
 c     ngambm galaxy probabilities)
 c     
+      
+
       psum=psum/wsum*ngambm
 
       f=psum
@@ -4475,9 +5233,9 @@ c     initialize psum = Sum[-log(lik)] and wsum = Sum[galaxy_weights]
 c     If interlopers are required, the g function is composed
 c     of 2 parts; one is the usual integral, truncated to r200
 
-      if (kintd.eq.1) then
-         rinfinity=0.99999*r200
-      endif
+      !if (kintd.eq.1) then
+       !  rinfinity=0.99999*r200
+      !endif
 
 c     Now compute the distribution function at the radial distance of
 c     each galaxy by interpolating the sigma_r(r) and then
@@ -4532,46 +5290,47 @@ c
 c     re-define rinfinity as the radius where v_z/sigma_r<0.1
 c     to avoid a problem in v_z=0
 c
-               if (kintd.eq.0) call rinf(rinfinity)
-c
+               !if (kintd.eq.0) call rinf(rinfinity)
+               call rinf(rinfinity)
+c               
 c     here I uses dqdag to handle peak singularities 
 c     that dqdagi does not handle 
 c
                umax = dacosh(rinfinity/rj)
-               errrel=0.005d0
+               errrel=0.001d0
                call dgaus8 (gwenu,0.d0,umax,errrel,gdgau, IERR) 
                g= rj*gdgau
 c     
 c     Add interloper contribution if requested
 c
-               if (kintd.eq.1) then
-                  rjrv=rj/r200
-                  vzvv=vj/v200
-                  ctr=r200/rc
-                  aint=10.**(-1.061+0.364*rjrv*rjrv-
-     -                 0.580*rjrv**4+0.533*rjrv**6)
-                  sigmaint=0.612-0.0653*rjrv*rjrv
-                  bint=0.0075
-                  gihat=aint*dexp(-0.5*(vzvv/sigmaint)**2)+bint
-                  call virsphmassp(rup,xmprmax)
-                  call virsphmassp(rlow,xmprmin)
-                  xmin=rlow/r200
-                  xmax=rup/r200
-                  errabs=0.d0
-                  errrel=0.005d0
-c                  xinteg=dcadre(sdint,xmin,xmax,errabs,errrel,
-c     &                 errest,ier)
-                  call dgaus8 (sdint,xmin,xmax, errrel, 
-     &                xinteg, IERR)  
-                  xmctr=(dlog(1.+ctr)-ctr/(1.+ctr))/(dlog(2.d0)-0.5d0)
-                  xnv=ngambm/((xmprmax-xmprmin)/xmctr+2.*pig*xinteg)
-cc                  write(*,*) ' Number of obsd galaxies ',ngambm
-                  xnh=xnv*(xmprmax-xmprmin)/xmctr
-                  xni=xnv*2.*pig*xinteg
-cc                  print *,' Nh, Ni, Nv, Nobs = ',xnh,xni,xnv,ngambm
-                  gi=xnv/(v200*r200*r200)*gihat
-                  gi=gi/xnv    ! g is in units of Nv, so I use the same units for gi
-              endif
+c               if (kintd.eq.1) then
+c                  rjrv=rj/r200
+c                  vzvv=vj/v200
+c                  ctr=r200/rc
+c                  aint=10.**(-1.061+0.364*rjrv*rjrv-
+c     -                 0.580*rjrv**4+0.533*rjrv**6)
+c                  sigmaint=0.612-0.0653*rjrv*rjrv
+c                  bint=0.0075
+c                  gihat=aint*dexp(-0.5*(vzvv/sigmaint)**2)+bint
+c                  call virsphmassp(rup,xmprmax)
+c                  call virsphmassp(rlow,xmprmin)
+c                  xmin=rlow/r200
+c                  xmax=rup/r200
+c                  errabs=0.d0
+c                  errrel=0.005d0
+cc                  xinteg=dcadre(sdint,xmin,xmax,errabs,errrel,
+cc     &                 errest,ier)
+c                  call dgaus8 (sdint,xmin,xmax, errrel, 
+c     &                xinteg, IERR)  
+c                  xmctr=(dlog(1.+ctr)-ctr/(1.+ctr))/(dlog(2.d0)-0.5d0)
+c                  xnv=ngambm/((xmprmax-xmprmin)/xmctr+2.*pig*xinteg)
+ccc                  write(*,*) ' Number of obsd galaxies ',ngambm
+c                  xnh=xnv*(xmprmax-xmprmin)/xmctr
+c                  xni=xnv*2.*pig*xinteg
+ccc                  print *,' Nh, Ni, Nv, Nobs = ',xnh,xni,xnv,ngambm
+c                  gi=xnv/(v200*r200*r200)*gihat
+c                  gi=gi/xnv    ! g is in units of Nv, so I use the same units for gi
+c              endif
                
                if (g.ne.g) write(*,*) 'BEWARE! ',rj,vj,g
 
@@ -4583,7 +5342,7 @@ c     the other is for the case in which c_nu is fitted externally
                if (nrc.gt.0.5) then
 
                   call sigmarnorm(rc,fnorm)
-                  if (kintd.eq.1) fnorm=fnorm*(xnh+xni)/xnh
+                  !if (kintd.eq.1) fnorm=fnorm*(xnh+xni)/xnh
                   p=2.*pig*rj*g/fnorm
 
 
@@ -4638,8 +5397,8 @@ c     re-define rinfinity as the radius where v_z/sigma_r leq 0.1
 c     to avoid a problem in v_z=0; if we require to consider the 
 c     interloper contribution, rinfinity is set to 1 already
 
-            if (kintd.eq.0) call rinf(rinfinity)
-
+            !if (kintd.eq.0) call rinf(rinfinity)
+            call rinf(rinfinity)
 c     check the limits of the integral
 
             if (rj.lt.rinfinity) then
@@ -4659,34 +5418,34 @@ c               endif
 
 c     Add interloper contribution if requested
 
-               if (kintd.eq.1) then
-                  rjrv=rj/r200
-                  vzvv=vj/v200
-                  ctr=r200/rc
-                  aint=10.**(-1.061+0.364*rjrv*rjrv-
-     -                 0.580*rjrv**4.+0.533*rjrv**6)
-                  sigmaint=0.612-0.0653*rjrv*rjrv
-                  bint=0.0075
-                  n2=2
-                  gihat=aint*dexp(-0.5*(vzvv/sigmaint)**2)+bint
-                  call virsphmassp(rup,xmprmax)
-                  call virsphmassp(rlow,xmprmin)
-                  xmin=rlow/r200
-                  xmax=rup/r200
-                  errabs=0.d0
-                  errrel=0.001d0
-c                  xinteg=dcadre(sdint,xmin,xmax,errabs,
-c     &                 errrel,errest,ier)
-                  call dgaus8 (sdint,xmin,xmax, errrel, 
-     &                xinteg, IERR) 
-                  xmctr=(dlog(1.+ctr)-ctr/(1.+ctr))/(dlog(2.d0)-0.5d0)
-                  xnv=ngambm/((xmprmax-xmprmin)/xmctr+2.*pig*xinteg)
-                  xnh=xnv*(xmprmax-xmprmin)/xmctr
-                  xni=xnv*2.*pig*xinteg
-                  gi=xnv/(v200*r200*r200)*gihat
-                  gi=gi/xnv    ! g is in units of Nv, so I use the same units for gi
-                  g=g+gi
-               endif
+c               if (kintd.eq.1) then
+c                  rjrv=rj/r200
+c                  vzvv=vj/v200
+c                  ctr=r200/rc
+c                  aint=10.**(-1.061+0.364*rjrv*rjrv-
+c     -                 0.580*rjrv**4.+0.533*rjrv**6)
+c                  sigmaint=0.612-0.0653*rjrv*rjrv
+c                  bint=0.0075
+c                  n2=2
+c                  gihat=aint*dexp(-0.5*(vzvv/sigmaint)**2)+bint
+c                  call virsphmassp(rup,xmprmax)
+c                  call virsphmassp(rlow,xmprmin)
+c                  xmin=rlow/r200
+c                  xmax=rup/r200
+c                  errabs=0.d0
+c                  errrel=0.001d0
+cc                  xinteg=dcadre(sdint,xmin,xmax,errabs,
+cc     &                 errrel,errest,ier)
+c                  call dgaus8 (sdint,xmin,xmax, errrel, 
+c     &                xinteg, IERR) 
+c                  xmctr=(dlog(1.+ctr)-ctr/(1.+ctr))/(dlog(2.d0)-0.5d0)
+c                  xnv=ngambm/((xmprmax-xmprmin)/xmctr+2.*pig*xinteg)
+c                  xnh=xnv*(xmprmax-xmprmin)/xmctr
+c                  xni=xnv*2.*pig*xinteg
+c                  gi=xnv/(v200*r200*r200)*gihat
+c                  gi=gi/xnv    ! g is in units of Nv, so I use the same units for gi
+c                  g=g+gi
+c               endif
 
 
 c     From g, one then has the probability p
@@ -4698,7 +5457,7 @@ c     the other is for the case in which c_nu is fitted externally
                if (nrc.gt.0.5) then
 
                   call sigmarnorm(rc,fnorm)
-                  if (kintd.eq.1) fnorm=fnorm*(xnh+xni)/xnh
+                  !if (kintd.eq.1) fnorm=fnorm*(xnh+xni)/xnh
                   p=2.*pig*rj*g/fnorm
                
                else !sono qui
@@ -4923,7 +5682,14 @@ c     the inner anisotropy for r=0, cbe0
       elseif (kani.eq.21) then
          rm2=rs                     ! NFW or other mass profiles
          if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
-         if (kmp.eq.4) rm2=1.521*rs ! Burkert
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+         !avoid unphyiscal values 
+         if (rm2.lt.0) rm2=1e-4
+         if(ifreeBeta.gt.0) rm2 = rbeta !rbeta free
+         
          becin=1.-1./(cbe*cbe)
          bec0=1.-1./(cbe0*cbe0)
          if (becin.ge.1.) becin=0.999d0  ! avoid unphysical values
@@ -4947,7 +5713,13 @@ c
          elseif (kani.eq.4) then
             rm2=rs              ! NFW or other mass profiles
             if (kmp.eq.2) rm2=0.5*rs ! Hernquist
-            if (kmp.eq.4) rm2=1.521*rs ! Burkert
+            if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+            if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+            if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+            if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+         !  avoid unphyiscal values 
+            if (rm2.lt.0) rm2=1e-4
+            
             bec=(1.-1./(cbe*cbe))*t/(t+rm2)
             if (bec.ge.1.) bec=0.999d0 ! avoid unphysical values
 
@@ -4958,7 +5730,14 @@ c     the inner anisotropy for r=0, cbe0
       elseif (kani.eq.41) then
          rm2=rs                     ! NFW or other mass profiles
          if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
-         if (kmp.eq.4) rm2=1.521*rs ! Burkert
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+         !avoid unphyiscal values 
+         if (rm2.lt.0) rm2=1e-4
+         if(ifreeBeta.gt.0) rm2 = rbeta !rbeta free
+         
          becin=1.-1./(cbe*cbe)
          bec0=1.-1./(cbe0*cbe0)
          if (becin.ge.1.) becin=0.999d0  ! avoid unphysical values
@@ -4967,13 +5746,39 @@ c     the inner anisotropy for r=0, cbe0
          bec=bec0+(becin-bec0)*t/(t+rm2)        
          if (bec.ge.1.) bec=0.999d0  ! avoid unphysical values   
 
+      elseif (kani.eq.8) then
+c     WORK IN PROGRESS
+c     Biviano&Pizzuti model
+         bi=1.-1./(cbe*cbe)
+         b0=1.-1./(cbe0*cbe0)
+         if (bi.ge.1.) bec=0.999d0  ! avoid unphysical values
+         if (b0.ge.1.) bec0=0.999d0  ! avoid unphysical values
+
+         rm2=rs                     ! NFW or other mass profiles
+         if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+        
+         if(ifreeBeta.gt.0) rm2 = rbeta !rbeta free 
+         bec = b0+(bi-b0)*(t/(t+rm2)+t**2/rm2**2*dexp(-(t/rm2)**2) )
+         if (bec.ge.1.) bec=0.999d0  ! avoid unphysical values
+
+
 c
 c     modified Tiret (non-zero central anisotropy)
 c
          elseif (kani.eq.5) then
             rm2=rs              ! NFW or other mass profiles
             if (kmp.eq.2) rm2=0.5*rs ! Hernquist
-            if (kmp.eq.4) rm2=1.521*rs ! Burkert
+            if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+            if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+            if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+            if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+            !avoid unphyiscal values 
+            if (rm2.lt.0) rm2=1e-4
+            
             bec=(1.-1./(cbe*cbe))*(t-rm2)/(t+rm2)
             if (bec.ge.1.) bec=0.999d0 ! avoid unphysical values
             if (bec.le.-1.) bec=-0.999d0 ! avoid unphysical values
@@ -5022,8 +5827,6 @@ c
 !>    It requires the inclusion of the external file paramsoptS.i,
 !! the values of all the paramters r200, rs, rc, cbe, 
 !! tmass, screen, rcut, al, kani, kmp, knfit, kscr, v200=10.*hz*r200.
-!> if kmp=7 and kscr>0, one needs to specify also nhs, the exponent for
-!> the Hu&Sawicki model of \f$ f(R) \f$, and the redshift parameter zb.
 !> A special case corresponds to the number of steps in the anisotropy
 !! parameter nbs=-1, where the Hansen & Moore model is selected
 !! (the anisotropy depends on the mass density profile \f$ \beta(r)=
@@ -5065,10 +5868,7 @@ c
 !>  kmp=7
 !>  knfit=1
 !>  kani=4
-!>  kscr=1
 !>  rcut=1.0
-!>  zb=0.3
-!>  nhs=2
 !>  
 !>
 !>  tlog=dlog(0.5d0) 
@@ -5082,9 +5882,11 @@ c
       dimension rsvalues(28),r100values(28)
       include 'paramsoptS.i'
       include 'sr.i'
+      include 'datavdp.i'
       external betairec
       external gammarec
       external hypgeo
+      external fbars
       
       data rsvalues/0.01,0.05,0.06,0.07,0.08,0.09,0.10,0.11,0.12,0.13,
      ,     0.14,0.15,0.16,0.17,0.18,0.19,0.20,0.21,0.22,0.23,0.24,0.25,
@@ -5182,42 +5984,31 @@ c
 c     attempt to insert generalized NFW model         
       elseif (kmp.eq.10) then
 
-       call hygfx ( 3-tmass, 3-tmass, 4-tmass, -t/rs, hfx ) 
-       call hygfx ( 3-tmass, 3-tmass, 4-tmass, -r200/rs, hfy)
+c       call hygfx ( 3-tmass, 3-tmass, 4-tmass, -t/rs, hfx ) 
+c       call hygfx ( 3-tmass, 3-tmass, 4-tmass, -r200/rs, hfy)
        
-       xm =  hfx/hfy*(t/r200)**(3-tmass)       
-
-      elseif (kmp.eq.7) then
-c     M(r) is the modified NFW profile with tmass=m (mass of the   
-c     scalaron field) as an additional free parameter 
-       timar=tmass
-       ainteg=frLin(t) !fifth force contribution
-       ascr=1.0d0      !it is different form 1 only in kscr>1     
-       if (kscr.eq.1) then  !screening model: istantaneous transition 
-			    !between linear and screened regime   
-	    alim=field(t)
-	    Ric=5.44e-8*0.9*((1+zb)**3+4*Olam/Omegam)
-	    !nhs=1  !exp in H&S model (added as external parameter)
-c       background field value with that tmass
-	    fr=Ric/(3*(nhs+1)*tmass*tmass+(nhs+2)*Ric)
-
-c       if field fluctuations are larger than the background value,
-c       it means that the field reaches the value f_R=0 inside the 
-c       overdensity; thus the fifth force is zero
-         if (alim.ge.fr) ainteg=0d0
-
-c       smoothed transition between the screened and linear regime
-c       the transition is performed with atan function and the sharpness
-c       is controlled by an exponent nsharp (default=10)
-       elseif(kscr.eq.2) then
-	     nsharp=7
-         ascr=(datan(nsharp*(t-screen))*2.0d0/pig+1.0d0)/2.0d0
-       endif     
-
-       fac200=1./(dlog(1.d0+r200/rs)-(r200/rs)/(1.d0+r200/rs))
-       xm=((dlog(1.d0+t/rs)-t/rs/(1.d0+t/rs))+ainteg*ascr)*fac200
+c       xm =  hfx/hfy*(t/r200)**(3-tmass)  
+    
+       call hygfx ( 3-dA3, 3-dA3, 4-dA3, -t/rs, hfx ) 
+       call hygfx ( 3-dA3, 3-dA3, 4-dA3, -r200/rs, hfy)
        
-      
+       xm =  hfx/hfy*(t/r200)**(3-dA3)     
+c     Clustering Dark Energy 
+c     dA3 = exponent of gNFW
+c     dA2 = f(cs,w)
+c     dA1 = cs2 (in unit of c**2)        
+      elseif (kmp.eq.18) then
+
+c       call hygfx ( 3-tmass, 3-tmass, 4-tmass, -t/rs, hfx ) 
+c       call hygfx ( 3-tmass, 3-tmass, 4-tmass, -r200/rs, hfy)
+       
+c       xm =  hfx/hfy*(t/r200)**(3-tmass)
+
+       call hygfx ( 3-dA3, 3-dA3, 4-dA3, -t/rs, hfx ) 
+       call hygfx ( 3-dA3, 3-dA3, 4-dA3, -r200/rs, hfy)
+       
+       xm=hfx/hfy*(t/r200)**(3-dA3)*(1.0d0+3*10**(screen-3.5)*(1+tmass))
+             
       elseif (kmp.eq.8)  then	
 c     M(r) is the modified NFW profile with a beyond Horndeski model 
 c     See Saltas+16, Sakestein+16
@@ -5229,10 +6020,25 @@ c     the free parameter tmass is now the coupling constant Y
        
       elseif (kmp.eq.9) then
 
-       fac200=1./(dlog(1.d0+r200/rs)-(r200/rs)/(1.d0+r200/rs))
-       xm=(dlog(1.d0+t/rs)-t/rs/(1.d0+t/rs))*fac200+dphidr(t/rs)
-c       write(dphidr(t/rs))
+c       fac200=1./(dlog(1.d0+r200/rs)-(r200/rs)/(1.d0+r200/rs))
+c       xm=(dlog(1.d0+t/rs)-t/rs/(1.d0+t/rs))*fac200+dphidr(t/rs)
        
+       xm = tM_bnfw_CS(t)
+
+      elseif (kmp.eq.15) then
+c     M(r) is the modified gNFW profile in chameleon screening 
+c     gamma is fixed to dA3
+        xm = tM_gnfw_CS(t)
+
+      elseif (kmp.eq.16) then
+c     M(r) is the modified Isothermal profile in chameleon screening 
+c     the exponent is 3/2       
+       xm = tM_iso_CS(t)
+       
+      elseif (kmp.eq.17) then 
+      !M(r) is multicomponent general Chameleon. gNFW+Jaffe+beta+NFW
+        xm = grav*tmass_Gen(t)/gm200 ! To divide by gm200 as this is already
+                                ! including the normalization factor       
       elseif (kmp.eq.2) then
 c
 c     M(r) is Hernquist; no gas contribution allowed for the time being
@@ -5256,6 +6062,54 @@ c
          rvrs=r200/rs
          fac200=1./(dlog(1+rvrs*rvrs)+2.*dlog(1.+rvrs)-2.*datan(rvrs))
          xm=fac200*(dlog(1+trs*trs)+2.*dlog(1.+trs)-2.*datan(trs))
+         
+      elseif (kmp.eq.11) then
+c        mass is modified Burkert in Chameleon Gravity   
+         trs=t/rs
+         rvrs=r200/rs
+         fac200=1./(dlog(1+rvrs*rvrs)+2.*dlog(1.+rvrs)-2.*datan(rvrs))
+         xm1=fac200*(dlog(1+trs*trs)+2.*dlog(1.+trs)-2.*datan(trs))
+         xm=xm1+dphib(trs)         
+
+
+      elseif (kmp.eq.12) then
+c     mass is modified Einasto in Chameleon Gravity
+       !  eim=5.
+         agp=3.*eim
+         xgp=2.*eim*(r200/rs)**(1./eim)
+         call dincog(agp,xgp,gin,gim,gip200)
+         fac200=1./gip200
+         xgp=2.*eim*(t/rs)**(1./eim)
+         call dincog(agp,xgp,gin,gim,gip)
+         xm1=fac200*gip
+         
+         xm=xm1+dphiE(t/rs) 
+         
+          
+      elseif (kmp.eq.13) then
+c     M(r) is Refracted Gravity; no DM contribution allowed for the time begin
+c     only BCG parameters kept free
+c
+        !refracted gravity with the function of Valeria
+        xm= grav*rgmass(t)/gm200
+        !fbarr=0.0
+        !if (kbary.eq.1) fbarr=fbars(t)
+        
+        !Covariant formulation. It is not good for the moment
+        !xm=grav*(xmstar*xlumbcg*t**2/(t+rjaf)**2+fbarr)/fmodRG(t)/gm200
+      elseif (kmp.eq.14) then
+      
+        !M(r) is boson star + gas and galaxies
+        fbarr=0.0
+        if (kbary.eq.1) fbarr=fbars(t)
+        xt = t/rs
+        if (xt.le.2) then 
+         xm = dtanh((t/rs)**tmass) + 1.0e-3*dA3*(t/rs)**screen
+        else
+         xm =  dtanh((2.0d0)**tmass) + 1.0e-3*dA3*(2.0d0)**screen
+        endif 
+         xm = xm + grav*fbarr/gm200
+      
       elseif (kmp.eq.5) then
 c
 c     M(r) is Soft Isoth Sph; no gas contribution allowed for the time begin
@@ -5268,7 +6122,7 @@ c
 c     M(r) is Einasto m=5; no gas contribution allowed for the time begin
 c     Normalisation set to 1 at r/r200=1
 c
-         eim=5.
+       !  eim=5.
          agp=3.*eim
          xgp=2.*eim*(r200/rs)**(1./eim)
          call dincog(agp,xgp,gin,gim,gip200)
@@ -5278,7 +6132,57 @@ c
          xm=fac200*gip
       endif
 
+
+!*********************** BCG *******************************************
+      fbarr=0.0
+      if (kbary.eq.1) fbarr=fbars(t)      
+      
+      if (kbcg.eq.1) then
+
+       !GR setup
+       if(kmp.eq.10.or.kmp.le.6.or.kmp.eq.18) then 
+        
+        fjaffe=grav*(xmstar*xlumbcg*t/rjaf/(1.+t/rjaf)+fbarr)/gm200
+        xm=xm+fjaffe !inclusion of gas,galaxies and bcg
+        
+        !INCLUDED IN THE GENERAL CHAMELEON
+        !Chameleon setup
+        !elseif (kmody.eq.1) then 
+        !dpj=dphiJ(t/rjaf) !Include the chameleon field of the BCG
+        !fjaffe=grav*(xmstar*xlumbcg*(t/rjaf/(1.+t/rjaf)+dpj)+fbarr)/gm200
+        !xm=xm+fjaffe !inclusion of gas,galaxies and bcg
+        
+        !Refracted gravity setup
+        !Hernquist mass for the BCG
+       elseif (kmp.eq.13) then
+        !the mass is all given by the BCG and gas+baryons, no DM
+        
+        !refracted gravity with the function of Valeria
+        xm= grav*rgmass(t)/gm200
+
+        !Covariant formulation. It is not good for the moment
+        
+        !xm=grav*(xmstar*xlumbcg*t**2/(t+rjaf)**2+fbarr)/fmodRG(t)/gm200
+        
+       elseif (kmp.eq.14) then
+        !Boson star + BCG
+        fjaffe=grav*(xmstar*xlumbcg*t/rjaf/(1.+t/rjaf)+fbarr)/gm200
+        
+        xt = t/rs
+        if (xt.le.2) then 
+         xmer = dtanh((t/rs)**tmass) + 1.0e-3*dA3*(t/rs)**screen
+        else
+         xmer =  dtanh((2.0d0)**tmass) + 1.0e-3*dA3*(2.0d0)**screen
+        endif 
+        
+         xm = xmer+fjaffe
+         
+       endif  
+        
+      endif     
+!***********************************************************************
       xm=xm*gm200 ! physical units
+
 
 c
 c     nu(r) from NFW, Hernquist or beta-model
@@ -5407,7 +6311,14 @@ c     with non-zero central anisotropy, and Hansen+Moore
          elseif (kani.eq.21) then
             rm2=rs                     ! NFW or other mass profiles
             if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
-            if (kmp.eq.4) rm2=1.521*rs ! Burkert
+            if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+            if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+            if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+            if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+            !avoid unphyiscal values 
+            if (rm2.lt.0) rm2=1e-4
+            if(ifreeBeta.gt.0) rm2 = rbeta !rbeta free
+            
             becin=1.-1./(cbe*cbe)
             bec0=1.-1./(cbe0*cbe0)
             if (becin.ge.1.) becin=0.999d0  ! avoid unphysical values
@@ -5419,25 +6330,65 @@ c     with non-zero central anisotropy, and Hansen+Moore
          elseif (kani.eq.4) then
             rm2=rs              ! NFW or other mass profiles
             if (kmp.eq.2) rm2=0.5*rs ! Hernquist
-            if (kmp.eq.4) rm2=1.521*rs ! Burkert
+            if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+            if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+            if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+            if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+            !avoid unphyiscal values 
+            if (rm2.lt.0) rm2=1e-4
+            
             b=(1.-1./(cbe*cbe))*t/(t+rm2)
             
          elseif (kani.eq.41) then
             rm2=rs                     ! NFW or other mass profiles
             if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
-            if (kmp.eq.4) rm2=1.521*rs ! Burkert
+            if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+            if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+            if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+            if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+            !avoid unphyiscal values 
+            if (rm2.lt.0) rm2=1e-4
+            if(ifreeBeta.gt.0) rm2 = rbeta !rbeta free
+            
             becin=1.-1./(cbe*cbe)
             bec0=1.-1./(cbe0*cbe0)
             if (becin.ge.1.) becin=0.999d0  ! avoid unphysical values
             if (bec0.ge.1.) bec0=0.999d0  ! avoid unphysical values
          
             b=bec0+(becin-bec0)*t/(t+rm2)        
-            if (bec.ge.1.) bec=0.999d0  ! avoid unphysical values 
+            if (b.ge.1.) bec=0.999d0  ! avoid unphysical values 
+
+        elseif (kani.eq.8) then
+c       WORK IN PROGRESS
+c       Biviano&Pizzuti model
+         bi=1.-1./(cbe*cbe)
+         b0=1.-1./(cbe0*cbe0)
+         if (bi.ge.1.) bec=0.999d0  ! avoid unphysical values
+         if (b0.ge.1.) bec0=0.999d0  ! avoid unphysical values
+
+         rm2=rs                     ! NFW or other mass profiles
+         if (kmp.eq.2) rm2=0.5*rs   ! Hernquist
+         if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+         if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+         if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+         if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+        
+         if(ifreeBeta.gt.0) rm2 = rbeta !rbeta free  
+
+         b = b0+(bi-b0)*(t/(t+rm2)+t**2/rm2**2*dexp(-(t/rm2)**2) )
+         if (b.ge.1.) bec=0.999d0  ! avoid unphysical values
+
         
          elseif (kani.eq.5) then
             rm2=rs              ! NFW or other mass profiles
             if (kmp.eq.2) rm2=0.5*rs ! Hernquist
-            if (kmp.eq.4) rm2=1.521*rs ! Burkert
+            if (kmp.eq.4.or.kmp.eq.11) rm2=1.521*rs ! Burkert
+            if (kmp.eq.10.or.kmp.eq.15.or.kmp.eq.17) rm2=(2-dA3)*rs !gNFW
+            if (kmp.eq.18) rm2 = (2 - dA3) *rs !clustering DE gNFW
+            if (kmp.eq.16) rm2=dsqrt(2.0d0)*rs !Isothermal
+            !avoid unphyiscal values 
+            if (rm2.lt.0) rm2=1e-4
+            
             b=(1.-1./(cbe*cbe))*(t-rm2)/(t+rm2)
          else   ! Hansen+Moore
             rhm=rc ! use nu(r)
@@ -5836,6 +6787,7 @@ c     &     omegal=0.7,omega0=0.3)
       real*8 c(2,RKNOTS,2,VZKNOTS)
       real*8 wk(2*RKNOTS*VZKNOTS+2*10)
       include 'paramsoptS.i'
+      include 'datavdp.i'
       include 'sr.i'
       include 'vlos.i'
       include 'datarv.i'
@@ -5852,7 +6804,8 @@ c     Ninterp points logarithmically spaced between 0.001 and 20
       ic = rknots
       ninterp=21*2
 
-      call freepareva(n,x,r200,rc,rs,cbe,tmass,screen,cbe0)
+      call freepareva(n,x,r200,rc,rs,cbe,tmass,screen,
+     & dA3,cbe0,rbeta,rjaf,xmstar)
 ccc     write(*,429) r200,rc,rs,cbe,tmass,f
 ccc 429  format(' In calfun: r200,rc,rs,cbe,tmass,L = ',5(f6.3,2x),f10.3)
       omegal=Olam
@@ -5919,9 +6872,9 @@ c     initialize psum = Sum[-log(lik)] and wsum = Sum[galaxy_weights]
 c     If interlopers are required, the g function is composed
 c     of 2 parts; one is the usual integral, truncated to r200
 
-      if (kintd.eq.1) then
-         rinfinity=0.99999*r200
-      endif
+      !if (kintd.eq.1) then
+      !   rinfinity=0.99999*r200
+      !endif
 
 c     Now compute the distribution function at the radial distance of
 c     each galaxy by interpolating the sigma_r(r) and then
@@ -5975,7 +6928,8 @@ c
 c     re-define rinfinity as the radius where v_z/sigma_r<0.1
 c     to avoid a problem in v_z=0
 c
-               if (kintd.eq.0) call rinf(rinfinity)
+               !if (kintd.eq.0) call rinf(rinfinity)
+               call rinf(rinfinity)
 c
 c     here I uses dqdag to handle peak singularities 
 c     that dqdagi does not handle 
@@ -5993,34 +6947,34 @@ c               endif
 c     
 c     Add interloper contribution if requested
 c
-               if (kintd.eq.1) then
-                  rjrv=rj/r200
-                  vzvv=vj/v200
-                  ctr=r200/rc
-                  aint=10.**(-1.061+0.364*rjrv*rjrv-
-     -                 0.580*rjrv**4+0.533*rjrv**6)
-                  sigmaint=0.612-0.0653*rjrv*rjrv
-                  bint=0.0075
-                  gihat=aint*dexp(-0.5*(vzvv/sigmaint)**2)+bint
-                  call virsphmassp(rup,xmprmax)
-                  call virsphmassp(rlow,xmprmin)
-                  xmin=rlow/r200
-                  xmax=rup/r200
-                  errabs=0.d0
-                  errrel=0.001d0
-c                  xinteg=dcadre(sdint,xmin,xmax,errabs,errrel,
-c     &                 errest,ier)
-                  call dgaus8 (sdint,xmin,xmax, errrel, 
-     &                xinteg, IERR)  
-                  xmctr=(dlog(1.+ctr)-ctr/(1.+ctr))/(dlog(2.d0)-0.5d0)
-                  xnv=ngambm/((xmprmax-xmprmin)/xmctr+2.*pig*xinteg)
-cc                  write(*,*) ' Number of obsd galaxies ',ngambm
-                  xnh=xnv*(xmprmax-xmprmin)/xmctr
-                  xni=xnv*2.*pig*xinteg
-cc                  print *,' Nh, Ni, Nv, Nobs = ',xnh,xni,xnv,ngambm
-                  gi=xnv/(v200*r200*r200)*gihat
-                  gi=gi/xnv    ! g is in units of Nv, so I use the same units for gi
-              endif
+c               if (kintd.eq.1) then
+c                  rjrv=rj/r200
+c                  vzvv=vj/v200
+c                  ctr=r200/rc
+c                  aint=10.**(-1.061+0.364*rjrv*rjrv-
+c     -                 0.580*rjrv**4+0.533*rjrv**6)
+c                  sigmaint=0.612-0.0653*rjrv*rjrv
+c                  bint=0.0075
+c                  gihat=aint*dexp(-0.5*(vzvv/sigmaint)**2)+bint
+c                  call virsphmassp(rup,xmprmax)
+c                  call virsphmassp(rlow,xmprmin)
+c                  xmin=rlow/r200
+c                  xmax=rup/r200
+c                  errabs=0.d0
+c                  errrel=0.001d0
+cc                  xinteg=dcadre(sdint,xmin,xmax,errabs,errrel,
+cc     &                 errest,ier)
+c                  call dgaus8 (sdint,xmin,xmax, errrel, 
+c     &                xinteg, IERR)  
+c                  xmctr=(dlog(1.+ctr)-ctr/(1.+ctr))/(dlog(2.d0)-0.5d0)
+c                  xnv=ngambm/((xmprmax-xmprmin)/xmctr+2.*pig*xinteg)
+ccc                  write(*,*) ' Number of obsd galaxies ',ngambm
+c                  xnh=xnv*(xmprmax-xmprmin)/xmctr
+c                  xni=xnv*2.*pig*xinteg
+ccc                  print *,' Nh, Ni, Nv, Nobs = ',xnh,xni,xnv,ngambm
+c                  gi=xnv/(v200*r200*r200)*gihat
+c                  gi=gi/xnv    ! g is in units of Nv, so I use the same units for gi
+c              endif
                
               if (g.ne.g) write(*,*) 'BEWARE! ',rj,vj,g
 
@@ -6032,7 +6986,7 @@ c     the other is for the case in which c_nu is fitted externally
               if (nrc.gt.0.5) then
                  
                  call sigmarnorm(rc,fnorm)
-                 if (kintd.eq.1) fnorm=fnorm*(xnh+xni)/xnh
+                 !if (kintd.eq.1) fnorm=fnorm*(xnh+xni)/xnh
                  p=2.*pig*rj*g/fnorm
                  
                  
@@ -6085,7 +7039,8 @@ c     re-define rinfinity as the radius where v_z/sigma_r leq 0.1
 c     to avoid a problem in v_z=0; if we require to consider the 
 c     interloper contribution, rinfinity is set to 1 already
 
-            if (kintd.eq.0) call rinf(rinfinity)
+            !if (kintd.eq.0) call rinf(rinfinity)
+            call rinf(rinfinity)
 
 c     check the limits of the integral
 
@@ -6107,34 +7062,34 @@ c               endif
 
 c     Add interloper contribution if requested
 
-               if (kintd.eq.1) then
-                  rjrv=rj/r200
-                  vzvv=vj/v200
-                  ctr=r200/rc
-                  aint=10.**(-1.061+0.364*rjrv*rjrv-
-     -                 0.580*rjrv**4.+0.533*rjrv**6)
-                  sigmaint=0.612-0.0653*rjrv*rjrv
-                  bint=0.0075
-                  n2=2
-                  gihat=aint*dexp(-0.5*(vzvv/sigmaint)**2)+bint
-                  call virsphmassp(rup,xmprmax)
-                  call virsphmassp(rlow,xmprmin)
-                  xmin=rlow/r200
-                  xmax=rup/r200
-                  errabs=0.d0
-                  errrel=0.001d0
-c                  xinteg=dcadre(sdint,xmin,xmax,errabs,
-c     &                 errrel,errest,ier)
-                  call dgaus8 (sdint,xmin,xmax, errrel, 
-     &                xinteg, IERR) 
-                  xmctr=(dlog(1.+ctr)-ctr/(1.+ctr))/(dlog(2.d0)-0.5d0)
-                  xnv=ngambm/((xmprmax-xmprmin)/xmctr+2.*pig*xinteg)
-                  xnh=xnv*(xmprmax-xmprmin)/xmctr
-                  xni=xnv*2.*pig*xinteg
-                  gi=xnv/(v200*r200*r200)*gihat
-                  gi=gi/xnv    ! g is in units of Nv, so I use the same units for gi
-                  g=g+gi
-               endif
+c               if (kintd.eq.1) then
+c                  rjrv=rj/r200
+c                  vzvv=vj/v200
+c                  ctr=r200/rc
+c                  aint=10.**(-1.061+0.364*rjrv*rjrv-
+c     -                 0.580*rjrv**4.+0.533*rjrv**6)
+c                  sigmaint=0.612-0.0653*rjrv*rjrv
+c                  bint=0.0075
+c                  n2=2
+c                  gihat=aint*dexp(-0.5*(vzvv/sigmaint)**2)+bint
+c                  call virsphmassp(rup,xmprmax)
+c                  call virsphmassp(rlow,xmprmin)
+c                  xmin=rlow/r200
+c                  xmax=rup/r200
+c                  errabs=0.d0
+c                  errrel=0.001d0
+cc                  xinteg=dcadre(sdint,xmin,xmax,errabs,
+cc     &                 errrel,errest,ier)
+c                  call dgaus8 (sdint,xmin,xmax, errrel, 
+c     &                xinteg, IERR) 
+c                  xmctr=(dlog(1.+ctr)-ctr/(1.+ctr))/(dlog(2.d0)-0.5d0)
+c                  xnv=ngambm/((xmprmax-xmprmin)/xmctr+2.*pig*xinteg)
+c                  xnh=xnv*(xmprmax-xmprmin)/xmctr
+c                  xni=xnv*2.*pig*xinteg
+c                  gi=xnv/(v200*r200*r200)*gihat
+c                  gi=gi/xnv    ! g is in units of Nv, so I use the same units for gi
+c                  g=g+gi
+c               endif
 
 
 c     From g, one then has the probability p
@@ -6146,7 +7101,7 @@ c     the other is for the case in which c_nu is fitted externally
                if (nrc.gt.0.5) then
 
                   call sigmarnorm(rc,fnorm)
-                  if (kintd.eq.1) fnorm=fnorm*(xnh+xni)/xnh
+                  !if (kintd.eq.1) fnorm=fnorm*(xnh+xni)/xnh
                   p=2.*pig*rj*g/fnorm
                
                else
@@ -6184,7 +7139,13 @@ c     ngambm galaxy probabilities)
 c     
 
       f=psum/wsum*ngambm
-
+      if(kbcg.eq.1.and.kbdt.eq.1) then 
+         rtbcg=20. !Max radius for the integration of the BCG integral
+         
+         call vdplik(chibcg)
+         f=f+chibcg
+c         write(*,*) r200, rs, xmstar, cbe, chibcg
+      endif
       return
       end
 
@@ -6199,13 +7160,15 @@ c
 c     &     omegal=0.7,omega0=0.3)
       integer RKNOTS, VZKNOTS
       parameter (RKNOTS=10,VZKNOTS=6)
-      dimension x(7),rp(RKNOTS),vp(VZKNOTS),z(RKNOTS,VZKNOTS)
+      dimension x(9),rp(RKNOTS),vp(VZKNOTS),z(RKNOTS,VZKNOTS)
       dimension y2a(RKNOTS,VZKNOTS)
       dimension bsc(RKNOTS,VZKNOTS),xknot(13),yknot(9)
       dimension rmbm(25000),vmbm(25000),embm(25000),wmbm(25000)
+c      dimension rmbcg(2500),vmbcg(2500),embcg(2500)
       real*8 c(2,RKNOTS,2,VZKNOTS)
       real*8 wk(2*RKNOTS*VZKNOTS+2*10)
       include 'paramsoptS.i'
+      include 'datavdp.i'
       include 'sr.i'
       include 'vlos.i'
       include 'datarv.i'
@@ -6228,8 +7191,70 @@ c     Ninterp points logarithmically spaced between 0.001 and 20
       
       n=nfreefunc
 
-      call freepareva(n,x,r200,rc,rs,cbe,tmass,screen,cbe0)
-
+      call freepareva(n,x,r200,rc,rs,cbe,tmass,screen,
+     & dA3,cbe0,rbeta,rjaf,xmstar)
+      
+      call CPU_TIME(start) !uses cpu time for the random generator seed
+      nst=int(1330*start, kind=8)
+      nseed = 123434789+(-1)**nst*nst
+      
+      
+      if(r200.gt.r2up.or.r200.lt.r2low) then
+c       write(*,*) 'Warning: best fit outside the prior range'
+c       write(*,*) 'redefine the best fit as the average value'
+       r200=(r2up-r2low)/2*(1+r_uniform_01 (nseed))
+      endif
+      if(rs.gt.rsup.or.rs.lt.rslow) then
+c       write(*,*) 'Warning: best fit "rs" outside the prior range'
+c       write(*,*) 'redefine the best "rs" fit as the average value'
+       rs=(rsup-rslow)/2*(1+r_uniform_01 (nseed))
+      endif 
+      if(rc.gt.rcup.or.rc.lt.rclow) then
+c        write(*,*) 'Warning: best fit "rc" outside the prior range'
+c        write(*,*) 'redefine the best fit "rc" as the average value'
+        rc=(rcup-rclow)/2*(1+r_uniform_01 (nseed))
+      endif 
+      if(cbe.gt.bup.or.cbe.lt.blow) then
+c        write(*,*) 'Warning: best fit "beta" outside the prior range'
+c        write(*,*) 'redefine the best fit "beta" as the average value'
+        cbe=(bup-blow)/2*(1+r_uniform_01 (nseed))
+      endif 
+      if(tmass.gt.tmup.or.tmass.lt.tmlow) then
+c        write(*,*) 'Warning: best fit "tmass" outside the prior range'
+c        write(*,*) 'redefine the best fit "tmass" as the average value'
+        tmass=(tmup-tmlow)/2*(1+r_uniform_01 (nseed))
+      endif
+      if(screen.gt.scrup.or.screen.lt.scrlow) then
+       
+c       write(*,*) 'Warning: best fit "screen" outside the prior range'
+c       write(*,*) 'redefine the best fit "screen"  as the average value'
+       screen=(scrup-scrlow)/2*(1+r_uniform_01 (nseed))
+       write(*,*) scrnew
+      endif
+      if(cbe0.gt.cb0up.or.cbe0.lt.cb0low) then
+c        write(*,*) 'Warning: best fit "beta2" outside the prior range'
+c        write(*,*) 'redefine the best fit "beta2" as the average value'
+        cbe0=(cb0up-cb0low)/2*(1+r_uniform_01 (nseed))
+      endif 
+      if(rbeta.gt.rbetaup.or.rbeta.lt.rbetalow) then
+c        write(*,*) 'Warning: best fit "beta2" outside the prior range'
+c        write(*,*) 'redefine the best fit "beta2" as the average value'
+        rbeta=(rbetaup-rbetalow)/2*(1+r_uniform_01 (nseed))
+      endif       
+      if(rjaf.gt.rjaup.or.rjaf.lt.rjalow) then
+c        write(*,*) 'Warning: best fit "rjaffe" outside the prior range'
+c        write(*,*) 'redefine the best fit "rjaffe" as the average value'
+        rjaf=(cb0up-cb0low)/2*(1+r_uniform_01 (nseed))
+      endif 
+      
+      if(xmstar.gt.xmaup.or.xmstar.lt.xmalow) then
+c        write(*,*) 'Warning: best fit "M*/L" outside the prior range'
+c        write(*,*) 'redefine the best fit "M*/L" as the average value'
+        xmstar=(xmaup-xmalow)/2*(1.0d0+r_uniform_01 (nseed))
+      endif      
+      
+      
+      
 cc      if (cbe.le.0) then
 cc         write(*,*) x
 cc         write(*,*) cbe
@@ -6245,7 +7270,7 @@ cc      endif
          rmbm(j)=r(j)
          vmbm(j)=v(j)
          embm(j)=e(j)
-         wmbm(j)=w(j)
+         wmbm(j)=w(j)         
       enddo
 
       irule=2
@@ -6298,9 +7323,9 @@ c     initialize psum = Sum[-log(lik)] and wsum = Sum[galaxy_weights]
 c     If interlopers are required, the g function is composed
 c     of 2 parts; one is the usual integral, truncated to r200
 
-      if (kintd.eq.1) then
-         rinfinity=0.99999*r200
-      endif
+      !if (kintd.eq.1) then
+        ! rinfinity=0.99999*r200
+      !endif
 
 c     Now compute the distribution function at the radial distance of
 c     each galaxy by interpolating the sigma_r(r) and then
@@ -6350,7 +7375,8 @@ c
 c     re-define rinfinity as the radius where v_z/sigma_r<0.1
 c     to avoid a problem in v_z=0
 c
-               if (kintd.eq.0) call rinf(rinfinity)
+               !if (kintd.eq.0) call rinf(rinfinity)
+               call rinf(rinfinity)
 c
 c     here I uses dqdag to handle peak singularities 
 c     that dqdagi does not handle 
@@ -6368,34 +7394,34 @@ c               endif
 c     
 c     Add interloper contribution if requested
 c
-               if (kintd.eq.1) then
-                  rjrv=rj/r200
-                  vzvv=vj/v200
-                  ctr=r200/rc
-                  aint=10.**(-1.061+0.364*rjrv*rjrv-
-     -                 0.580*rjrv**4+0.533*rjrv**6)
-                  sigmaint=0.612-0.0653*rjrv*rjrv
-                  bint=0.0075
-                  gihat=aint*dexp(-0.5*(vzvv/sigmaint)**2)+bint
-                  call virsphmassp(rup,xmprmax)
-                  call virsphmassp(rlow,xmprmin)
-                  xmin=rlow/r200
-                  xmax=rup/r200
-                  errabs=0.d0
-                  errrel=0.001d0
-c                  xinteg=dcadre(sdint,xmin,xmax,errabs,errrel,
-c     &                 errest,ier)
-                  call dgaus8 (sdint,xmin,xmax, errrel, 
-     &                xinteg, IERR) 
-                  xmctr=(dlog(1.+ctr)-ctr/(1.+ctr))/(dlog(2.d0)-0.5d0)
-                  xnv=ngambm/((xmprmax-xmprmin)/xmctr+2.*pig*xinteg)
-cc                  write(*,*) ' Number of obsd galaxies ',ngambm
-                  xnh=xnv*(xmprmax-xmprmin)/xmctr
-                  xni=xnv*2.*pig*xinteg
-cc                  print *,' Nh, Ni, Nv, Nobs = ',xnh,xni,xnv,ngambm
-                  gi=xnv/(v200*r200*r200)*gihat
-                  gi=gi/xnv    ! g is in units of Nv, so I use the same units for gi
-              endif
+c               if (kintd.eq.1) then
+c                  rjrv=rj/r200
+c                  vzvv=vj/v200
+c                  ctr=r200/rc
+c                  aint=10.**(-1.061+0.364*rjrv*rjrv-
+c     -                 0.580*rjrv**4+0.533*rjrv**6)
+c                  sigmaint=0.612-0.0653*rjrv*rjrv
+c                  bint=0.0075
+c                  gihat=aint*dexp(-0.5*(vzvv/sigmaint)**2)+bint
+c                  call virsphmassp(rup,xmprmax)
+c                  call virsphmassp(rlow,xmprmin)
+c                  xmin=rlow/r200
+c                  xmax=rup/r200
+c                  errabs=0.d0
+c                  errrel=0.001d0
+cc                  xinteg=dcadre(sdint,xmin,xmax,errabs,errrel,
+cc     &                 errest,ier)
+c                  call dgaus8 (sdint,xmin,xmax, errrel, 
+c     &                xinteg, IERR) 
+c                  xmctr=(dlog(1.+ctr)-ctr/(1.+ctr))/(dlog(2.d0)-0.5d0)
+c                  xnv=ngambm/((xmprmax-xmprmin)/xmctr+2.*pig*xinteg)
+ccc                  write(*,*) ' Number of obsd galaxies ',ngambm
+c                  xnh=xnv*(xmprmax-xmprmin)/xmctr
+c                  xni=xnv*2.*pig*xinteg
+ccc                  print *,' Nh, Ni, Nv, Nobs = ',xnh,xni,xnv,ngambm
+c                  gi=xnv/(v200*r200*r200)*gihat
+c                  gi=gi/xnv    ! g is in units of Nv, so I use the same units for gi
+c              endif
                
                if (g.ne.g) write(*,*) 'BEWARE! ',rj,vj,g
 
@@ -6407,7 +7433,7 @@ c     the other is for the case in which c_nu is fitted externally
                if (nrc.gt.0.5) then
 
                   call sigmarnorm(rc,fnorm)
-                  if (kintd.eq.1) fnorm=fnorm*(xnh+xni)/xnh
+                  !if (kintd.eq.1) fnorm=fnorm*(xnh+xni)/xnh
                   p=2.*pig*rj*g/fnorm
 
 
@@ -6459,7 +7485,8 @@ c     re-define rinfinity as the radius where v_z/sigma_r leq 0.1
 c     to avoid a problem in v_z=0; if we require to consider the 
 c     interloper contribution, rinfinity is set to 1 already
 
-            if (kintd.eq.0) call rinf(rinfinity)
+            !if (kintd.eq.0) call rinf(rinfinity)
+            call rinf(rinfinity)
 
 c     check the limits of the integral
 
@@ -6482,34 +7509,33 @@ c               endif
 
 c     Add interloper contribution if requested
 
-               if (kintd.eq.1) then
-                  rjrv=rj/r200
-                  vzvv=vj/v200
-                  ctr=r200/rc
-                  aint=10.**(-1.061+0.364*rjrv*rjrv-
-     -                 0.580*rjrv**4.+0.533*rjrv**6)
-                  sigmaint=0.612-0.0653*rjrv*rjrv
-                  bint=0.0075
-                  n2=2
-                  gihat=aint*dexp(-0.5*(vzvv/sigmaint)**2)+bint
-                  call virsphmassp(rup,xmprmax)
-                  call virsphmassp(rlow,xmprmin)
-                  xmin=rlow/r200
-                  xmax=rup/r200
-                  errabs=0.d0
-                  errrel=0.001d0
-c                  xinteg=dcadre(sdint,xmin,xmax,errabs,
-c     &                 errrel,errest,ier)
-                  call dgaus8 (sdint,xmin,xmax, errrel, 
-     &                xinteg, IERR) 
-                  xmctr=(dlog(1.+ctr)-ctr/(1.+ctr))/(dlog(2.d0)-0.5d0)
-                  xnv=ngambm/((xmprmax-xmprmin)/xmctr+2.*pig*xinteg)
-                  xnh=xnv*(xmprmax-xmprmin)/xmctr
-                  xni=xnv*2.*pig*xinteg
-                  gi=xnv/(v200*r200*r200)*gihat
-                  gi=gi/xnv    ! g is in units of Nv, so I use the same units for gi
-                  g=g+gi
-               endif
+c               if (kintd.eq.1) then
+c                  rjrv=rj/r200
+c                  vzvv=vj/v200
+c                  ctr=r200/rc
+c                  aint=10.**(-1.061+0.364*rjrv*rjrv-
+c     -                 0.580*rjrv**4.+0.533*rjrv**6)
+c                  sigmaint=0.612-0.0653*rjrv*rjrv
+c                  bint=0.0075
+c                  n2=2
+c                  gihat=aint*dexp(-0.5*(vzvv/sigmaint)**2)+bint
+c                  call virsphmassp(rup,xmprmax)
+c                  call virsphmassp(rlow,xmprmin)
+c                  xmin=rlow/r200
+c                  xmax=rup/r200
+c                  errabs=0.d0
+c                  errrel=0.001d0
+
+c                  call dgaus8 (sdint,xmin,xmax, errrel, 
+c     &                xinteg, IERR) 
+c                  xmctr=(dlog(1.+ctr)-ctr/(1.+ctr))/(dlog(2.d0)-0.5d0)
+c                  xnv=ngambm/((xmprmax-xmprmin)/xmctr+2.*pig*xinteg)
+c                  xnh=xnv*(xmprmax-xmprmin)/xmctr
+c                  xni=xnv*2.*pig*xinteg
+c                  gi=xnv/(v200*r200*r200)*gihat
+c                  gi=gi/xnv    ! g is in units of Nv, so I use the same units for gi
+c                  g=g+gi
+c               endif
 
 
 c     From g, one then has the probability p
@@ -6521,7 +7547,7 @@ c     the other is for the case in which c_nu is fitted externally
                if (nrc.gt.0.5) then
 
                   call sigmarnorm(rc,fnorm)
-                  if (kintd.eq.1) fnorm=fnorm*(xnh+xni)/xnh
+                  !if (kintd.eq.1) fnorm=fnorm*(xnh+xni)/xnh
                   p=2.*pig*rj*g/fnorm
                
                else
@@ -6560,22 +7586,28 @@ c
    
       func=psum/wsum*ngambm
       
+      if(kbcg.eq.1.and.kbdt.eq.1) then 
+         rtbcg=20. !Max radius for the integration of the BCG integral
+         
+         call vdplik(chibcg)
+         func=func+chibcg
+      endif
+
       return
       end
-
-
+    
 c
 c
 
       subroutine freepareva(nfreepar,freepar,r200new,rcnew,rsnew,cbnew,
-     &           tmassnew,scrnew,cb0new)
+     &           tmassnew,scrnew,dA3new,cb0new,rbetanew,rjafnew,xmsnew)
       implicit real*8 (a-h,o-z)
       implicit integer*4 (i-n)
        parameter (pig=3.1415926535d0,iga=25000,
      &     grav=4.302e-9,q0=-0.64,clight=2.99792458d5)
       dimension freepar(nfreepar)
       include 'paramsoptS.i'
-
+      include 'datavdp.i'
       omegal=Olam !0.7
       omega0=Omegam!2.*(q0+omegal)
 
@@ -6607,15 +7639,15 @@ c
       else
          ifp=ifp+1
          cbnew=freepar(ifp)
-
       endif
       if (ipar(5).eq.0) then
          tmassnew=tmassg
       else
          ifp=ifp+1
          if(kmp.ne.8) tmassnew=10.**freepar(ifp)
-         if (kmp.eq.9) then !explore from 0 to 1 the range of parameter
+         if (kmody.eq.1.and.kmp.ne.8.or.kmp.eq.17) then !explore from 0 to 1 the range of parameter
          ! in the case of CS 
+          
           if (freepar(ifp).lt.0) freepar(ifp)=dabs(freepar(ifp)) !avoid < 0
           if (freepar(ifp).ge.1) freepar(ifp)=1/freepar(ifp) !avoid >1
           tmassnew=-dlog(1-freepar(ifp))/0.1
@@ -6632,22 +7664,43 @@ c
          ifp=ifp+1
          cb0new=freepar(ifp)
       endif
-            
+
+      if (ipar(8).eq.0) then
+         rjafnew=rjafg
+      else
+         ifp=ifp+1
+         rjafnew=10.**freepar(ifp)
+      endif      
+      if (ipar(9).eq.0) then
+         xmsnew=xmstarg
+      else
+         ifp=ifp+1
+         xmsnew=10.**freepar(ifp)
+      endif
+      if (ipar(10).eq.0) then
+         dA3new=dA3g
+      else
+         ifp=ifp+1
+         dA3new=10.**freepar(ifp)
+      endif      
+      if (ipar(11).eq.0) then
+         rbetanew=rbetag
+      else
+         ifp=ifp+1
+         rbetanew=10.**freepar(ifp)
+      endif             
       if (ipar(6).eq.0) then  !TEST2
          scrnew=screeg
       else
          ifp=ifp+1
          scrnew=10.**freepar(ifp)
-         if (kmp.eq.9) then !explore from 0 to 1 the range of parameter
+         if (kmody.eq.1.and.kmp.ne.8) then !explore from 0 to 1 the range of parameter
          ! in the case of CS 
           if (freepar(ifp).lt.0) freepar(ifp)=dabs(freepar(ifp)) !avoid < 0
           if (freepar(ifp).ge.1) freepar(ifp)=1/freepar(ifp) !avoid >1
           scrnew=freepar(ifp)/(1-freepar(ifp))
          endif
- !        if (kmp.eq.8) then
- !          scrnew=freepar(ifp)
- !          if (scrnew.eq.0.0d0) scrnew=1.e-2 
- !        endif
+
       endif
 
 
@@ -6656,6 +7709,7 @@ c
          rm200=100.*hz*hz/grav*r200new**3
          cmean=6.76*(rm200/1.e12)**(-0.098)
          rsnew=r200new/cmean
+         if (kfs2.eq.1) rcnew = 4 * rsnew
       endif
 
       if (klfm.eq.1) then ! LfM (TLM in Mamon et al. 2013)
@@ -6675,180 +7729,19 @@ c************************************************************************
 !! for the kinematic analysis in modified gravity
 
 !> \ingroup MOD 
-       function frLin(x)
-!>    @author L. Pizzuti
-!>    @details It computes the contribution to the effective mass profile 
-!!    produced by a linear Horndeski modification of gravity
-!!    (i.e. no screening) assuming that the mass of the field is given by
-!!     the COMMON parameter `tmass` and the coupling by the COMMON parameter `screen`. 
-!>    The source of the mass distribution is modeled as a NFW profile
-!!    expressed by the virial radius `r200` and the scale radius `rs`. 
-!!    It requires the inclusion of the block of COMMON parameters
-!!    `paramsoptS.i` and defined values of the parameters
-!!    `r200, rs, tmass, screen, kscr`. The function is scaled by \f$M_{200}/f200 \f$, where
-!!    \f$ f200=(\log(1+r_{200}/r_{s})-(r_{200}/r_{s})/(1+r_{200}/r_s)) \f$.
-!>    @param[in] x  values of the radius (in Mpc) from the cluster center at which the function if 
-!!    computed
-!>
-!>   Example of usage:
-!>   \code{.f}
-!>       kscr=-1  !screening parameter. kscr=-1 corresponds to linear Horndeski gravity
-!>       screen=1.2
-!>       r200=1.2
-!>       rs=0.5
-!>       tmass=0.8
-!>       write(*,*) frlin(2.12d0)
-!>  \endcode    
-       implicit real*8 (a-h,o-z)
-       implicit integer*4 (i-n)
-
-       parameter (pig=3.1415926535d0)
-     
-       include 'paramsoptS.i'
-       fac200=1./(dlog(1.d0+r200/rs)-(r200/rs)/(1.d0+r200/rs))
-       timar=tmass
-       tim=timar*(rs+x)
-       if(dabs(tim).lt.100) then
-	    afir=((timar*x-1)*(exptot(-tim)))*dexp(tim)
-        atir=dexp(-tim)*(1+x*timar)*(-exptot(tim))
-       else
-        afir=((timar*x-1)*(exptot(-tim)))
-        atir=(1+x*timar)*(-exptot(tim))
-       endif
-       if(dabs(timar*rs).lt.100) then
-       asec=dexp(-tim)*(1+x*timar)*(dexp(2*timar*rs)*exptot(-timar*rs)+
-     + exptot(timar*rs))
-      else
-       asec=(1+x*timar)*(dexp(-timar*x)*(exptot(timar*rs)-
-     - exptot(-timar*rs))) 
-      endif
-	  aQ=1.0d0/6
-      if(kscr.eq.-1) then
-        aQ=(screen*screen)
-        
-      endif
-	    ainteg=afir+asec+atir+2*x/(rs+x)
-        frLin=-ainteg*aQ!/6
-c        write(*,*) frLin, aQ
-       if(frLin.le.0.or.aQ.lt.1e-6) then !avoid unphyisical values
-         frLin=0.0d0
-       endif
-        
-      RETURN
-      END
-
-c*********************************************************
-c    to compute the exponential integral in the expression
-c    of the field and on the mass in f(R) gravity
-c    If x is larger than 100 the function is approximated
-c    by a partial sum
-
-      function exptot(x)
-      implicit real*8 (a-h,o-z)
-      implicit integer*4 (i-n)
-
-      parameter (pig=3.1415926535d0)
-      include 'paramsoptS.i'
-
-      external expint
-      external ei
-
-c      if(x.lt.0d0) exptot=-expint(1,-x)
-c      if(x.gt.0d0) exptot=ei(x)
-      if(dabs(x).gt.100) then
-        sum=0.
-        term=1.
-        do ik=1,50
-          term=term*ik/(x)
-          sum=sum+term
-        enddo
-        exptot=(1.+sum)/x
-      else
-        exptot=dei(x)
-      endif
-      return
-      end
-
-
-!> \ingroup MOD 
-
-      function field(x) 
-!>    @author L. Pizzuti
-!>    @details It computes the value of the 
-!!    scalaron perturbations \f $\delta f_R \f$ in linear theory
-!!    (i.e. no screening) assuming that the mass of the field is given by
-!!    tmass. The source of the mass distribution is modeled as a NFW profile
-!!    expressed by the virial radius `r200` and the scale radius `rs`.
-!!    It requires the inclusion of `paramsoptS.i` and defined values of the parameters
-!!    `r200, rs, tmass, h0, Omegam, Olam, za`
-!>    @param[in] x  values of the radius (in Mpc) from the cluster center at which the function if 
-!!    computed
-!>
-!>   Example of usage:
-!>   \code{.f}
-!>       h0=70
-!>       Omegam=0.3
-!>       Omegal=0.7
-!>       za=0.3
-!>       r200=1.2
-!>       rs=0.5
-!>       tmass=0.8
-!>       write(*,*) field(2.12d0)
-!>  \endcode  
-!>       
-      implicit real*8 (a-h,o-z)
-      implicit integer*4 (i-n)
-
-      parameter (pig=3.1415926535d0)
-     
-      include 'paramsoptS.i'
-      EXTERNAL EXPTOT
-      fac200=1./(dlog(1.d0+r200/rs)-(r200/rs)/(1.d0+r200/rs))
-       
-      zb=za
-      Hz2=5.44e-8*((1+zb)**3*Omegam+Olam)/6
-      A0=200*(r200**3)*fac200*Hz2
-      tim=tmass*(rs+x)
-      if(dabs(tim).lt.100) then
-        afiel=dexp(-tim)*(-exptot(tim))	 	
-        bfiel=-dexp(tim)*exptot(-tim)
-	 
-      else
-         afiel=(-exptot(tim))	 	
-         bfiel=-exptot(-tim)
-      endif
-      if(dabs(tmass*rs).lt.100) then
-         asec=dexp(-tim)*exptot(tmass*rs)
-         bsec=+dexp(tmass*(rs-x))*exptot(-tmass*rs)
-       else
-       	 asec=dexp(-tmass*x)*exptot(tmass*rs)
-         bsec=+dexp(tmass*(-x))*exptot(-tmass*rs)
-       endif
-
-       field=-A0*(afiel+bfiel+asec+bsec)/x
-c	Ric=5.44e-8*3*((1+zb)**3*0.3+4*0.7)
-c	n=1
-c	fr=Ric/(3*(n+1)*tmass*tmass+(n+2)*Ric)
-c	if(field.ge.fr) field=fr
-
-       RETURN
-      END
-
- 
-
-!> \ingroup MOD 
       
       function dphidr(x) 
 !>   @author L. Pizzuti
-!>   @details  compute the term in the effective mass due to chameleon field
+!>   @details  compute the effective mass due to chameleon field `Meff=Q/G *r**2 * dphidr`
+!!   assuming a NFW density profile. Note that it has been generalized by dphibn.
 !!  It requires the parameters in the COMMON block paramsoptS.i, in particular:
 !>  - (effective) mass profile parameters: `r200, rs, tmass, screen`. 
 !!  The background field value `tmass` is given by tmass (in unit of 1e-5)  
 !>  - cosmological parameters: hubble constant `h0` (in km/s/Mpc),
 !!  density parameters `Omegam, Omegal`, redshift `za`                                 
 !>  - mass model `kmp` 
-!>  - number of steps in the second MG parameter `nhone`. If equal to -1
-!!  it forces f(R) chameleon case.
+!>  - exponential cutoff `ncutof`: if greater than 0, it sets a cutoff to the 
+!!  fifth force.
 !>   @param[in] x REAL*8, value at which the function is computed
 !>
 !>
@@ -6872,12 +7765,12 @@ c	if(field.ge.fr) field=fr
        parameter (pig=3.1415926535d0, ampl=2.43e27, ah0=1.48e-33,
      & ampc=1.57e29,rhoc=3.88e-11, clight=2.99792458d5)
        
-       parameter (grav=4.302e-9)
+       parameter (grav=4.302e-9, alimit=0.001)
        include 'paramsoptS.i'
 
        hz=h0*dsqrt(Omegam*(1+za)**3+Olam)
        c200=r200/rs
-       phinf=tmass*1e-5 !in realtà è phinf/Mpl in unità di 1e-5clight**2
+       phinf=tmass*1e-5 !tmass is phinf/Mpl in units of 1e-5clight**2
        fac200=1./(dlog(1.d0+r200/rs)-(r200/rs)/(1.d0+r200/rs))
 
        if(kmp.eq.9.and.nhone.ge.0) then
@@ -6889,7 +7782,6 @@ c	if(field.ge.fr) field=fr
        endif
        !this factor is rho_s*Q*rs**2/Mpl**2. In unit of clight**2
        B=bcoup*200*c200**3*fac200*hz**2*rs**2/clight**2
-
        
        xczero=(B/phinf-1)
        
@@ -6899,24 +7791,387 @@ c	if(field.ge.fr) field=fr
           Czero=0.0  
         endif
         
+        !Exponential cutoff
+        dminf=1
+        if (ncutof.gt.0) then
+            dminf=dexp(-x*rs*dsqrt(1e-7*bcoup/phinf))
+        endif
+    
         if (x.le.xczero) then
             dphidr=0
         else 
             cdav=rs*bcoup*clight**2/(100*hz*hz*r200**3)
-            dphidr=cdav*(Czero-B*(x/(1.0d0+x)-dlog(1.0d0+x)))
+            dphidr=cdav*(Czero-B*(x/(1.0d0+x)-dlog(1.0d0+x)))*dminf
 
         endif
-        !if the cluster is totally screened, the chameleon contribution is
-        !seattled to zero
         
-        if (xczero*rs.gt.1.5*rupin) dphidr=0
         return
        end 
- 
 
-c***********************************************************************      
+!modified gravity functions for other mass profiles ********************
+!> \ingroup MOD        
+      function  dphibn(x,rhos,rss,b,Q,phinf) 
+!>   @author L. Pizzuti
+!>   @details  this function computes `Meff=Q/G *r**2 * dphidr` 
+!!   (where phi is Phi/Mpl) for a chameleon field `Phi`, assuming a
+!!   b-NFW mass density profile.
+!!  It requires the parameters `ncutof` in the COMMON block paramsoptS,
+!!  which set an exponential cutoff to the fifth force if greater than 0.
+!>   @param[in] x REAL*8, value at which the function is computed
+!>   @param[in] rhos REAL*8, characteristic density [M_sun/Mpc**3]
+!>   @param[in] rss  REAL*8  scale radius of the density profile [Mpc]
+!>   @param[in] b  REAL*8    exponent of the b-NFW profile
+!>   @param[in] Q  REAL*8    Coupling of the field with matter
+!>   @param[in] phinf  REAL*8    background value of the scalar field (units of c**2)
+!>
+!>   Example of usage:
+!>   \code{.f}
+!>        
+!>       rhos=1.2e15
+!>       rss=0.5
+!>       Q=1.23
+!>       Phinf=4.3e-5
+!>       ncutof = 1
+!>       b = 3
+!>       write(*,*) dphibn(2.12d0,rhos,rss,b,Q,phinf)
+!>  \endcode       
+
       
+       implicit real*8 (a-h,o-z)
+       implicit integer*4 (i-n)
 
+       parameter (pig=3.1415926535d0, ampl=2.43e27, ah0=1.48e-33,
+     & ampc=1.57e29,rhoc=3.88e-11, clight=2.99792458e5, cl=3e5)
+       
+       parameter (grav=4.302e-9, alimit=0.0005) !limiting value for the screening radius
+       include 'paramsoptS.i'    
+       
+       !Facda=Q*rss**2*rhos*8*pig*grav/clight**2 !factor containing the planck mass
+       Facda=Q*rss**2*8*pig*grav*rhos/cl**2
+       !Exponential cutoff
+        dminf=1.0
+        if (ncutof.gt.0) then
+            dminf=dexp(-x*rss*dsqrt(1e-7*Q/phinf))
+        endif
+        
+        if (b.gt.2) then !bNFW case
+         cdav=(Q**2)*(rss**3)*rhos*8*pig/(clight**2) !factor in front of everything
+         
+         xcs=(phinf*(b-1.0d0)/Facda)**(1.0d0/(1.0d0-b))-1.0d0
+         
+         if (xcs.ge.alimit) then
+            Cs=(1+xcs)**(1.0d0-b)*(1.0d0-xcs+b*xcs)/((b-1)*(b-2))
+         else
+          xcs=0.0d0            
+          Cs=1/((b-1)*(b-2))
+         endif 
+         
+         if (x.gt.xcs) then
+          dout1 = ((x+1)**(1-b)*(x-b*x-1)/((b-1)*(b-2))+Cs)
+          dout = dout1*cdav*clight**2*dminf
+         else
+          dout = 0.0d0
+         endif
+        
+        else if (b.eq.2) then !NFW case
+c          write(*,*) 'check'
+          xcs=Facda/phinf-1.0d0
+          if (xcs.ge.alimit) then
+            !write(*,*) xcs, 'here', Facda
+            Cs=-phinf-Facda*dlog(1+xcs)
+          else
+            xcs=0.0d0
+            Cs=-Facda
+          endif
+          if (x.gt.xcs) then
+          
+           dout1=(Facda*(1/(x+1.0d0)+dlog(1.0d0+x))+Cs)
+           dout = dout1*rss*Q*clight**2/grav*dminf
+          else
+           dout = 0.0d0
+          endif
+        
+        else
+         dout = 0.0d0
+            
+        endif
+        
+        dphibn = dout 
+        
+        return  
+       end
+       
+!> \ingroup MOD        
+      function tM_bnfw_CS(x) 
+!>   @author L. Pizzuti
+!>   @details  compute the effective mass due to chameleon field for a
+!!   b-NFW mass density profile, which exponent is defined by `eim >=2`.
+!!  It requires the parameters in the COMMON block paramsoptS.i, in particular:
+!>  - (effective) mass profile parameters: `r200, rs, tmass, screen, eim`. 
+!!  The background field value `tmass` is given by tmass (in unit of 1e-5)  
+!>  - cosmological parameters: hubble constant `h0` (in km/s/Mpc),
+!!  density parameters `Omegam, Omegal`, redshift `za`                                 
+!>  - mass model `kmp` 
+!>  - number of steps in the second MG parameter `nhone`. If equal to -1
+!!  it forces f(R) chameleon case.
+!>   @param[in] x REAL*8, value at which the function is computed
+!>
+!>
+!>   Example of usage:
+!>   \code{.f}
+!>        
+!>       h0=70
+!>       Omegam=0.3
+!>       Omegal=0.7
+!>       kmp=9
+!>       r200=1.2
+!>       rs=0.5
+!>       tmass=100.23
+!>       nhone=10
+!>       screen=4.3
+!>       ncutof = 1
+!>       eim = 3
+!>       write(*,*) tM_bnfw_CS(2.12d0)
+!>  \endcode       
+        
+       
+       implicit real*8 (a-h,o-z)
+       implicit integer*4 (i-n)
+
+       parameter (pig=3.1415926535d0, ampl=2.43e27, ah0=1.48e-33,
+     & ampc=1.57e29,rhoc=3.88e-11, clight=2.99792458d5)
+       
+       parameter (grav=4.302e-9, alimit=0.001) !limiting value for the screening radius
+       include 'paramsoptS.i'
+       
+       cx = x/rs
+       hz=h0*dsqrt(Omegam*(1+za)**3+Olam)
+       c200=r200/rs
+       phinf=tmass*1e-5 !in realtà è phinf/Mpl in unità di 1e-5clight**2
+       
+       bcoup=screen !the modified parameter of the screening becomes
+                      !the coupling constant in the genneric chameleon run
+       
+       dm200=100*hz**2/grav*r200**3
+       !bnfw
+       if (eim.gt.2) then
+        b = int(eim)
+        f200=(c200+1)**(-b)*((c200+1.0)**b-b*c200*(c200+1)+c200**2-1.0)
+        dma=dm200*(1.0d0 + (1 + cx)**(1 - b)*(-1.0d0 + cx - b*cx))/f200
+        rhos=dm200*(b-1)*(b-2)/(4*pig*rs**3*f200)
+        
+        !Sono arrivato qui
+         if (tmass.gt.0.001.and.bcoup.gt.0.001) then
+         
+          dphir = dphibn(cx,rhos,rs,b,bcoup,phinf)
+         else
+          dphir = 0.0d0
+          
+         endif
+         dmtes =(dphir+dma)/dm200
+        !nfw
+        else if (eim.eq.2.0d0) then
+         b = 2.0d0 !eim
+         fac200=dlog(1+c200)-c200/(1+c200) 
+         dma=(dlog(1+cx)-cx/(1+cx))/fac200
+         rhos=dm200/(4*pig*rs**3*fac200)
+         
+         if (tmass.ne.0.and.bcoup.ne.0) then
+          dphir = dphibn(cx,rhos,rs,b,bcoup,phinf)/dm200
+         else
+          dphir = 0.0d0
+          
+         endif
+         dmtes = dphir+dma  
+               
+        else if (eim.lt.2) then
+         dmtes = 0.0d0
+        
+        endif      
+        !In MG-MAMPOSSt values should be in units of M200
+
+        tM_bnfw_CS = dmtes
+       return
+       end
+         
+         
+! ================ TEST FOR THE SCREENING VALUES ======================= 
+!> \ingroup MOD         
+      subroutine ScreenNFW(xcs)   
+       implicit real*8 (a-h,o-z)
+       implicit integer*4 (i-n)
+
+       parameter (pig=3.1415926535d0, ampl=2.43e27, ah0=1.48e-33,
+     & ampc=1.57e29,rhoc=3.88e-11, clight=2.99792458d5)
+       
+       parameter (grav=4.302e-9, alimit=0.001) !limiting value for the screening radius
+       include 'paramsoptS.i'
+         hz=h0*dsqrt(Omegam*(1+za)**3+Olam)
+         c200=r200/rs
+         phinf=tmass*1e-5
+         fac200=dlog(1+c200)-c200/(1+c200) 
+         dm200=100*hz**2/grav*r200**3
+         rhos=dm200/(4*pig*rs**3*fac200)
+         
+         
+         
+         Facda=screen*rs**2*rhos*8*pig*grav/clight**2 !factor containing the planck mass
+         
+         xcs=(Facda/phinf-1.0d0)*rs
+         if (xcs.lt.0) xcs = 0.0d0  
+         
+        return 
+        end
+c***********************************************************************      
+      function dphigNFW(x,rhos,rss,bgam,Q,phinf) 
+!>   @author L. Pizzuti
+!>   @details  this function computes `Meff=Q/G *r**2 * dphidr` 
+!!   (where phi is Phi/Mpl) for a chameleon field `Phi`, assuming a
+!!   gNFW mass density profile.
+!!  It requires the parameters `ncutof` in the COMMON block paramsoptS,
+!!  which set an exponential cutoff to the fifth force if greater than 0.
+!>   @param[in] x REAL*8, value at which the function is computed
+!>   @param[in] rhos REAL*8, characteristic density [M_sun/Mpc**3]
+!>   @param[in] rss  REAL*8  scale radius of the density profile [Mpc]
+!>   @param[in] bgam  REAL*8    exponent of the b-NFW profile
+!>   @param[in] Q  REAL*8    Coupling of the field with matter
+!>   @param[in] phinf  REAL*8    background value of the scalar field (units of c**2)
+!>
+!>   Example of usage:
+!>   \code{.f}
+!>        
+!>       rhos=1.2e15
+!>       rss=0.5
+!>       Q=1.23
+!>       Phinf=4.3e-5
+!>       ncutof = 1
+!>       bgam = 3
+!>       write(*,*) dphibn(2.12d0,rhos,rss,bgam,Q,phinf)
+!>  \endcode  
+       implicit real*8 (a-h,o-z)
+       implicit integer*4 (i-n)
+
+       parameter (pig=3.1415926535d0, clight= 2.99792458d5)
+       parameter (grav=4.302e-9, alimit=0.001) !limiting value for the screening radius
+       include 'paramsoptS.i'    
+       
+       Facda=Q*rss**2*rhos*8*pig*grav/clight**2 !factor containing the planck mass
+       !Exponential cutoff
+       dminf=1.0d0
+       
+       if (ncutof.gt.0) then
+            dminf=dexp(-x*rss*dsqrt(1e-7*Q/phinf))
+       endif
+      
+       call hygfx ( 3-bgam, 3-bgam, 4-bgam, -x, hfx ) 
+       
+       
+       facsc = 1 + (phinf/Facda)*(bgam - 2.0d0)
+
+       if (facsc.lt.0) then
+        xsc = alimit
+       else
+        xsc = 1/(1 - ( facsc )**(1/(2-bgam)) ) - 1 
+       endif
+       
+       if (isnan(xsc)) xsc = alimit
+       
+       
+       !Constant factor containing rs
+       Clogg = 1 + dlog(rss)
+    
+       if (xsc.gt.alimit) then
+        
+        call hygfx ( 3-bgam, 3-bgam, 4-bgam, -xsc, hxsc)
+        !Compute the constant of integration
+        
+        Cgnfw = - Facda  * ( Clogg + (xsc**(3-bgam))/(3 - bgam)*hxsc)
+        
+        if (x.lt.xsc) then
+        
+         dout=0.0d0
+        else            
+         dout= Cgnfw + Facda * ( Clogg  + x**(3 - bgam)/ (3-bgam)*hfx) 
+        endif
+        
+       else
+        Ccg = - Facda  * (Clogg)
+        dout = Ccg + Facda  * ( Clogg + x**(3- bgam)/ (3-bgam)*hfx)
+       endif 
+       
+       dphigNFW =  dout*Q*rss*clight**2/grav*dminf
+       
+       return 
+      end
+
+c######=================================================================
+      function tM_gnfw_CS(x) 
+!>   @author L. Pizzuti
+!>   @details  compute the effective mass due to chameleon field for a
+!!   gNFW mass density profile, which exponent is defined by `dA3 <=2`.
+!!  It requires the parameters in the COMMON block paramsoptS.i, in particular:
+!>  - (effective) mass profile parameters: `r200, rs, tmass, screen, dA3`. 
+!!  The background field value `tmass` is given by tmass (in unit of 1e-5)  
+!>  - cosmological parameters: hubble constant `h0` (in km/s/Mpc),
+!!  density parameters `Omegam, Omegal`, redshift `za`                                 
+!>  - mass model `kmp` 
+!>   @param[in] x REAL*8, value at which the function is computed
+!>
+!>
+!>   Example of usage:
+!>   \code{.f}
+!>        
+!>       h0=70
+!>       Omegam=0.3
+!>       Omegal=0.7
+!>       kmp=9
+!>       r200=1.2
+!>       rs=0.5
+!>       tmass=100.23
+!>       nhone=10
+!>       screen=4.3
+!>       ncutof = 1
+!>       dA3 = 1.2
+!>       write(*,*) tM_gnfw_CS(2.12d0)
+!>  \endcode       
+       implicit real*8 (a-h,o-z)
+       implicit integer*4 (i-n)
+
+       parameter (pig=3.1415926535d0, clight=2.99792458d5)
+       
+       parameter (grav=4.302e-9, alimit=0.001) !limiting value for the screening radius
+       include 'paramsoptS.i'
+       
+       cx = x/rs
+       hz=h0*dsqrt(Omegam*(1+za)**3+Olam)
+       c200=r200/rs
+       phinf=tmass*1e-5
+       
+       bcoup=screen !the modified parameter of the screening becomes
+                      !the coupling constant in the genneric chameleon run
+       
+       dm200=100*hz**2/grav*r200**3
+       call hygfx ( 3-dA3, 3-dA3, 4-dA3, -c200, h2x)
+       
+       rhos=(dm200*r200**(-3.0+dA3)*rs**(-dA3)*(3.0-dA3))/(4*pig*h2x)
+       
+       call hygfx ( 3-dA3, 3-dA3, 4-dA3, -cx, h2y)
+       dmass = (x/r200)**(3-dA3)*dm200*h2y/h2x
+       
+       if (bcoup.ne.0.and.tmass.ne.0) then 
+         dphidr= dphigNFW(cx,rhos,rs,dA3,bcoup,phinf) 
+      else
+         dphidr=0.0d0
+      endif
+        tM_gnfw_CS = (dphidr + dmass)/dm200 !given in units of m200
+      return
+        
+      end
+
+
+c***********************************************************************     
+     
+     
 
       function r_normal_ab ( a, b, nseed )
 
@@ -7063,8 +8318,8 @@ c***********************************************************************
        return
       end
 c***********************************************************************
-      subroutine tranmod(r200new,rcnew,rsnew,cbnew,
-     &           tmassnew,scrnew,cb0new,sigma,npar,neseed)
+      subroutine tranmod(r200new,rcnew,rsnew,cbnew,tmassnew,scrnew, !checkpoint
+     &         dA3new,cb0new,rbetanew,rjafnew,xmsnew,sigma,npar,neseed)
      
 c     This routine compute the new values of the free parameters in 
 c     a MCMC using a gaussian distribution with std sigma(nfreepar)
@@ -7072,96 +8327,390 @@ c     a MCMC using a gaussian distribution with std sigma(nfreepar)
        implicit integer*4 (i-n)
        
        dimension sigma(npar)
-       include 'paramsoptS.i' 
+       include 'paramsoptS.i'  
        external r_normal_ab 
-
-       r200new=r_normal_ab (dlog(r200new),sigma(1),neseed)
-       r200new=dexp(r200new)
-       rcnew=r_normal_ab (dlog(rcnew),sigma(2),neseed)
-       rcnew=dexp(rcnew)
-       rsnew=r_normal_ab (dlog(rsnew),sigma(3),neseed)
-       rsnew=dexp(rsnew)
-       cbnew=r_normal_ab (dlog(cbnew),sigma(4),neseed)
-       cbnew=dexp(cbnew)
-       cb0new=r_normal_ab (dlog(cb0new),sigma(7),neseed)
-       cb0new=dexp(cb0new)
-       if (kmp.eq.8) then
-       !!
-       !For mg Y parameter not log: it could be negative!
-       !!
-        tmassnew=r_normal_ab (tmassnew,sigma(5),neseed)
-       else
-        if(kmp.eq.7.or.kmp.eq.9) then
+    
+       if (sigma(1).gt.0.0d0) then
         
-        !case of general chameleon. The parameter space is explored
-        !in terms of the rescaled variables Q_2 phi_2 (see e.g. Terukina
-        !et al., 2014, Pizzuti et al., 2021)
+        r200_old = r200new
+        if (kmp.le.6) then
+          almu = dlog(r200_old)
+ 11       zr2l=r_normal_ab (almu,sigma(1),neseed)
+          r200new=dexp(zr2l)
+          
+          !To avoid very small, unphysical values when running assumig
+          !Gaussian Priors, a lower limit of r200min = 0.1 r200g is set
+          if (ipriorGauss.eq.1 .and. r200new.le.0.1d0*r200g) goto 11
+          
+        else
+ 10       r200new = dabs(r_normal_ab (r200_old,sigma(1),neseed))
         
-         nLogP=1 !Set equal to 0 to explore the phi space using the logarithm
-         ! of the parameter. 
-        
-         !Exploration is made using the phi_2 parameter
-         if (kmp.eq.9.and.nhone.gt.0.and.nLogP.eq.1) then
-           tmassnew=1-dexp(-tmassnew*0.1)
-           if (tmassnew.lt.0) then
-             tmassnew=dabs(r_normal_ab (0.d0,sigma(5),neseed))
-           else
-             
-             tmassnew=dsqrt(r_normal_ab (tmassnew,sigma(5),neseed)**2)
-             !be sure that tmassnew is smaller than 1
-             if (tmassnew.gt.1) then
-              tmassnew=2.0-tmassnew
-             endif
-
-           endif
-           tmassnew=(-10*dlog(1-tmassnew))
-           
-        !Exploration is made using the log(phi) parameter  
-         else 
-          tmassnew=r_normal_ab (dlog10(tmassnew),sigma(5),neseed)
-          tmassnew=10**(tmassnew)
-         endif
-        else !all other cases for now
-         tmassnew=r_normal_ab (dlog(tmassnew),sigma(5),neseed)
-         tmassnew=dexp(tmassnew)
+          !To avoid very small, unphysical values when running assumig
+          !Gaussian Priors, a lower limit of r200min = 0.1 r200g is set
+          if (ipriorGauss.eq.1 .and. r200new.le.0.1d0*r200g) goto 10
         endif
        endif
-       if(kmp.ne.8) then
-       
-         if (scrnew.eq.0) then !The screening radius and/or the coupling
-         !constant in general chameleon can be zero
-         
-           scrnew=dabs(r_normal_ab (scrnew,sigma(6),neseed))
-         else
-           scrnew=r_normal_ab (dlog(scrnew),sigma(6),neseed)
-           scrnew=dexp(scrnew)
-         endif
-         if(kmp.eq.9) then !In Chameleon screening, redefine the coupling
-                          !constant
-           scrtemp=scrnew/(1+scrnew)
-        
-           if (scrtemp.lt.0) then
-             scrtemp=dabs(r_normal_ab (0.d0,sigma(6),neseed))
-           else
-             scrtemp=dsqrt(r_normal_ab (scrtemp,sigma(6),neseed)**2)
-             !be sure that it is smaller than 1
-             if (scrtemp.gt.1) then
-              scrtemp=2.0-scrtemp
-             endif
-             
-           endif
-           scrnew=scrtemp/(1-scrtemp)
-        
-         endif
-       else !the coupling constant in Vainshtein can be negative
 
-         scrnew=r_normal_ab (scrnew,sigma(6),neseed)
+       if (sigma(2).gt.0.0d0) then
+         rc_old = rcnew
+         alrc = dlog(rc_old)
+         zrcl = r_normal_ab (alrc,sigma(2),neseed)
+         rcnew=dexp(zrcl)
        endif
+       
+       if (sigma(3).gt.0.0d0) then
+        rs_old = rsnew
+        if (kmp.le.6) then
+          alrs = dlog(rs_old)
+ 13       zrsl=r_normal_ab (alrs,sigma(3),neseed)
+          rsnew=dexp(zrsl)
+          !To avoid very small, unphysical values when running assumig
+          !Gaussian Priors, a lower limit of rsmin = 0.05 Mpc is set
+          if (ipriorGauss.eq.1 .and. rsnew.le.0.05d0) goto 13
+        else
+ 12       rsnew=dabs(r_normal_ab (rs_old,sigma(3),neseed))
+         !To avoid very small, unphysical values when running assumig
+         !Gaussian Priors, a lower limit of rsmin = 0.05 Mpc is set
+          if (ipriorGauss.eq.1 .and. rsnew.le.0.05d0) goto 12
+        endif
+       endif
+        
+       !Anisotropy parameter at infinity
+       if (sigma(4).gt.0.0d0) then
+        cb_old = cbnew
+        alcb = dlog(cb_old)
+        zcbl =r_normal_ab (alcb,sigma(4),neseed)
+        cbnew=dexp(zcbl)
+        !case of gT or gOM:
+        if (kani == 41 .or. kani == 21 .or. kani == 8) then
+         if (cbnew <= 0.4d0) then
+            do itry = 1, 100
+                zcbl  = r_normal_ab(log(max(cbnew,1.0d-12)), sigma(4), 
+     &           neseed)
+                cbnew = exp(zcbl)
+                if (cbnew > 0.4d0) exit
+             end do
+            if (cbnew <= 0.4d0) cbnew = 0.5d0   ! fallback finale
+         endif
+        endif
+       
+       endif
+       
+       !anisotropy parameter a r=0
+       if (sigma(7).gt.0.0d0) then
+        cb0_old = cb0new
+        alcb0 = dlog(cb0_old)
+        zcb0l =r_normal_ab (alcb0,sigma(4),neseed)
+        cb0new=dexp(zcb0l)
+        !case of gT or gOM:
+        !avoid very small values of beta which makes the integral overflow
+        if (cb0new <= 0.4d0) then
+            do itry = 1, 100
+                zcb0l  = r_normal_ab(log(max(cb0new,1.0d-12)), sigma(4), 
+     &           neseed)
+                cb0new = exp(zcb0l)
+                if (cb0new > 0.4d0) exit
+             end do
+            if (cb0new <= 0.4d0) cb0new = 0.5d0   ! fallback finale
+        endif
+       endif
+
+       
+       !BCG ***************************************************
+       if (sigma(8).gt.0.0d0) then
+        rjafnew=r_normal_ab (dlog(rjafnew),sigma(8),neseed)
+        rjafnew=dexp(rjafnew)
+       endif
+       if (sigma(9).gt.0.0d0) then
+        xmsnew=r_normal_ab (dlog(xmsnew),sigma(9),neseed)
+        xmsnew=dexp(xmsnew)
+       endif
+       !****************************************************
+    
+       if (sigma(10) > 0.0d0) then
+        ! special case if A3 = gamma gNFW
+        !=============================================================
+        if (kmp.eq.10 .or. kmp.eq.17 .or. kmp.eq.18) then
+         
+            imaxtry = 50   ! massimo numero di tentativi
+
+            do itry = 1, imaxtry
+                dA3new = r_normal_ab(dA3new, sigma(10), neseed)
+
+                ! only physical values 0 < gamma < 2
+                if (dA3new > 0.0d0 .and. dA3new < 2.0d0) exit
+            end do
+
+            ! after imaxtry trials, fallback
+            if (dA3new <= 0.0d0 .or. dA3new >= 2.0d0) then
+                dA3new = min(1.5d0, max(0.5d0, dA3g))  ! safety value
+            endif
+        
+        else if (kmp.eq.13) then
+            dA3new = dabs(r_normal_ab((dA3new), sigma(10), neseed))
+        else
+            dla3 = r_normal_ab(dlog(dA3new), sigma(10), neseed)
+            dA3new = dexp(dla3)
+        endif
+       endif
+
+c  ======================OLD ==========================================         
+c       if (sigma(5).gt.0.0d0) then 
+c       !DHOST case treated separately
+c        if (kmp.eq.8) then
+c        !!
+c        !For mg Y parameter not log: it could be negative!
+c        !!
+c         tmassnew=r_normal_ab (tmassnew,sigma(5),neseed)
+c        else
+
+c         if(kmody.eq.1.and.kmp.ne.8.or.kmp.eq.17) then
+         
+c         !case of general chameleon. The parameter space is explored
+c         !in terms of the rescaled variables Q_2 phi_2 (see e.g. Terukina
+c         !et al., 2014, Pizzuti et al., 2021)
+        
+c          nLogP=1 !Set equal to 0 to explore the phi space using the logarithm
+c         ! of the parameter. 
+        
+c         !Exploration is made using the phi_2 parameter
+         
+c          kcham=0
+c          if(kmp.eq.9.or.kmp.eq.11.or.kmp.eq.12.or.kmp.eq.15) kcham=1
+c          if (kmp.eq.16.or.kmp.eq.17) kcham=1
+c          if (kcham.eq.1.and.nhone.ge.0.and.nLogP.eq.1) then
+c           tmatemp=1-dexp(-tmassnew*0.1)
+
+c           if (tmatemp.lt.0) then
+c             tmatemp=dabs(r_normal_ab (0.d0,sigma(5),neseed))
+c           else
+c             tmatemp=dabs(r_normal_ab (tmatemp,sigma(5),neseed))
+c           endif  
+c             !be sure that tmassnew is smaller than 1
+c           if (tmatemp.gt.1.0d0) then
+c            tmatemp = r_uniform_01 ( neseed )
+c           endif
+                 
+c           tmassnew=(-10*dlog(1-tmatemp))
+
+c          !Exploration is made using the log(phi) parameter  
+c          else 
+c           tmassnew=r_normal_ab (dlog10(tmassnew),sigma(5),neseed)
+c           tmassnew=10**(tmassnew)
+c          endif
+c         else if (kmp.eq.13.or.kmp.eq.14) then 
+c         !Refracted gravity, BS: tmass is strictly positive
+c          tmassnew=r_normal_ab (dlog10(tmassnew),sigma(5),neseed)
+c          tmassnew=10**(tmassnew) 
+c         else !all other cases for now
+c          tmassnew=r_normal_ab (tmassnew,sigma(5),neseed)
+c          !CDE: tmass striclty positive (is the cs^2 value)
+c          if (kmp.eq.18.and.tmassnew.lt.0) tmassnew = dabs(tmassnew)
+c         !tmassnew=dexp(tmassnew) I set as a trial a gaussian exploration with fixed step
+c         !This is because gamma for gNFW can be close to zero, and we need to avoid problems
+c         endif
+c        endif
+       
+c       endif
+c  ======================OLD ==========================================  
+
+       
+       if (sigma(5) > 0.0d0) then
+        select case (kmp)
+
+        !--------------------------------
+         case (8)  ! DHOST: può essere negativo
+         tmassnew = r_normal_ab(tmassnew, sigma(5), neseed)
+
+        !--------------------------------
+       
+         case (9, 11, 12, 15, 16, 17)  ! Chameleon  !TOGLI 1            
+            !kmody = 1
+            
+            if (kmody.eq.1) then
+                
+                !TO BE INCLUDED OUTSIDE
+                !if I have only f(R), I have to explore in log
+                !nLogP=1 !Set equal to 0 to explore the phi space using the logarithm
+                ! of the parameter. 
+                
+                if (nhone.gt.0.or.nLogP.eq.1) then
+
+                    eps = 1.d-12
+
+                    t_low = 1.d0 - dexp(-0.1d0 * tmlow)
+                    t_up  = 1.d0 - dexp(-0.1d0 * tmup)
+
+                    tmatemp = 1.d0 - dexp(-0.1d0 * tmassnew)
+                    tmatemp = min(max(tmatemp, t_low+eps), t_up-eps)
+
+                    tmpdd = r_normal_ab(0.d0, sigma(5), neseed)
+                    tmatnew = reflect_ab( tmatemp + tmpdd, t_low, t_up )
+
+                    ! solo safety numerico estremo
+                    tmatnew = min(max(tmatnew, eps), 1.d0-eps)
+
+                    tmassnew = -10.d0 * dlog(1.d0 - tmatnew)
+
+                    ! update current (if you accept later, do it there instead)
+                    ! tmatemp = tmatnew
+
+                else
+                ! ---- log-phi space ----
+                
+             tmassnep = r_normal_ab(dlog10(tmassnew), sigma(5), neseed)
+                    tmassnew = 10.0d0**tmassnep
+                end if
+            else
+                ! If kmody ≠ 1, general case
+                tmassnew = r_normal_ab(tmassnew, sigma(5), neseed)
+            end if
+
+            !--------------------------------
+        case (13, 14)  ! Refracted gravity or Boson star: tmass > 0
+            tmass_old = tmassnew
+        
+ 15        tmassnew = dabs(r_normal_ab(tmass_old, sigma(5), neseed))    
+          !To avoid very small, unphysical values 
+c           if ( tmassnew.le.(0.002d0)) goto 13            
+           !tmassnew = 10.0d0**tmassnew
+            !--------------------------------
+        case (18)  ! CDE: tmass positive
+            tmassnew = r_normal_ab(tmassnew, sigma(5), neseed)
+            if (tmassnew < 0.0d0) tmassnew = abs(tmassnew)
+
+            !--------------------------------
+        case default  ! other cases
+            tmassnew = r_normal_ab(tmassnew, sigma(5), neseed)
+
+        end select
+       end if
+
+
+       if (sigma(6) > 0.0d0) then
+        select case (kmp)
+        case(8,18,13)
+         scrnew = r_normal_ab(scrnew, sigma(6), neseed)
+        case default
+        ! Chameleon 
+            if (scrnew <= 0.0d0) then
+            ! screening radius or coupling may be zero (not negative)
+            ! Consider the absolute value
+                scrnew = dabs(r_normal_ab(scrnew, sigma(6), neseed))
+            else
+            ! Trasform in log-space for positive values
+                scrnew = r_normal_ab(dlog(scrnew), sigma(6), neseed)
+                scrnew = dexp(scrnew)
+            endif
+
+            if (kmody.eq.1.or.kmp.eq.17) then
+                eps = 1.d-12
+                ! --- define scrtemp from current scrnew
+                if (scrnew.le.0.d0) then
+                   scrtemp = eps
+                else
+                   scrtemp = scrnew / (1.d0 + scrnew)
+                endif
+
+                ! --- bounds in scrtemp implied by scrlow/scrup
+                s_low = scrlow / (1.d0 + scrlow)
+                s_up  = scrup  / (1.d0 + scrup)
+
+                ! keep current inside bounds (safety)
+                scrtemp = min(max(scrtemp, s_low+eps), s_up-eps)
+
+                ! ----- RW on scrtemp in [s_low, s_up] with reflection
+                sctest = r_normal_ab(0.d0, sigma(6), neseed)
+                scrtemp_new = reflect_ab(scrtemp + sctest, s_low, s_up)
+
+                ! back to scrnew (guaranteed within [scrlow,scrup])
+                scrtemp_new = min(max(scrtemp_new, eps), 1.d0-eps)  ! only numerical safety
+                scrnew = scrtemp_new / (1.d0 - scrtemp_new)
+
+            endif
+        end select        
+        
+        !OLD. Keep for security reasons ================================
+        
+c        if (kmp.ne.8 .and. kmp.ne.18) then
+c        ! Chameleon 
+c            if (scrnew <= 0.0d0) then
+c            ! screening radius or coupling may be zero (not negative)
+c            ! Consider the absolute value
+c                scrnew = dabs(r_normal_ab(scrnew, sigma(6), neseed))
+c            else
+c            ! Trasform in log-space for positive values
+c                scrnew = r_normal_ab(dlog(scrnew), sigma(6), neseed)
+c                scrnew = dexp(scrnew)
+c            endif
+c
+c            if (kmody.eq.1 .or. kmp.eq.17) then
+c            ! trasformazione in [0,1] per evitare accumulation ai bordi
+c                scrtemp = scrnew / (1.0d0 + scrnew)
+c            ! calcolo sigma logit-safe
+c                sigma_logit = sigma(6) / (scrtemp * (1.0d0 - scrtemp))
+c                ! passo Gaussiano in logit-space
+c                y1 = dlog(scrtemp / (1.0d0 - scrtemp))
+c                y1_new = r_normal_ab(y1, sigma_logit, neseed)
+c                scrtemp = 1.0d0 / (1.0d0 + dexp(-y_new))
+c                
+c                scrnew = scrtemp / (1.0d0 - scrtemp)
+c            endif
+c
+c        else
+c        ! Vainshtein o CDE: coupling può essere negativo
+c         scrnew = r_normal_ab(scrnew, sigma(6), neseed)
+c        endif
+       endif
+
+
+       if (sigma(11).gt.0.0d0) then       
+        rbeta_old = rbetanew
+        alrbeta = dlog(rbeta_old)
+ 14     zlrbeta=r_normal_ab (alrbeta,sigma(11),neseed)
+        rbetanew=dexp(zlrbeta)
+        !To avoid very small, unphysical values when running assumig
+        !Gaussian Priors, a lower limit of rsmin = 0.01 Mpc is set
+        if (ipriorGauss.eq.1 .and. rbetanew.le.0.01) goto 14
+       endif  
+
        
        return
       end
 c
 c
+
+
+C       TEST REFLECTION
+        double precision function reflect01(u)
+          implicit none
+          double precision, intent(in) :: u
+          double precision :: x
+          x = u
+          do
+             if (x .ge. 0.d0 .and. x .le. 1.d0) exit
+             if (x .lt. 0.d0) x = -x
+             if (x .gt. 1.d0) x = 2.d0 - x
+          end do
+          reflect01 = x
+        end function reflect01
+        
+        double precision function reflect_ab(x, a, b)
+          implicit none
+          double precision, intent(in) :: x, a, b
+          double precision :: y
+          y = x
+          do
+             if (y .ge. a .and. y .le. b) exit
+             if (y .lt. a) y = a + (a - y)
+             if (y .gt. b) y = b - (y - b)
+          end do
+          reflect_ab = y
+        end function reflect_ab
+
+
+
+
 
       subroutine sigmaeva(nparr,sigma)
 !> evaluate the sigma values for the MCMC exploring based on the free 
@@ -7174,59 +8723,171 @@ c
       include 'paramsoptS.i'
 
       r200g=r200
-      
+      !r200
       if (ipar(1).eq.0) then
          sigma(1)=0.0
       else
          sigma(1)=0.1
          if(kmp.lt.6) sigma(1)=0.05 !if no MG, less degeneracy, smaller step
          
+         if (kpro.eq.1) then
+          sigma(1)=(dlog(r2up)-dlog(r2low))*0.05d0
+          if (kbdt.eq.1) sigma(1)=(dlog(r2up)-dlog(r2low))*0.01d0
+         endif
+         
       endif
+
+      !dA3 (Refracted gravity model, gamma exp for gNFW)
+      if (ipar(10).eq.0) then
+         sigma(10)=0.0
+      else
+         sigma(10)=0.05
+         if (kpro.eq.1) then
+           sigma(10)=(dlog(dA3up)-dlog(dA3low))*0.04d0
+           if (kbdt.eq.1) sigma(10)=(dlog(dA3up)-dlog(dA3low))*0.01d0
+           if (kmp.eq.13) sigma(10)=((dA3up)-(dA3low))*0.04d0
+         endif
+         
+      endif      
+
+      !rc 
       if (ipar(2).eq.0) then
          sigma(2)=0.0
-         
       else
          sigma(2)=0.1
-     
+         if (kpro.eq.1) then
+          sigma(2)=(dlog(rcup)-dlog(rclow))*0.05d0
+          if (kbdt.eq.1) sigma(2)=(dlog(rcup)-dlog(rclow))*0.01d0
+         endif
       endif
+      !rs
+      
       if (ipar(3).eq.0) then
          sigma(3)=0.0
       else
          sigma(3)=0.03
-       
+         if (kpro.eq.1) then
+          sigma(3)=(dlog(rsup)-dlog(rslow))*0.05d0
+          if (kbdt.eq.1) sigma(3)=(dlog(rsup)-dlog(rslow))*0.01d0
+         endif
       endif
+      !cbe
       if (ipar(4).eq.0) then
          sigma(4)=0.0
       else
          sigma(4)=0.04
+         if (kpro.eq.1) then
+          sigma(4)=(dlog(bup)-dlog(blow))*0.05d0
+          if (kbdt.eq.1) sigma(4)=(dlog(bup)-dlog(blow))*0.01d0
+         endif
        
       endif
+
       if (ipar(5).eq.0) then
          sigma(5)=0.0
       else
          sigma(5)=0.2
          
+         !case chameleon fR
          if(kmp.eq.9.and.nhone.lt.0) sigma(5)=1
-         if(kmp.eq.10) sigma(5)=0.05
-        
+         !if(kmp.eq.10) sigma(5)=0.1 !not used anymore
+         !case refracted grav
+         !if (kmp.eq.13) sigma(5)=0.01
+         if (kpro.eq.1) then
+          dfact = 0.08d0
+          if (kbdt.eq.1) then
+            dfact = 0.04d0
+            if (kmp.eq.18) dfact = 0.01d0 
+            if (kmp.eq.13) dfact = 0.01d0
+          endif
+          sigma(5)=(dlog(tmup)-dlog(tmlow))*dfact
+          !In the case of RG, explore in linear space
+          if (kmp.eq.13) then
+             dfact = 0.01d0
+             sigma(5)=((tmup)-(tmlow))*dfact
+          endif
+          !NOW CHANGE
+          if (kmody.eq.1.or.kmp.eq.17) then
+            if(nLogP.eq.1.or.nhone.gt.0) then
+             sigma(5) = dfact !In this case it shoud run from 0 to 1
+            else
+             
+             sigma(5)=(dlog10(tmup)-dlog10(tmlow))*dfact
+            endif
+          endif
+
+         endif
+
       endif
+       !!!!
+      !second MG parameter
       if (ipar(6).eq.0) then
          
          sigma(6)=0.0
       else
          sigma(6)=0.02
-         if (kscr.eq.-1) sigma(6)=0.2
+         if (kpro.eq.1) then
+          dfact = 0.05d0
+          if (kbdt.eq.1) then
+            dfact = 0.02d0
+            if (kmp.eq.18) dfact = 0.01d0
+          endif
+          if (kmp.eq.13) then
+           dfact = 0.005d0
+           sigma(6)=((scrup)-(scrlow)) * dfact 
+          else
+           sigma(6)=(dlog(scrup)-dlog(scrlow))* dfact 
+          endif 
+          if (kmody.eq.1.or.kmp.eq.17) sigma(6) = 0.08d0 !In this case it shoud run from
+                                            ! 0 to 1
+         endif
+         
       endif
+      
+      !cbe0
       if (ipar(7).eq.0) then
          sigma(7)=0.0
       else
          sigma(7)=0.04
-       
+         if (kpro.eq.1) then
+          sigma(7)=(dlog(cb0up)-dlog(cb0low))*0.05d0
+          if (kbdt.eq.1) sigma(7)=(dlog(cb0up)-dlog(cb0low))*0.02d0
+         endif
       endif
+      !rjaffe
+      if (ipar(8).eq.0) then
+         sigma(8)=0.0
+      else
+         sigma(8)=0.04
+         if (kpro.eq.1) then
+          sigma(8)=(dlog(rjaup)-dlog(rjalow))*0.05d0
+         endif
+      endif
+      !xmstar
+      if (ipar(9).eq.0) then
+         sigma(9)=0.0
+      else
+         sigma(9)=0.04
+         if (kpro.eq.1) then
+          sigma(9)=(dlog(xmaup)-dlog(xmalow))*0.01d0
+          if (kmp.eq.13) sigma(9)=(dlog(xmaup)-dlog(xmalow))*0.01d0
+         endif 
+      endif
+      !Rbeta parameter (Work in progress!!)
+      if (ipar(11).eq.0) then
+         sigma(11)=0.0
+      else
+         sigma(11)=0.03
+         if (kpro.eq.1) then
+          sigma(11)=(dlog(rbetaup)-dlog(rbetalow))*0.05d0
+          if (kbdt.eq.1) sigma(11)=(dlog(rbetaup)-dlog(rbetalow))*0.01d0
+         endif
+      endif
+
       return
       end
 c************* prior function for the mcmc run *************************
-      subroutine priord(x,y,z,q,w,s,b2,pout) 
+      subroutine priord(x,y,z,q,w,s,da,b2,rb,rj,xma,pout) 
       !(r200n,rcn,rsn,cbn,tmassn,scrn,beta2n,pout1)
       USE ieee_arithmetic
       implicit real*8 (a-h,o-z)
@@ -7247,37 +8908,50 @@ c************* prior function for the mcmc run *************************
         
         if(y.lt.0.05.or.y.gt.3.9.or.z.lt.0.05.or.z.gt.3.9) then
          pout=rinf
-
          return 
         endif
+        
         if (q.lt.0.2.or.q.gt.7.00) then
          pout=rinf
-
          return
-        endif
+        endif 
+         
+        if (da.lt.0.001.or.da.gt.3.00) then
+          pout=rinf
+          return
+        endif         
+         
         if (b2.lt.0.2.or.b2.gt.7.00) then
          pout=rinf
-
          return
         endif
+        
+        if(kbg.eq.1.or.kmp.eq.13) then
+         if (rj.lt.0.01.or.rj.gt.1.00) then
+          pout=rinf
+          return
+         endif
+        
+         if (xma.lt.0.1.or.xma.gt.20.00) then
+          pout=rinf
+          return
+         endif
+        
+        endif
+        
         if (kmp.eq.8) then
          if (w.gt.12.or.w.lt.-0.6) then
           pout=rinf
-
           return
          endif
-        elseif (kmp.eq.7) then
-         if (w.gt.150.or.w.lt.0.008) then
-          pout=rinf
-
-          return
-         endif
-        elseif (kmp.eq.9) then
+         
+        elseif (kmody.eq.1) then
          if (w.gt.150.or.w.lt.0.001) then
           
           pout=rinf
           return
          endif
+         
          if(nhone.gt.1) then
           if(s.gt.29.or.s.lt.1e-2) then
             pout=rinf
@@ -7287,39 +8961,87 @@ c************* prior function for the mcmc run *************************
         endif
         pout= 0.0
         return
+        
        else
-
+c ======================================================================       
+        !R200
         if (x.lt.r2low.or.x.gt.r2up) then
          pout=rinf
          return
         endif
-        
+        !rc, rs
         if(y.lt.rclow.or.y.gt.rcup.or.z.lt.rslow.or.z.gt.rsup) then
          pout=rinf
          return 
         endif
+        !Beta 
         if (q.lt.blow.or.q.gt.bup) then
          pout=rinf
          return
         endif
+        !beta0
         if (b2.lt.cb0low.or.b2.gt.cb0up) then
          pout=rinf
          return
         endif
         
-        if (w.gt.tmup.or.w.lt.tmlow) then
-         pout=rinf
-         
-         return
+        !tmass depending on the MG model   
+        select case(kmp)
+         case(9,11,12,15,16,17)
+          if (nhone.gt.0.and.nLogP.eq.1) then
+            if (w.gt.tmup.or.w.lt.tmlow) then
+             pout=rinf
+             return
+            endif
+          else 
+            dlw = dlog10(w)
+            if (dlw.gt.dlog10(tmup).or.dlw.lt.dlog10(tmlow)) then
+             pout=rinf
+             return
+            endif
+          endif   
+        case default
+          if (w.gt.tmup.or.w.lt.tmlow) then
+             pout=rinf
+             return
+            endif
+        end select
+          
+                
+        if (rj.lt.rjalow.or.rj.gt.rjaup) then
+          pout=rinf
+          return
         endif
-        if(nhone.gt.1) then
-         if(s.gt.scrup.or.s.lt.scrlow) then
-           
+      
+         if (xma.lt.xmalow.or.xma.gt.xmaup) then
+          !write(*,*) 'here', xm,xmalow,xmaup
+          pout=rinf
+          return
+         endif
+         
+         
+        if (da.lt.dA3low.or.da.gt.dA3up) then
+           pout=rinf
+           return 
+        endif 
+
+        if (rb.lt.rbetalow.or.rb.gt.rbetaup) then
+           pout=rinf
+           return 
+        endif 
+         
+        if(s.gt.scrup.or.s.lt.scrlow) then
            pout=rinf
            return
-         endif
         endif
-        pout= 0.0
+
+         
+        pout = 0.0
+        !Flat prior in log 
+        !BE CAREFUL: When running with A1 = 0!!!
+        !if (nhone.le.0.and.nLogP.eq.0.and.ntmass.gt.0) then
+        !  pout = pout -dlog(w)
+        !endif
         return
        endif
        icoun=0
@@ -7338,6 +9060,206 @@ c************* prior function for the mcmc run *************************
          if (icoun.gt.0) pout=rinf
         endif
        end
+
+
+      
+
+c =========== GAUSSIAN PRIOR =========================================== 
+!> \ingroup MAM     
+      subroutine priorG(x,y,z,q,w,s,da,b2,rb,rj,xma,pout) 
+!>  @author L. Pizzuti      
+!>  @details This subroutine computes the multivariate Gaussian prior 
+!!  for the set of input free parameters.
+!!  It requires the definition of kmp and of all the bounds in input_pars.
+!>  For each parameter, the mean is given by 0.5*(xlow +xup) and the std
+!!  by 0.5*(xup - xup).
+!>   @param[in] x  value of r200
+!>   @param[in] y value of rc
+!>   @param[in] z value of rs
+!>   @param[in] q value of cbe
+!>   @param[in] w value of tmass
+!>   @param[in] s value of screening
+!>   @param[in] da value of A3
+!>   @param[in] b2 value of cbe0
+!>   @param[in] rb value of rbeta
+!>   @param[in] rj value of rjaffe
+!>   @param[in] xma value of xmstar
+
+!>   @param[out] pout value of the log probability
+
+      USE ieee_arithmetic
+      implicit real*8 (a-h,o-z)
+      implicit integer*4 (i-n)
+      parameter (pig=3.1415926535897932d0)
+      
+      include 'paramsoptS.i'  
+      
+      !handle infinities
+      IF (ieee_support_inf(rinf)) THEN
+         rinf = ieee_value(rinf,  ieee_negative_inf)
+      END IF
+      
+      !compute log prior for r200
+      r2mean = 0.5 * (r2low + r2up)
+      r2sig = 0.5 * (r2up - r2low)
+      
+      if (r2sig.eq.0) then
+       dlogpr2 = 0
+      else
+       dlogpr2 = -0.5 * ((x - r2mean) / r2sig) ** 2
+     &           - dlog(r2sig) - 0.5 * dlog(2.0 * pig)
+      endif
+      
+      !compute log prior for rc
+      rcmean = 0.5 * (rclow + rcup)
+      rcsig = 0.5 * (rcup - rclow)
+      if (rcsig.eq.0) then
+        dlogprc = 0.0
+      else
+       dlogprc = -0.5 * ((y - rcmean) / rcsig) ** 2
+     &           - dlog(rcsig) - 0.5 * dlog(2.0 * pig)
+      endif
+      
+      !compute log prior for rs
+           
+      rsmean = 0.5 * (rslow + rsup)
+      rssig = 0.5 * (rsup - rslow)
+      if (rssig.eq.0) then 
+       dlogprs = 0.0
+      else 
+       dlogprs = -0.5 * ((z - rsmean) / rssig) ** 2
+     &           - dlog(rssig) - 0.5 * dlog(2.0 * pig)      
+      endif
+
+      !compute log prior for rbeta
+      rbmean = 0.5 * (rbetalow + rbetaup)
+      rbsig = 0.5 * (rbetalow - rbetaup)
+
+      if (rbsig.eq.0) then 
+       dlogprb = 0.0d0
+      else
+       dlogprb = -0.5 * ((rb - rbmean) / rbsig) ** 2
+     &           - dlog(rbsig) - 0.5 * dlog(2.0 * pig) 
+      endif
+
+      !compute log prior for cbe
+      cbmean = 0.5 * (blow + bup)
+      cbsig = 0.5 * (bup - blow)
+      
+      if (cbsig.eq.0) then 
+       dlogpbt = 0.0
+      else 
+       dlogpbt = -0.5 * ((q - cbmean) / cbsig) ** 2
+     &           - dlog(cbsig) - 0.5 * dlog(2.0 * pig)       
+      endif
+      !if requested (1), Beta has still flat priors
+      if (ipriorBeta.eq.1) then
+       dlogpbt = 0.0
+       if (q.lt.blow.or.q.gt.bup) then
+         pout=rinf
+         return
+       endif
+      endif 
+      
+      !compute log prior for cbe2
+      cb2mean = 0.5 * (cb0low + cb0up)
+      cb2sig = 0.5 * (cb0up - cb0low)
+      
+      if (cb2sig.eq.0) then 
+       dlogpb2 = 0.0
+      else       
+       dlogpb2 = -0.5 * ((b2 - cb2mean) / cb2sig) ** 2
+     &           - dlog(cb2sig) - 0.5 * dlog(2.0 * pig)       
+      endif
+      !if requested (1), Beta0 has flat priors 
+      if (ipriorBeta0.eq.1) then 
+        dlogpb2 = 0.0
+        if (b2.lt.cb0low.or.b2.gt.cb0up) then
+         pout=rinf
+         return
+        endif
+      
+      endif 
+      
+      !compute log prior for tmass
+      tmean = 0.5 * (tmlow + tmup)
+      tmsig = 0.5 * (tmup - tmlow)
+
+      if (tmsig.eq.0) then
+       dlogptm = 0.0
+      else  
+       dlogptm = -0.5 * ((w - tmean) / tmsig) ** 2
+     &           - dlog(tmsig) - 0.5 * dlog(2.0 * pig)   
+      
+       if (w.lt.0.0.and.kmp.ne.8) then
+       !tmass cannot be negative  
+        pout = rinf
+        return
+       endif  
+      endif
+      
+      !compute log prior for rj (BCG)
+      rjmean = 0.5 * (rjalow + rjaup)
+      rjsig = 0.5 * (rjaup - rjalow)
+      if (rjsig.eq.0) then
+       dlogprj = 0.0
+      else  
+       dlogprj = -0.5 * ((rj - rjmean) / rjsig) ** 2
+     &           - dlog(rjsig) - 0.5 * dlog(2.0 * pig)  
+      endif
+
+      !compute log prior for xmstar (BCG)
+      xmamean = 0.5 * (xmalow + xmaup)
+      xmasig = 0.5 * (xmaup - xmalow)
+      if (xmasig.eq.0) then
+       dlogpxma = 0.0
+      else  
+       dlogpxma = -0.5 * ((xma - xmamean) / xmasig) ** 2
+     &           - dlog(xmasig) - 0.5 * dlog(2.0 * pig) 
+      endif
+      !compute log prior for A3
+      damean = 0.5 * (dA3low + dA3up)
+      dasig = 0.5 * (dA3up - dA3low)
+
+      if (dasig.eq.0) then
+       dlogpda = 0.0
+      else  
+       dlogpda = -0.5 * ((da - damean) / dasig) ** 2
+     &           - dlog(dasig) - 0.5 * dlog(2.0 * pig)
+
+       if (kmp.eq.17) then
+       !avoid unphysical values for gamma as exponent in gNFW models
+        if (da.lt.1e-3.or.da.gt.1.999) then
+         pout = rinf
+         return
+        endif
+       endif
+      endif
+      
+      !compute log prior for screen
+      scmean = 0.5 * (scrlow + scrup)
+      scsig = 0.5 * (scrup - scrlow)
+
+      if (scsig.eq.0) then
+       dlogpsc = 0.0
+      else  
+
+       dlogpsc = -0.5 * ((s - scmean) / scsig) ** 2
+     &           - dlog(scsig) - 0.5 * dlog(2.0 * pig)
+
+       if (s.lt.0.0.and.kmp.ne.8) then
+        !screen cannot be negative  
+        pout = rinf
+        return
+       endif 
+      endif
+      pout1 = dlogpr2 + dlogpbt + dlogpb2 + dlogprs + dlogprc 
+      pout2 = dlogpsc + dlogpda + dlogpxma + dlogprj + dlogptm 
+      
+      !total log probability
+      pout = pout1+pout2
+      return
+      end 
        
 c     criteria for acceptance in the MCMC run
        subroutine acceptance(x, x_new,eval,nseed)
@@ -7361,7 +9283,8 @@ c     criteria for acceptance in the MCMC run
         endif
         return 
        end
-       
+
+
 c***********************************************************************
 c Lensing Monte Carlo for Beyond Horndeski models **********************       
        
@@ -7549,7 +9472,7 @@ cfactor rs already included
         implicit integer*4 (i-n)
     
         include 'paramsoptS.i'
-        if(xlow.ge.0.95*xmed) then
+        if(xlow.ge.0.995*xmed) then
           xlow=xmed-dabs(xmed)/4.0
           
           write(*,199) xlow
@@ -7557,7 +9480,7 @@ cfactor rs already included
      &     ' lower bound of parameter range too close to guess value',/
      &     'automatically reset to',f9.4 )
         endif
-        if(xup.le.1.05*xmed) then
+        if(xup.le.1.005*xmed) then
           xup=xmed+dabs(xmed)/4
 
           write(*,198) xup
@@ -7957,7 +9880,7 @@ c************************ Modified: ************************************
       psum=0.0d0 !initialize the chisquare
       do k=1,npoint
        estat=(sigmael**2)/(pig*(xth(k+1)**2-xth(k)**2)*ngal)
-       error(k)=(dsqrt(estat)+sigmalls)
+       error(k)=dsqrt(estat+sigmalls)
        xbin(k)=(rth(k)+(rth(k)-rth(k))/2) 
        
        pp=gt_mod(xbin(k),r200,rs,tmass,screen)
@@ -7968,41 +9891,836 @@ c************************ Modified: ************************************
       return
        
       end
-      
-c****************** old functions *************************
-c     double precision function gwe(u)
-c      implicit real*8 (a-h,o-z)
-c      implicit integer*4 (i-n)
-c      real*8 rjl(1), yrjl(1)
-c      parameter (pig=3.1415926535897932d0)
-c      include 'paramsoptS.i'
-c      include 'sr.i'
-c      include 'vlos.i'
-c      include 'tsallis.i'
-c      external gammarec
-c      t = xmin*dcosh(u)
-c      if ((knfit.eq.1).or.(nrc.eq.-1.and.kmp.eq.1)) then
-c         c=r200/rc
-c         gc=1./(dlog(c+1)-c/(c+1))
-c         xnu=1.d0/(t/rc*(1.+t/rc)**2)*c*c*c*gc/4./pig/(r200*r200*r200)
-c      elseif ((knfit.eq.2).or.(nrc.eq.-1.and.kmp.eq.2)) then
-c         xnu=rc/(2.*pig*t)/(t+rc)**3.
-c      else
-c         xnu=-1.d0/dsqrt(pig*1.d0)*
-c     &        gammarec(-al+0.5d0)/gammarec(-al+1.d0)*
-c     &        al/rc*(1.d0+(t/rc)*(t/rc))**(-0.5d0+al)
-c      endif
-c      rjl(1)=dlog(t)
-c      call icsevu(xris,yris,ninterp,csr,icsr,rjl,yrjl,1,ier)
-c      if (ier .eq. 34) then
-c         print *,' ICSEVU in GWENU: max xris=', xris(ninterp), ' r=',
-c     &    rjl(1)
-c      endif
-c      sigr=dexp(yrjl(1)) !check
-c      gwe=sigr
-c      return
-c      end
+C********************************* BCG ADDITION ************************
 
+
+      function fintegrand(xl)
+      implicit real*8 (a-h,o-z)
+      implicit integer*4 (i-n)
+      include 'paramsoptS.i'
+ !     external fmass,fbetaint,frho
+      x=dexp(xl)
+      fintegrand=frho(x)*fmass(x)/x*fbetaint(x) !integral in dlog!
+      return
+      end
+
+
+
+!>  \ingroup MAM
+      function fmass(t)
+!>    @details This subroutine computes the total mass profile of the  
+!!    cluster assuming spherical symmetry. 
+!>     @param[in] t REAL*8, value where the function is evaluated
+!>           
+!>    It requires additional external parameters from `pars_test.txt`, from `Options.txt` and the 
+!!    COMMON block `paramsoptS.i`. In particular: 
+!>  - the mass profile switch `kmp`
+!>  - the mass profile parameters 
+!! `r200, rs, tmass, screen`
+!>  - the value of velocity dispersion at r200, `v200`
+!>  - the switch for the inclusion of the BCG `kbcg`
+!>  - if `kbcg=1`, the BCG-mass profile parameters: `rjaf,xmstar,xlumbcg`
+
+!>
+!>    Example of usage:
+
+!>     \code{.f}
+!>      kbcg=1
+!>      r200=1.41
+!>      v200=r200*10*70
+!>      kmp=10
+!>      rs=0.3 
+!>      cbe=1.2
+!>      tmass=1.2
+!>      screen=0.0d0
+!>      xmstar=4.5d0
+!>      xlumbcg=492000000000.0d0
+!>      rjaf=0.039
+!>      x=0.25d0
+!>      write(*,*) fmass(x)
+!>    \endcode     
+
+      implicit real*8 (a-h,o-z)
+      implicit integer*4 (i-n)
+      complex gamma,z,hypgeo,z200m, hfz
+      dimension rsvalues(28),r100values(28)
+      parameter (pig=3.1415926535897932d0,grav=4.302e-9)
+      
+      include 'paramsoptS.i'
+      include 'barions.i'
+      
+      data rsvalues/0.01,0.05,0.06,0.07,0.08,0.09,0.10,0.11,0.12,0.13,
+     ,     0.14,0.15,0.16,0.17,0.18,0.19,0.20,0.21,0.22,0.23,0.24,0.25,
+     ,     0.30,0.35,0.40,0.45,0.50,1.00/
+      data r100values/1.288,1.307,1.311,1.314,1.318,1.321,1.324,1.326,
+     ,     1.329,1.332,1.334,1.337,1.339,1.342,1.344,1.347,1.349,1.351,
+     ,     1.353,1.356,1.358,1.36,1.37,1.38,1.389,1.398,1.406,1.476/
+      external gammarec
+      external hypgeo
+      external fbars
+c    
+      gm200=r200*v200*v200
+      
+      if (kmp.eq.1) then
+c
+c     DM mass profile is genealized-NFW
+c
+         if (kgas.eq.1) then
+c
+c     If requested, I consider the total mass as the sum of
+c     the gas and DM mass profiles; beyond r100, the fraction
+c     Mgas/Mtot is assumed to be constant, hence the shape of
+c     Mtot becomes that of the DM mass profile, rescaled by
+c     the appropriate factor (1.-0.167). The DM profile is
+c     normalised in such a way as to give 0.857 (1-0.123-0.02) of the 
+c     total mass at r200, which is what is generally found in groups 
+c     and clusters. 0.02 is provided by the central BGG. The gas mass fraction 
+c     becomes ~0.167 (the Universal baryon ratio) at ~r100.
+c     Note that the radii have to be changed accordingly, r200 is
+c     not r200 of the total mass: r200mod=r200*(1-0.143)^(1/3)
+c
+            ficm=0.123
+            fbgg=0.020
+            fac200=1.*(1.d0-ficm-fbgg)/
+     &           (dlog(1.d0+r200/rs)-(r200/rs)/(1.d0+r200/rs))
+            tm=t*(1.d0-ficm-fbgg)**(-1./3.)
+            xmdm=(dlog(1.d0+tm/rs)-tm/rs/(1.d0+tm/rs))*fac200
+c
+c     Determine r100 by interpolation
+c
+            j1=0
+            do j=1,28
+               if (rsvalues(j).le.rs) j1=j
+            enddo
+            if (j1.eq.0) r100=r100values(1)
+            if (j1.eq.28) r100=r100values(28)
+            if (j1.gt.0.and.j1.lt.28) r100=(r100values(j1+1)-
+     -           r100values(j1))/
+     /           (rsvalues(j1+1)-rsvalues(j1))*(rs-rsvalues(j1))+
+     +           r100values(j1)
+c
+c     IC gas mass profile: it is computed from integration
+c     of a beta profile with r_c/r_200=0.01 and beta=0.5
+c     i.e. close to the average values for the Osmond &
+c     Ponman sample. The normalization from Sanderson
+c     et al. (2003) but it is not very accurate. It indicates
+c     Mgas/Mtot=0.02 at 0.3*r_200, a value representative
+c     of groups. Such a value makes Mgas/Mtot=0.123 at r200,
+c     and 0.167 (the universal baryon fraction, see Zhang et al. 06)
+c     at 1.23*r_200, which is close to r_100.
+c     I then adopt Mgas/Mtot=0.123 at r_200, for simplicity.
+c     I use Mamon+Lokas 05b expression for Mgas(r) which proves 
+c     accurate to within +-2.5% over the radial range 0.01-20 r_200.
+c
+            ga=-1.09051d0
+            z=t/0.01d0
+            xmg=1.87277d-4*((z**3.d0/3.d0)**ga+
+     +           (2.d0/3.d0*z**(1.5d0))**ga)**(1.d0/ga)
+            if (t.le.r100) then
+               xm=xmdm+xmg+fbgg
+            else
+               xm=xmdm/(1.d0-ficm-fbgg)
+            endif
+         else
+c
+c     If not requested, the mass profile becomes
+c     identical to NFW with the normalisation
+c     set to v200^2*r200/G at r/r200=1
+c
+            fac200=1./(dlog(1.d0+r200/rs)-(r200/rs)/(1.d0+r200/rs))
+            xm=(dlog(1.d0+t/rs)-t/rs/(1.d0+t/rs))*fac200
+         endif
+
+
+c     attempt to insert generalized NFW model         
+      elseif (kmp.eq.10) then
+
+c       call hygfx ( 3-tmass, 3-tmass, 4-tmass, -t/rs, hfx ) 
+c       call hygfx ( 3-tmass, 3-tmass, 4-tmass, -r200/rs, hfy)
+       
+c       xm =  hfx/hfy*(t/r200)**(3-tmass)
+
+       call hygfx ( 3-dA3, 3-dA3, 4-dA3, -t/rs, hfx ) 
+       call hygfx ( 3-dA3, 3-dA3, 4-dA3, -r200/rs, hfy)
+       
+       xm =  hfx/hfy*(t/r200)**(3-dA3) 
+c     Clustering Dark Energy 
+c     dA3 = exponent of gNFW
+c     dA2 = f(cs,w)
+c     dA1 = cs2 (in unit of c**2)        
+      elseif (kmp.eq.18) then
+
+c       call hygfx ( 3-tmass, 3-tmass, 4-tmass, -t/rs, hfx ) 
+c       call hygfx ( 3-tmass, 3-tmass, 4-tmass, -r200/rs, hfy)
+       
+c       xm =  hfx/hfy*(t/r200)**(3-tmass)
+
+       call hygfx ( 3-dA3, 3-dA3, 4-dA3, -t/rs, hfx ) 
+       call hygfx ( 3-dA3, 3-dA3, 4-dA3, -r200/rs, hfy)
+       
+       xm=hfx/hfy*(t/r200)**(3-dA3)*(1.0d0+3*10**(screen-3.5)*(1+tmass))
+               
+      elseif (kmp.eq.8)  then	
+c     M(r) is the modified NFW profile with a beyond Horndeski model 
+c     See Saltas+16, Sakestein+16
+c     the free parameter tmass is now the coupling constant Y 
+	
+       fac200=1./(dlog(1.d0+r200/rs)-(r200/rs)/(1.d0+r200/rs))
+       abey=tmass*t*t*(rs-t)/(rs+t)**3
+       xm=((dlog(1.d0+t/rs)-t/rs/(1.d0+t/rs))+abey/4)*fac200
+      
+      elseif (kmp.eq.9) then
+c     M(r) is the modified NFW profile in chameleon screening 
+c      (Pizzuti et al.,2021)    
+       !fac200=1./(dlog(1.d0+r200/rs)-(r200/rs)/(1.d0+r200/rs))
+       !xm=(dlog(1.d0+t/rs)-t/rs/(1.d0+t/rs))*fac200+dphidr(t/rs)
+       
+       xm = tM_bnfw_CS(t)
+       
+      elseif (kmp.eq.15) then
+c     M(r) is the modified gNFW profile in chameleon screening 
+c     gamma is fixed to dA3
+        xm = tM_gnfw_CS(t)       
+
+      elseif (kmp.eq.16) then
+c     M(r) is the modified Isothermal profile in chameleon screening 
+c     the exponent is 3/2       
+       xm = tM_iso_CS(t)
+      
+c      elseif (kmp.eq.17) then
+c       !M(r) is multicomponent general Chameleon. gNFW+Jaffe+beta+NFW
+c        xm = grav*tmass_Gen(t)/gm200 ! To divide by gm200 as this is already
+c                                ! including the normalization factor  
+      
+      elseif (kmp.eq.2) then
+c
+c     M(r) is Hernquist; no gas contribution allowed for the time being
+c     Normalisation set to 1 at r/r200=1
+c
+         fac200=(r200+rs)*(r200+rs)/(r200*r200)
+         xm=t*t/(t+rs)/(t+rs)*fac200
+      elseif (kmp.eq.3) then
+c
+c     M(r) is PIEMD; no gas contribution allowed for the time begin
+c     Normalisation set to 1 at r/r200=1
+c     
+         fac200=1./(rcut*datan(r200/rcut)-rs*datan(r200/rs))
+         xm=fac200*(rcut*datan(t/rcut)-rs*datan(t/rs))
+      elseif (kmp.eq.4) then
+c
+c     M(r) is Burkert; no gas contribution allowed for the time begin
+c     Normalisation set to 1 at r/r200=1
+c
+         trs=t/rs
+         rvrs=r200/rs
+         fac200=1./(dlog(1+rvrs*rvrs)+2.*dlog(1.+rvrs)-2.*datan(rvrs))
+         xm=fac200*(dlog(1+trs*trs)+2.*dlog(1.+trs)-2.*datan(trs))
+
+
+      elseif (kmp.eq.11) then
+c        mass is modified Burkert in Chameleon Gravity   
+         trs=t/rs
+         rvrs=r200/rs
+         fac200=1./(dlog(1+rvrs*rvrs)+2.*dlog(1.+rvrs)-2.*datan(rvrs))
+         xm1=fac200*(dlog(1+trs*trs)+2.*dlog(1.+trs)-2.*datan(trs))
+         xm=xm1+dphib(trs)           
+
+      elseif (kmp.eq.12) then
+c     mass is modified Einasto in Chameleon Gravity
+       !  eim=5.
+         agp=3.*eim
+         xgp=2.*eim*(r200/rs)**(1./eim)
+         call dincog(agp,xgp,gin,gim,gip200)
+         fac200=1./gip200
+         xgp=2.*eim*(t/rs)**(1./eim)
+         call dincog(agp,xgp,gin,gim,gip)
+         xm1=fac200*gip
+         
+         xm=xm1+dphiE(t/rs)  
+      
+      elseif (kmp.eq.14) then
+      !Dark matter profile is Boson Star
+        xt = t/rs
+        if (xt.le.2.0d0) then 
+         xm = dtanh((t/rs)**tmass) + 1.0e-3*dA3*(t/rs)**screen
+        else
+         xm =  dtanh((2.0d0)**tmass) + 1.0e-3*dA3*(2.0d0)**screen
+        endif 
+        
+         
+      elseif (kmp.eq.5) then
+c
+c     M(r) is Soft Isoth Sph; no gas contribution allowed for the time begin
+c     Normalisation set to 1 at r/r200=1
+c
+         fac200=1./(r200-rs*datan(r200/rs))
+         xm=fac200*(t-rs*datan(t/rs))
+      else
+c
+c     M(r) is Einasto m=eim; no gas contribution allowed for the time begin
+c     Normalisation set to 1 at r/r200=1
+c
+       !  eim=5.
+         agp=3.*eim
+         xgp=2.*eim*(r200/rs)**(1./eim)
+         call dincog(agp,xgp,gin,gim,gip200)
+         fac200=1./gip200
+         xgp=2.*eim*(t/rs)**(1./eim)
+         call dincog(agp,xgp,gin,gim,gip)
+         xm=fac200*gip
+cc         write(*,999) r200,rs,t,3.*eim,2.*eim*(r200/rs)**(1./eim),
+cc     &        2.*eim*(t/rs)**(1./eim),gip200,gip,xm
+cc 999     format(4(1x,f5.2),2(1x,f6.2),3(1x,d11.3))
+cc         eim=5.
+cc         fac200=1./dgammp(3.*eim,2.*eim*(r200/rs)**(1./eim))
+cc         xm=fac200*dgammp(3.*eim,2.*eim*(t/rs)**(1./eim))
+       endif      
+
+!     Jaffe M(r) and baryonic mass in galaxies and gas
+       
+        fbarr=0.0
+        if (kbary.eq.1) fbarr=fbars(t) !inclusion of baryons 
+       
+        fjaffe=xmstar*xlumbcg*t/rjaf/(1.+t/rjaf)+fbarr
+      
+      
+        !NOT NEEDED. INCLUDED IN THE GENERAL CHAMELEON CASE
+        !if (kmody.eq.1) then 
+        ! dpj=dphiJ(t/rjaf) !Include the chameleon field of the BCG
+        ! fjaffe= xmstar*xlumbcg*(t/rjaf/(1.+t/rjaf)+dpj)+fbarr
+        !endif
+
+       !else
+        fmass=fjaffe+xm*gm200/grav   !+fmassgal+fmassgas+fjaffeicl
+
+! Diaferio's model of refracted gravity: *******************************       
+        if (kmp.eq.13) then 
+        
+        !refracted gravity with the function of Valeria
+        fmass= rgmass(t)
+        !fbarr=0.0
+        !if (kbary.eq.1) fbarr=fbars(t)
+        
+        !Covariant formulation. It is not good for the moment
+    
+         !fmass=(xmstar*xlumbcg*t**2/(t+rjaf)**2+fbarr)/fmodRG(t)
+                  
+        elseif (kmp.eq.17) then
+        !M(r) is multicomponent general Chameleon. gNFW+Jaffe+beta+NFW
+         fmass = tmass_Gen(t)  
+          
+        endif 
+ 
+!
+      return
+      end
+
+
+
+      function fbars(x)
+       implicit real*8 (a-h,o-z)
+       implicit integer*4 (i-n)
+       parameter (pig=3.1415926535897932d0)
+       include 'paramsoptS.i'
+       include 'barions.i'
+       
+       !call hunt(rgas, ngas,x,jlo) 
+       !fbars=xmgas(jlo)
+       !Aggiungi profilo beta con parametri LUCA
+       !Test con RG
+       if (srhoga.eq.0) rhog1 = rho0gas
+       if (srsga.eq.0)  rsga1 = rsgas
+       
+       
+       if (srhost.eq.0) rhost1 = rhostar
+       if (srstar.eq.0) rst1 = rstar
+       
+       xg = x/rsga1
+       if (kalpha.eq.1) then
+        !New: Gas (this is a beta profile with beta = 1)
+        fbb1 = (-1.0d0/(xg**2*dsqrt(1+xg**2))+ (dasinh(xg))/xg**3)                  
+       else
+        !Profile with beta = 2/3 
+        fbb1 = rsga1**2 * (x - rsga1*datan(xg)) / x**3
+        
+       endif
+       
+       !New: galaxies: NFW profile
+       xstar = x/rst1
+       fbb2 = (-1.0d0/(xstar**2*(1+xstar))+(dlog(1+xstar))/xstar**3)
+       
+       fbars = 4*pig*x**3*(rhost1*fbb2 + rhog1*fbb1)
+
+
+       !fbars = 4*pig*rhog1*rsga1**2*(x-rsga1*datan(x/rsga1))
+       return
+      end
+    
+      !OLD FUNCTION -> Interpolates
+      function fbars2(x)
+      !interpolate the baryons
+       implicit real*8 (a-h,o-z)
+       implicit integer*4 (i-n)
+       include 'paramsoptS.i'
+       include 'barions.i'
+       if (x.le.(rgas(1)+0.01)) then
+        fbars2 = xmgas(1)
+       else if (x.ge.(rgas(ngas)-0.001)) then
+        fbars2 = xmgas(ngas)
+       else
+        call hunt(rgas, ngas,x,jlo) 
+        fbars2= xmgas(jlo)
+       endif 
+       
+       return
+      end
+
+!************ FUNCTIONS FOR INTEGRAL IN REFRACTED GRAVITY **************
+      function fintRG(x)
+       implicit real*8 (a-h,o-z)
+       implicit integer*4 (i-n)
+       include 'paramsoptS.i'
+       include 'barions.i'
+       
+       external fbars
+         fbarr=0.0
+         if (kbary.eq.1) fbarr=fbars(x)
+        fintRG=(fbarr)/x**2 !xmstar*xlumbcg*x**2/(x+rjaf)**2+
+       return 
+      end 
+      
+      function fmodRG(x)
+       implicit real*8 (a-h,o-z)
+       implicit integer*4 (i-n)
+       parameter (grav=4.302e-9, clight=2.99792458d5)
+       
+       include 'paramsoptS.i'
+       include 'barions.i'
+       
+       external fintRG
+       errrel=0.0001d0
+
+        call dgaus8 (fintRG,0.0d0,x,errrel,ares, IERR)
+        
+        test=xmstar*xlumbcg*x/rjaf/(x+rjaf)
+        fmodRG=(1-grav*(test+ares)/clight**2)
+       
+       return
+       end
+
+! **********************************************************************
+
+!     exp(2*int(beta/x dx)) - OM model / constant model
+!     !!! Note that the constant part of the integration is in the MAIN pgm
+
+      function fbetaint(x)
+      implicit real*8 (a-h,o-z)
+      implicit integer*4 (i-n)
+      include 'paramsoptS.i'
+      if (kanbcg.eq.1) then !OM
+       fbetaint=rabcg*rabcg+x*x
+      elseif (kanbcg.eq.0) then 
+       bcgbetac=rabcg
+       fbetaint=x**(2.*bcgbetac) ! beta=bcgbetac=constant at all radii 
+      endif
+      
+      return
+      end
+
+
+!     density profile (nu(r) or rho*(r))
+!     Jaffe or Hernquist
+
+      function frho(x)
+      implicit real*8 (a-h,o-z)
+      implicit integer*4 (i-n)
+      parameter (pi=3.1415927d0)
+
+      include 'paramsoptS.i'
+        
+      external frhoHer
+!      common /params/rt,r200,rs,gam,ra,rjaf,xlumbcg,xmstarl,xm200,spsf
+
+!      frho=xmstarl*xlumbcg*rjaf/(4.*pi*x*x*(rjaf+x)*(rjaf+x))
+       if (kdbcg.ne.1) then
+        frho=rjaf/(4.*pi*x*x*(rjaf+x)*(rjaf+x))
+       else
+        frho=frhoHer(x)
+       endif
+      return
+      end
+   
+!     density profile  (nu(r) or rho*(r))
+!     Hernquist  
+!     This is to test the model of Diaferio
+      function frhoHer(x)
+      implicit real*8 (a-h,o-z)
+      implicit integer*4 (i-n)
+      parameter (pi=3.1415927d0)
+
+      include 'paramsoptS.i'
+
+!      frhoHer=xmstarl*xlumbcg*rjaf/(2.*pi*x*(rjaf+x)**3)
+       frhoHer=rjaf/(2.*pi*x*(rjaf+x)**3)
+
+      return
+      end   
+      
+      
+      function fbeta(x)
+      implicit real*8 (a-h,o-z)
+      implicit integer*4 (i-n)
+
+      include 'paramsoptS.i'
+
+!      common /params/rt,r200,rs,gam,ra,rjaf,xlumbcg,xmstarl,xm200,spsf
+       if(kanbcg.eq.0) then
+        fbeta=rabcg
+       else if(kanbcg.eq.1) then
+        fbeta=x*x/(rabcg*rabcg+x*x)
+       endif
+       
+      return
+      end
+
+! ********************* BCG RUN ****************************************
+
+
+!> \ingroup MAM
+      function frpHer(tt) 
+!>  @author L. Pizzuti      
+!>  @details This function computes the analytic expression 
+!!  for the radial dependence of the projected surface density
+!!  of a Hernquist profile in GR excluding the normalization. 
+!!  This is needed for the BCG, it is equivalent to sigmar2(tt).
+!!  It requires the inclusion of 'paramsoptS.i' for `rjaf`
+!>
+!>   @param[in] R radius in Mpc
+!>
+!>   Example of usage:
+!>
+!>   \code{.f}
+!>   rjaf=0.03d0
+
+!>   write(*,*) frpHer(1.2d0)
+!>   \endcode
+
+
+      implicit real*8 (a-h,o-z)
+      implicit integer*4 (i-n)
+      parameter (pig=3.1415926535897932d0)
+      include 'paramsoptS.i'
+      s=tt/rjaf
+
+      if (s.gt.1) then
+         xs=acos(1./s)/sqrt(s*s-1.)
+         fr=((2.+s*s)*xs-3.)/(2.*pig*rjaf*rjaf*(1.-s*s)**2)
+      elseif (s.lt.1) then
+         xs=dlog((1.+sqrt(1.-s*s))/s)/sqrt(1.-s*s)
+         fr=((2.+s*s)*xs-3.)/(2.*pig*rjaf*rjaf*(1.-s*s)**2)
+      else
+         xs=1.
+         fr=2./(15.*pig*rjaf*rjaf)
+      endif
+
+      frpHer=fr
+
+      return
+      end
+
+
+
+
+c!     projected density profile (N(R) or Sigma*(R) or I(R))
+c!     Jaffe or Hernquist
+
+      function frhoproj(x)
+      implicit real*8 (a-h,o-z)
+      implicit integer*4 (i-n)
+      parameter (pi=3.1415927d0, Dmj=0.184565d0)
+      
+      include 'paramsoptS.i'
+      include 'datavdp.i'
+    
+      external frpHer
+      
+      
+      if (kdbcg.ne.1) then
+c!      common /params/rt,r200,rs,gam,ra,rjaf,xlumbcg,xmstarl,xm200,spsf
+
+       s=x/rjaf
+
+       if (abs(s-1.).lt.0.001) then
+
+         s1=0.999
+         cs1=dacosh(1.d0/s1)
+         s2=1.001
+         cs2=dacos(1.d0/s2)
+         
+         ticaz1=(1.d0-(2.d0-s1*s1)*cs1/dsqrt(dabs(s1*s1-1.d0)))
+         ticaz1=ticaz1/2.d0/(s1*s1-1.d0)  
+         frhoproj1=pi/(4.d0*s1)-ticaz1
+     
+         ticaz2=(1.d0-(2.d0-s2*s2)*cs2/dsqrt(dabs(s2*s2-1.d0)))
+         ticaz2=ticaz2/2.d0/(s2*s2-1.d0)               
+
+         frhoproj2=pi/(4.d0*s2)-ticaz2
+
+         frhoproj=(frhoproj2-frhoproj1)/(s2-s1)*(s-s1)+frhoproj1
+
+c!     R<>rjaf
+
+       else
+
+         if (s.lt.1.) then
+            cs=dacosh(1.d0/s)
+         else
+            cs=dacos(1.d0/s)
+         endif
+        pipp=(1.d0-(2.d0-s*s)*cs/dsqrt(dabs(s*s-1.d0)))/2.d0/(s*s-1.d0)
+        frhoproj=pi/(4.d0*s)-pipp
+       endif
+      
+       frhoproj=frhoproj/(pi*rjaf*rjaf)
+
+      else
+       !case of a Hernquist profile for the BCG
+       frhoproj=frpHer(x)
+      endif
+      
+      return
+      end
+
+
+      function fabbeta(xl)
+      implicit real*8 (a-h,o-z)
+      implicit integer*4 (i-n)
+      dimension u(1),s(1),ydev1(1),ydev2(1)
+
+      include 'paramsoptS.i'
+      include 'datavdp.i'
+
+
+      ! common /params/rt,r200,rs,gam,ra,rjaf,xlumbcg,xmstarl,xm200,spsf
+      ! common/spline/xx(500),yy(500),csc(500,3),icsc,nd
+      ! common/limits/ax,rpsf
+
+!      external fbeta
+
+      u(1)=xl
+
+      
+      call SPLINE_CUBIC_VAL(nd,xbc,ybc,ypb2,u,s,
+     &  ydev1,ydev2)
+      
+      s1=s(1)
+
+      x=dexp(xl)
+      b1=fbeta(x)
+
+      a=dexp(ax)
+
+      if (abs(1.-x/a).lt.0.001) then
+         fabbeta=0.d0
+      else
+         fabbeta=dexp(s1)*x*x/dsqrt(x*x-a*a)*(1.-b1*a*a/(x*x))
+      endif
+
+
+      return
+      end
+
+
+
+c***********************************************************************
+!     
+!     Solving the integral in log space to get ln(nu*vr^2)
+!     
+      subroutine vdpbcg(rvdp,vdp,bcgr,bcgvdp,nvdp,iout)
+
+      implicit real*8 (a-h,o-z)
+      implicit integer*4 (i-n)
+
+      parameter (pi=3.1415927d0,grav=4.302d-9,iii=5000)
+      parameter (nout=100) !200
+
+      dimension xmnul(iii),vr2nu(iii),u(iii),s(iii)
+      dimension rvdp(nvdp),vdp(nvdp),sig2i(iii)
+      dimension bcgr(nvdp),bcgvdp(nvdp)
+
+      include 'datavdp.i'      
+      include 'paramsoptS.i'
+      
+      external fintegrand
+      external fabbeta
+      external frhoproj
+      external frho
+      external fmass
+      !Try to see if the BCG should be integrated up the top or we can do less
+      errabs=0.001d0
+      errel=0.001d0
+      bx=dlog(rtbcg/10.0d0) !rtbcg
+      a1=dlog(1.d-4)
+      deltalog=(bx-a1)/nout
+      lout=0
+      
+
+      do i=1,nout-1
+         ax=a1+deltalog*i
+         res=0.d0
+         call dgaus8 (fintegrand,ax,bx, errel, 
+     &    res, IERR)
+     
+         
+         if (kanbcg.eq.0) then
+          rabcg=bcgbetac
+          denbeta=dexp(2.*bcgbetac*ax) ! constant part of the integrated beta(r) for the model beta=bcgbetac=constant at all radii
+         else if (kanbcg.eq.1) then
+          denbeta=rabcg*rabcg+dexp(2.*ax) ! constant part of the integrated beta(r)
+         endif
+         res=res*grav/denbeta 
+         
+         if (IERR.gt.130) write(*,*) ' int_fvdm: ',dexp(ax),res
+         if (res.eq.res) then 
+            lout=lout+1
+            xmnul(lout)=ax
+            vr2nu(lout)=dlog(res)
+            
+         endif
+        
+      enddo
+c!
+c!     Spline fitting of ln(nu*vr^2)
+c!
+      nd=lout-2
+      do k=1,nd
+         xbc(k)=xmnul(k)
+         ybc(k)=vr2nu(k)
+      enddo
+      
+      call SPLINE_CUBIC_SET(nd,xbc,ybc,2,0.d0,2,0.d0,ypb2)
+
+!     Abel projection of nu*vr^2 in nout points,
+!     yielding I*VDP^2; then divide by I(R) and take the sqrt
+
+      jout=0
+      !call CPU_TIME(stbcg)
+      do j=1,lout-1
+         ax=a1+deltalog*j
+         resp=0.0d0
+         errel=0.001d0
+         
+         call dgaus8 (fabbeta,ax,bx,errel,resp,IERR)
+
+         if (IERR.gt.130) write(*,*) ' int_fabbeta: ',dexp(ax),resp
+         if (resp.lt.0.) resp=0.
+         a=dexp(ax)
+         fir=frhoproj(a)
+         if (resp.eq.resp) then 
+            jout=jout+1
+            rvdp(jout)=a
+            vdp(jout)=dsqrt(2.d0*resp/fir)
+
+            sig2i(jout)=2.d0*resp 
+
+            bcgr(jout)=rvdp(jout)
+            bcgvdp(jout)=vdp(jout)            
+c! END
+         endif
+      enddo
+      
+      !call CPU_TIME(enbcg)
+      !write(*,*) lout, 'time of execution BCG = ', enbcg-stbcg
+      
+      iout=jout
+      return
+      end
+
+      subroutine vdplik(chibcg)
+
+      implicit real*8 (a-h,o-z)
+      implicit integer*4 (i-n)
+      parameter (pi=3.1415927d0,grav=4.302d-9)
+      parameter  (nout=200) !200
+      
+      dimension bcgr(nout),bcgvdp(nout),rvdp(nout),vdp(nout)
+
+
+      include 'paramsoptS.i'
+      include 'datavdp.i'
+
+      nvdp=nout-1
+         
+      omegal=Olam
+      omega0=Omegam
+      hz=h0*sqrt(omega0*(1.+za)**3+omegal)
+                                            
+      xm200=100.*hz*hz/grav*r200**3
+
+
+      call vdpbcg(rvdp,vdp,bcgr,bcgvdp,nvdp,iout)
+      chiq=0.d0
+        
+      rlim = 2.*rbcg(nbcg)
+      do k=1,iout
+        if (bcgr(k).le.rlim) imax=k
+      enddo
+      do j=1,nbcg
+        rbcgj=rbcg(j)             
+        call hunt(rvdp,imax,rbcgj,jlo)
+        sbcge= vdp(jlo)+ ( vdp(jlo+1)-vdp(jlo) )/(rvdp(jlo+1) - 
+     -                rvdp(jlo)) * (rbcgj - rvdp(jlo) )
+  
+        chiq=chiq+(sbcg(j)-sbcge)*(sbcg(j)-sbcge)/(esbcg(j)*esbcg(j))
+
+      enddo
+
+      chibcg = chiq/2 !The -log(Likelihood) is chiq/2
+
+      return 
+      end
+
+      SUBROUTINE hunt(xx,n,x,jlo)
+      implicit real*8 (a-h,o-z)
+      implicit integer*4 (i-n)
+      dimension xx(n)
+      LOGICAL ascnd
+      ascnd=xx(n).gt.xx(1)
+      if(jlo.le.0.or.jlo.gt.n)then
+        jlo=0
+        jhi=n+1
+        goto 3
+      endif
+      inc=1
+      if(x.ge.xx(jlo).eqv.ascnd)then
+1       jhi=jlo+inc
+        if(jhi.gt.n)then
+          jhi=n+1
+        else if(x.ge.xx(jhi).eqv.ascnd)then
+          jlo=jhi
+          inc=inc+inc
+          goto 1
+        endif
+      else
+        jhi=jlo
+2       jlo=jhi-inc
+        if(jlo.lt.1)then
+          jlo=0
+        else if(x.lt.xx(jlo).eqv.ascnd)then
+          jhi=jlo
+          inc=inc+inc
+          goto 2
+        endif
+      endif
+3     if(jhi-jlo.eq.1)return
+      jm=(jhi+jlo)/2
+      if(x.gt.xx(jm).eqv.ascnd)then
+        jlo=jm
+      else
+        jhi=jm
+      endif
+      goto 3
+      END
 
 
 ! Find roots of a function 
@@ -8053,43 +10771,1158 @@ c     	enddo
 c      end subroutine find_root
 
        
-c       double precision function fsqrt( x )
-c    	implicit real*8 (a-h,o-z)
-c        implicit integer*4 (i-n)
-c        external field
-c        include 'paramsoptS.i'
-c        zeb=0.0d0
-c        Ric=5.44e-8*0.9*((1+zb)**3+4*0.7/0.3)
-c        n=nhs  !exp in H&S model
-c        fr=Ric/(3*(n+1)*tmass*tmass+(n+2)*Ric)
-c        fsqrt = (field(x)-fr)
-c        return 
-c       end
+
+
+!**************** MODIFIED GRAVITY CHAMELEON ***************************    
+! This is the function where the root is the screening radius in the case
+! of the Burkert chameleon field profile
+       double precision function dfbur( x ) 
+        implicit real*8 (a-h,o-z)
+        implicit integer*4 (i-n)
+        parameter (pig=3.1415926535897932d0, Grav=4.302e-9, cl=3e5)
+        
+        include 'paramsoptS.i'
+         
+        phinf=tmass*1e-5 
+        tm200=100/Grav*(r200**3)*h0**2*(Omegam*(1.0d0+za)**(3)+Olam)
+        fac200=dlog(1+(r200/rs)**2)+2.*dlog(1.0d0+r200/rs)-2.0d0*
+     &   datan(r200/rs)
+         facda=tm200/fac200/(pig*rs**3)*  !rhos
+     &   screen*(rs**2)*8*pig*Grav/(cl**2) !the rest of the factor
+
+        
+        fac1=(2*datan(x)-2*dlog(1.0d0+x) + dlog(1.0d0 + x**2))*facda
+        dfbur=((1.0d0+x)*(4*phinf - facda*pig+fac1))/(4*x)
+
+        return 
+        end
+         
+!      It finds the root of the dfbur function     
+       subroutine froot_Bur(x1,x2)
+       implicit real*8 (a-h,o-z)
+       implicit integer*4 (i-n)
+      
+       external dfbur
+       include 'paramsoptS.i'
+       limit=1000
+       i=1
+      !x1 = 0.05d0 ; x2 = 10.d0 ; 
+       e = 1.0e-5
+      
+      DO 
+        IF (i > limit) THEN
+          WRITE(*,*) "Function not converging"
+         EXIT
+        END IF
+        d = (x2 - x1) / (dfbur(x2) - dfbur(x1)) * dfbur(x2)
+
+        IF (ABS(d) < e) THEN
+         !WRITE(*,"(A,F18.15)") "Root found at x = ", x2
+         EXIT    
+        END IF
+        x1 = x2
+        x2 = x2 - d
+        i = i + 1
+      END DO
+      end
+      
+      subroutine find_xsc(xsc,alimit)
+      
+      !alim=0.001 limiting value for screening radius to be considered 0
+       implicit real*8 (a-h,o-z)
+       implicit integer*4 (i-n)
+      
+       external dfbur,froot_Bur, fein, froot_Ein
+       include 'paramsoptS.i'
+       
+       xsc=alimit
+       x0=alimit
+       dftest=0.0
+       
+       if (kmp.eq.11) then
+       ! see if the function is negative at the beginning
+        dftest=dfbur(alimit)
+        if (dftest.lt.0) then  
+         do i=1,4000
+            xx=x0+0.01d0
+
+            dfx0=dfbur(x0)
+            dfxx=dfbur(xx)
+            dfprod=dfx0*dfxx
+            !if you find the screening radius, refine the value
+            if (dfprod.lt.0) then 
+
+                call froot_Bur(x0,xx)
+                xsc=xx           
+                return
+            endif
+            x0=xx
+         enddo
+         !if not found, the screening radius is the maximum of the interval
+         if (xsc.eq.alimit) xsc=xx
+         return
+        endif 
+ 
+!      case Einasto                
+       else if (kmp.eq.12) then 
+         dftest=fein(alimit)
+        if (dftest.lt.0) then  !monotonically increasing function
+         do i=1,4000
+c        !search for the screening radius in the interval 0-40 Mpc
+            xx=x0+0.01d0
+            dfx0=fein(x0)
+            dfxx=fein(xx)
+            dfprod=dfx0*dfxx            
+!if you find the screening radius, refine the value
+            if (dfprod.lt.0) then 
+
+                call froot_Ein(x0,xx)
+                xsc=xx           
+                return
+            endif
+            x0=xx
+         enddo
+         !if not found, the screening radius is the maximum of the interval
+         if (xsc.eq.alimit) xsc=xx
+         return
+        endif             
+
+       endif
+       
+       return 
+       end
+ 
+!     Same for the BCG       
+      subroutine find_xscB(xscB,alimbc)
+      
+      !alim=0.001 limiting value for screening radius to be considered 0
+       implicit real*8 (a-h,o-z)
+       implicit integer*4 (i-n)
+      
+       external fjaf_r, froot_Jaffe
+       include 'paramsoptS.i'
+
+       x0=alimbc
+       
+       xscB=alimbc     
     
-c       subroutine findroot2(x1,x2)
-c       implicit real*8 (a-h,o-z)
-c       implicit integer*4 (i-n)
+c       write(*,*) alimbc, fjaf_r(alimbc)
+       if (kbcg.eq.1) then
+
+    
+         if (fjaf_r(alimbc).lt.0) then    
+          do i=1,4000
+            xp=x0+0.0005d0 
+            if (fjaf_r(x0)*fjaf_r(xp).lt.0) then 
+                call froot_Jaffe(x0,xp)
+                xscB=xp           
+                return
+            endif
+            x0=xp
+          enddo
+          
+          if (xscB.eq.alimbc) xscB=xp
+         endif       
+       
+       else 
+         xscB=0.0d0 
+       endif
+       return
+       end
+       
+       double precision function dphib(x)
+!>   @author L. Pizzuti
+!>   @details  compute the term in the effective mass  Q*r**2/G*dphi/dr 
+!!   due to chameleon field for a Burkert mass model.  
+!!  It requires the parameters in the COMMON block paramsoptS.i, in particular:
+!>  - (effective) mass profile parameters: `r200, rs, tmass, screen`. 
+!!  The background field value `tmass` is given by tmass (in unit of 1e-5)  
+!>  - cosmological parameters: hubble constant `h0` (in km/s/Mpc),
+!!  density parameters `Omegam, Omegal`, redshift `za`                                 
+!>  - mass model `kmp` 
+!>  - number of steps in the second MG parameter `nhone`. If equal to -1
+!!  it forces f(R) chameleon case.
+!>  - the value of the screening radius `xsccH` previously computed by find_xsc 
+!>  - the value `alimi` of the screening radius to be considered 0
+!>   @param[in] x REAL*8, value at which the function is computed
+!>
+!>
+!>   Example of usage:
+!>   \code{.f}
+!>        
+!>       h0=70
+!>       Omegam=0.3
+!>       Omegal=0.7
+!>       kmp=9
+!>       r200=1.2
+!>       rs=0.5
+!>       tmass=100.23
+!>       nhone=10
+!>       screen=0.3
+!>       alimi=0.001
+!>       xsccH=alimi
+!>       alimit=alimi
+!>       call find_xsc(xsccH,alimit)
+!>       write(*,*) 'test dphib= ', dphib(1.0d0)
+!>  \endcode       
+       
+       
+       
+       !Gives the value of Q*r**2/G*dphi/dr for burkert profile in unit
+       !of M200
+        implicit real*8 (a-h,o-z)
+        implicit integer*4 (i-n)
+        parameter (pig=3.1415926535897932d0, Grav=4.302e-9, cl=3e5)
+        
+        include 'paramsoptS.i'
+         
+        phinf=tmass*1e-5 
+        Hz2=h0**2*(Omegam*(1+za)**3+Olam)
+        tm200=100*Hz2/Grav*r200**3
+        !SONO QUI!!!!!
+        !Force f(R) gravity (Q = 1/sqrt(6)) 
+        if(kmp.eq.9.and.nhone.lt.0) then
+         bcoup=1./dsqrt(6.0d0)         
+       else
+         bcoup=screen !the modified parameter of the screening becomes
+                      !the coupling constant in the genneric chameleon run
+       endif
+        
+        
+        c200=r200/rs
+        fac200=dlog(1+c200*c200)+2.*dlog(1.0+c200)-2.*datan(c200)
+        rhos=tm200/fac200/(pig*rs**3)
+        
+        Facda=screen*rs**2*8*pig*Grav*rhos/cl**2
+        
+        Cb=Facda*(2.0d0*datan(xscCH)-2*dlog(1+xscCH)-dlog(1+xscCH**2))/4
+        
+        !(-4*phinf + Facda*pig - 2*Facda*dlog(1 + xscCH**2))/4. 
+        
+        !exponential cutoff
+        dminf=1
+        if (ncutof.gt.0) then
+            
+            dminf=dexp(-x*rs*dsqrt(1e-7*screen/phinf))
+        endif
+        
+        if (xscCH.gt.alimi) then
+           if (x.lt.xscCH) then
+            dout=0.0d0
+           else
+           !this is x**2*dphi/dx
+            dout=Cb+Facda/(4.)*(-2*datan(x)+2*dlog(1+x)+dlog(1+x**2))
+           endif
+        else
+         dout=Facda/(4.)*(-2*datan(x)+2*dlog(1+x)+dlog(1+x**2))
+        endif
+        
+        dphib=dout*rs*screen*cl**2/Grav/tm200*dminf !note the last factor!
+                                            !masses are given in units
+                                            ! of m200
+        return
+        end
+        
+        
+        
+       double precision function fein( x )
+        implicit real*8 (a-h,o-z)
+        implicit integer*4 (i-n)
+        parameter (pig=3.1415926535897932d0, Grav=4.302e-9, cl=3e5)
+        
+        include 'paramsoptS.i'
+         
+        phinf=tmass*1e-5 
+        Hz2=h0**2*(Omegam*(1+za)**3+Olam)
+        tm200=100*Hz2/Grav*r200**3
+        
+        c200=r200/rs
+        !eim=5.
+        call GAMMA(2*eim,tgam2)
+        call GAMMA(3*eim,tgam3)
+        agp=3.*eim
+        bgp=2*eim
+        xgp=2.*eim*(r200/rs)**(1./eim)
+        
+        xsc=2*eim*x**(1./eim)
+        
+        call dincog(agp,xgp,gin,gim,gip200) !(1-gammaincc)
+        call dincog(bgp,xsc,gin,gim,gipx) !1-gammaincc -> 
+        tgamc=1-gipx
+        fac200=gip200*tgam3  
+        rho1=tm200*(8**eim)*eim**(3*eim-1)
+        rhos=rho1/(4*pig*rs**3*fac200*dexp(2*eim))
+        Facda=screen*rs**2*rhos*8*pig*Grav/cl**2
+        f1=4**eim*phinf*eim**(2*eim-1.0d0)/(Facda*dexp(2*eim)*tgam2)
+        fein=f1-tgamc
+        
+        return 
+        end        
+        
+       subroutine froot_Ein(x1,x2)
+       implicit real*8 (a-h,o-z)
+       implicit integer*4 (i-n)
       
-c       external fsqrt
-c       include 'paramsoptS.i'
-c       limit=1000
-c       i=1
-c       write(*,*) limit
-c      !x1 = 0.05d0 ; x2 = 10.d0 ; e = 1.0e-10
+       external fein
+       include 'paramsoptS.i'
+       limit=1000
+       i=1
+      !x1 = 0.05d0 ; x2 = 10.d0 ; 
+       e = 1.0e-5
       
-c      DO 
-c        IF (i > limit) THEN
-c          WRITE(*,*) "Function not converging"
-c         EXIT
-c        END IF
-c        d = (x2 - x1) / (fsqrt(x2) - fsqrt(x1)) * fsqrt(x2)
-c        write(*,*) d, x1,x2
-c        IF (ABS(d) < e) THEN
-c         WRITE(*,"(A,F18.15)") "Root found at x = ", x2
-c         EXIT    
-c        END IF
-c        x1 = x2
-c        x2 = x2 - d
-c        i = i + 1
-c      END DO
+      DO 
+        IF (i > limit) THEN
+          WRITE(*,*) "Function not converging"
+         EXIT
+        END IF
+        d = (x2 - x1) / (fein(x2) - fein(x1)) * fein(x2)
+
+        IF (ABS(d) < e) THEN
+         !WRITE(*,"(A,F18.15)") "Root found at x = ", x2
+         EXIT    
+        END IF
+        x1 = x2
+        x2 = x2 - d
+        i = i + 1
+      END DO
+      end
+
+
+!=======================================================================
+
+       double precision function dphiso(x,rhos,rss,Q,phinf)
+!>   @author L. Pizzuti
+!>   @details  compute the term in the effective mass due to chameleon field
+!!   for a Isothermal mass model with beta = 1 (exp = 3/2). 
+!!  It requires the parameter `alimi` in the COMMON block paramsoptS.i:                     
+!>  - the value `alimi` of the screening radius to be considered 0
+!>   @param[in] x REAL*8, value at which the function is computed
+!>
+!>
+!>   Example of usage:
+!>   \code{.f}
+!>        
+!>       alimi=0.001
+!>       write(*,*) 'test dphiso= ', dphib(1.0d0)
+!>  \endcode       
+       
+       
+       
+       !Gives the value of Q*r**2/G*dphi/dr for burkert profile in unit
+       !of M200
+        implicit real*8 (a-h,o-z)
+        implicit integer*4 (i-n)
+        parameter (pig=3.1415926535897932d0, Grav=4.302e-9, cl=3e5)
+        
+        include 'paramsoptS.i'
+         
+        Facda=Q*rss**2*8*pig*Grav*rhos/cl**2
+    
+        
+        !exponential cutoff
+        dminf=1
+        if (ncutof.gt.0) then
+            
+            dminf=dexp(-x*rss*dsqrt(1e-7*Q/phinf))
+        endif
+        
+        if ((Facda/phinf).gt.1.0d0) then
+        
+    
+         xsc = dsqrt((Facda/phinf)**2 - 1.0d0) 
+         Ciso = phinf*xsc - Facda*dlog(dsqrt(1+xsc**2)+xsc)
+       else
+        xsc = alimi !the limiting value is defined in gomamposstoptS.f
+        Ciso = 0.0d0
+       endif
+       if (x.ge.xsc) then
+        dnum1 = Ciso-(Facda*x)/dsqrt(1.0d0+x**2)
+        dnum2 = -Facda*dlog(1/(x+dsqrt(1 + x**2))) 
+        dout =(dnum1+dnum2)*rss*Q*cl**2/Grav*dminf
+
+       else
+        dout = 0.0d0
+       endif
+        
+    
+        dphiso= dout 
+        
+        return
+        end
+
+
+c######=================================================================
+      function tM_iso_CS(x) 
+!>   @author L. Pizzuti
+!>   @details  compute the effective mass due to chameleon field for a
+!!   Isothermal mass density profile, which exponent is 3/2
+!!  It requires the parameters in the COMMON block paramsoptS.i, in particular:
+!>  - (effective) mass profile parameters: `r200, rs, tmass, screen`. 
+!!  The background field value `tmass` is given by tmass (in unit of 1e-5)  
+!>  - cosmological parameters: hubble constant `h0` (in km/s/Mpc),
+!!  density parameters `Omegam, Omegal`, redshift `za` 
+!>  - cutoff of the fifth force (Y/N) `ncutof=0/1`.                                
+!>   @param[in] x REAL*8, value at which the function is computed
+!>
+!>
+!>   Example of usage:
+!>   \code{.f}
+!>        
+!>       h0=70
+!>       Omegam=0.3
+!>       Omegal=0.7
+!>       kmp=9
+!>       r200=1.2
+!>       rs=0.5
+!>       tmass=100.23
+!>       screen=4.3
+!>       ncutof = 1
+!>       eim = 1.2
+!>       write(*,*) tM_iso_CS(2.12d0)
+!>  \endcode       
+       implicit real*8 (a-h,o-z)
+       implicit integer*4 (i-n)
+
+       parameter (pig=3.1415926535d0, clight=2.99792458d5)
+       
+       parameter (grav=4.302e-9, alimit=0.001) !limiting value for the screening radius
+       include 'paramsoptS.i'
+       
+       cx = x/rs
+       hz=h0*dsqrt(Omegam*(1+za)**3+Olam)
+       c200=r200/rs
+       phinf=tmass*1e-5
+       bcoup = screen
+       
+       dm200=100*hz**2/grav*r200**3
+       
+       
+       sqc = dsqrt(1+c200**2) 
+       rhoss= - dm200*sqc/((c200+sqc*dlog(dsqrt(c200**2 +1) - c200) ) )
+       
+       rhos = rhoss/( 4*pig*rs**3 )
+       dnim = -cx/(dsqrt(1+cx**2) ) + dlog( dsqrt( 1 + cx**2 ) + cx )
+       dmass = dnim*rhoss 
+
+       
+       if (bcoup.ne.0.and.tmass.ne.0) then 
+         dphid = dphiso(cx,rhos,rs,bcoup,phinf)
+         
+      else
+         dphid = 0.0d0
+      endif
+        
+        tM_iso_CS = (dphid + dmass)/dm200 !given in units of m200
+       return
+        
+      end
+
+
+
+!=======================================================================
+        
+        
+        double precision function dphiE(x)
+        
+        implicit real*8 (a-h,o-z)
+        implicit integer*4 (i-n)
+        parameter (pig=3.1415926535897932d0, Grav=4.302e-9, cl=3e5)
+        
+        include 'paramsoptS.i'   
+        
+        phinf=tmass*1e-5 
+        Hz2=h0**2*(Omegam*(1+za)**3+Olam)
+        tm200=100*Hz2/Grav*r200**3
+        
+        c200=r200/rs
+!        eim=5.
+        call GAMMA(2*eim,tgam2)
+        call GAMMA(3*eim,tgam3)
+        agp=3.*eim
+        bgp=2*eim
+        xgp=2.*eim*(r200/rs)**(1./eim)
+        
+        xss=2*eim*x**(1./eim)
+        
+        xsc=2*eim*xscCH**(1./eim)
+        
+        
+        !exponential cutoff
+        dminf=1
+        if (ncutof.gt.0) then
+            
+            dminf=dexp(-x*dsqrt(1e-7*screen/phinf))
+        endif
+        
+!       Incomplete gamma function for  fac200
+        call dincog(agp,xgp,gin,gim,gip200) !(1-gammaincc(c200))
+        
+        !Incomplete gamma function for  the x value
+        call dincog(agp,xss,gin,gim,gipx) !(1-gammaincc(x))
+        
+        !Incomplete gamma function for the screening radius
+        call dincog(agp,xsc,gin,gim,gipsc) !1-gammaincc(xscCH)
+        
+        
+        tgamc=1.0-gipx
+        fac200=gip200*tgam3  
+        rho1=tm200*(8**eim)*eim**(3*eim-1)
+        rhos=rho1/(4*pig*rs**3*fac200*dexp(2*eim))
+        Facda=screen*rs**2*rhos*8*pig*Grav/cl**2
+        
+        
+        Ce=8**(-eim)*dexp(2*eim)*Facda*eim**(1.-3*eim)*(1-gipsc)*tgam3
+
+        if (xscCH.gt.alimi) then
+          if (x.le.xscCH) then
+            dout=0.0d0
+          else
+            dout1=(8)**(-eim)*dexp(2*eim)*Facda*eim**(1.-3*eim)
+            dout=Ce-dout1*tgamc*tgam3
+          endif
+        else
+         Cce=8**(-eim)*dexp(2*eim)*eim**(1 -3*eim)*tgam3*Facda
+         dout1=(8)**(-eim)*dexp(2*eim)*Facda*eim**(1.-3*eim)
+         dout=Cce-dout1*tgamc*tgam3
+        endif 
+        dphiE= dout*rs*screen*cl**2/Grav/tm200*dminf
+        return 
+        
+        end
+
+
+!xmstar*xlumbcg*t/rjaf/(1.+t/rjaf)
+
+
+       double precision function fjaf_r( x )
+        implicit real*8 (a-h,o-z)
+        implicit integer*4 (i-n)
+        parameter (pig=3.1415926535897932d0, Grav=4.302e-9, cl=3e5)
+        
+        include 'paramsoptS.i'
+        
+        phinf=tmass*1e-5 
+        rhos=xmstar*xlumbcg/(4*pig*rjaf**3)
+        
+        Facda=screen*rjaf**2*8*pig*Grav*rhos/cl**2
+        
+        fjaf_r=Facda*(x+1)*(dlog(x/(x+1)))+Facda+phinf*(x+1)
+        return
+       end 
+
+       subroutine froot_Jaffe(x1,x2)
+       implicit real*8 (a-h,o-z)
+       implicit integer*4 (i-n)
+      
+       external fjaf_r
+       include 'paramsoptS.i'
+       limit=1000
+       i=1
+       e = 1.0e-5
+      
+       DO 
+        IF (i > limit) THEN
+          WRITE(*,*) "Function not converging"
+         EXIT
+        END IF
+        d = (x2 - x1) / (fjaf_r(x2) - fjaf_r(x1)) * fjaf_r(x2)
+
+        IF (ABS(d) < e) THEN
+         !WRITE(*,"(A,F18.15)") "Root found at x = ", x2
+         EXIT    
+        END IF
+        x1 = x2
+        x2 = x2 - d
+        i = i + 1
+       END DO
+      end
+
+
+      double precision function dphiJ(x)
+        implicit real*8 (a-h,o-z)
+        implicit integer*4 (i-n)
+        parameter (pig=3.1415926535897932d0, Grav=4.302e-9, cl=3e5)
+        
+        include 'paramsoptS.i'
+         
+        phinf=tmass*1e-5 
+        
+        rhos=xmstar*xlumbcg/(4*pig*rjaf**3)
+        
+        Facda=screen*rjaf**2*8*pig*Grav*rhos/cl**2
+        
+        CJ= phinf*xsBCG+Facda*(xsBCG*dlog(xsBCG/(1+xsBCG))+1)
+        
+        !exponential cutoff
+        dminf=1
+        if (ncutof.gt.0) then
+            
+            dminf=dexp(-x*dsqrt(1e-7*screen/phinf))
+        endif
+        
+        if (xsBCG.gt.0.0001) then
+           if (x.lt.xsBCG) then
+            dout=0.0d0
+           else
+            dout=CJ-Facda/(x+1)
+           endif
+        else
+           dout=Facda*(1-1/(x+1))
+        endif
+       
+        dphiJ=dout*rjaf*screen*cl**2/Grav/(xmstar*xlumbcg)*dminf !note the last factor!
+                                            !masses are given in units
+                                            ! of m200
+        return
+        end
+        
+
+
+!General screening implementation
+
+
+      double precision function fscrtot(x)
+       implicit real*8 (a-h,o-z)
+       implicit integer*4 (i-n)
+       
+       !complex hfy
+       parameter (pig=3.1415926535897932d0, Grav=4.302e-9, cl=3e5)       
+    
+       include 'paramsoptS.i'
+       include 'barions.i'
+
+       external hypgeo
+
+       Facda = screen*(8*pig*Grav)/cl**2
+       phinf=tmass*1e-5
+       
+       !Define the central jaffe density
+       rhob = (xmstar*xlumbcg)/(4*pig*rjaf**3)
+
+       !Use A3 as gamma
+       dgami = dA3
+       
+       !Define the central gNFW profile
+       !sono qui
+        
+        Hz2=h0**2*(Omegam*(1+za)**3+Olam)
+        tm200=100*Hz2/Grav*r200**3
+
+        call hygfx ( 3-dgami, 3-dgami, 4-dgami, -r200/rs, hfy)
+        
+    
+        rhop1=(r200/rs)**(dgami-3.0d0)
+        
+        rhop2 = tm200/(4*pig*rs**3*hfy)*(3-dgami)
+        rhos = rhop1*rhop2
+       
+
+       
+       
+        djaf = (rjaf**3*rhob)/(x+rjaf)+rjaf**2*rhob*dlog(x/(x + rjaf)) 
+       
+        dgas = -(rsga1**3 *rhog1)/dsqrt(x**2+rsga1**2)
+        dgal =  -(rst1**3 * rhost1)/(x + rst1)
+        ddm =rs**2*(1.0d0-(x/(x +rs))**(2-dgami))*rhos/(-2.0d0+dgami)
+        !write(*,*) dgas, rsga1, rhog1
+        fscrtot =  phinf + Facda*(dgas+dgal+ddm+djaf) 
+        
+      return
+      end
+      
+      
+      subroutine froot_GEN(x1,x2)
+       implicit real*8 (a-h,o-z)
+       implicit integer*4 (i-n)
+      
+       external fscrtot
+       include 'paramsoptS.i'
+       limit=10000
+       i=1
+      !x1 = 0.05d0 ; x2 = 10.d0 ; 
+       e = 1.0e-6
+      
+       DO 
+        IF (i > limit) THEN
+          WRITE(*,*) "Function not converging"
+
+         EXIT
+        END IF
+        d = (x2 - x1) / (fscrtot(x2) - fscrtot(x1)) * fscrtot(x2)
+
+        IF (ABS(d) < e) THEN
+         !WRITE(*,"(A,F18.15)") "Root found at x = ", x2
+         EXIT    
+        END IF
+        x1 = x2
+        x2 = x2 - d
+        i = i + 1
+      END DO
+      end
+      
+      
+! This computes the general multicomponent screening. Tested      
+      double precision function ScreenGen(xlimit)
+       implicit real*8 (a-h,o-z)
+       implicit integer*4 (i-n)
+       
+       parameter (pig=3.1415926535897932d0, Grav=4.302e-9, cl=3e5)       
+    
+       include 'paramsoptS.i'
+       include 'barions.i'
+
+       external fscrtot
+            
+        xsc = xlimit
+        x0 = xlimit   
+        if(tmass.lt.0.005.or.screen.lt.0.005) then
+         xsc = 0.0d0
+        else
+         if(fscrtot(x0).lt.0.0d0) then
+          do i = 1,80000
+            xx=x0+0.001
+            if (fscrtot(x0)*fscrtot(xx).lt.0.0d0) then
+                xtemp = xx !save option when the root in NaN
+
+                !call froot_GEN(x0,xx)
+                !if (isnan(xx)) xsc = xtemp
+                xsc = xx
+                ScreenGen = xsc        
+                return
+            endif
+            x0=xx
+          enddo
+          if (xsc.eq.xlimit) xsc=xx
+       
+        else 
+         xsc=0.0d0 
+        endif
+       endif
+       ScreenGen = xsc
+
+      return 
+      end
+      
+
+!  fifth force in General multicomponent Chameleon
+!  Validated against the python script
+      double precision function dphiGen(x)
+!>   @author L. Pizzuti
+!>   @details  compute the term in the effective mass  Q*r**2/G*dphi/dr 
+!!   due to chameleon field for a four multicomponent mass model.  
+!!  It requires the parameters in the COMMON block paramsoptS.i, in particular:
+!>  - (effective) mass profile parameters: `r200, rs, tmass, screen, dA3`.
+!!  The background field value `tmass` is given in unit of 1e-5 c**2.  
+!>  - the BCG parameters: `xlumbcg, xmstar, rjaf`.
+!>  - The baryonic parameters: rho1g, rsga1, rhost1, rst1 
+!>  - cosmological parameters: hubble constant `h0` (in km/s/Mpc),
+!!  density parameters `Omegam, Omegal`, redshift `za`                                 
+!>  - mass model `kmp` 
+!>  - the value of the screening radius `xsccH` previously computed by ScreenGen 
+!>   @param[in] x REAL*8, value at which the function is computed
+!>
+!>
+!>   Example of usage:
+!>   \code{.f}
+!>       rs = 0.5
+!>       r200 = 1.9
+!>       tmass = 10.0d0
+!>       screen = 0.5
+!>       dA3 = 1.4
+!>       xlumbcg = 4.9e11
+!>       xmstar = 4.6
+!>       rjaf = 0.039
+!>       
+!>       h0=70
+!>       Omegam=0.3
+!>       Olam=0.7
+!>       za=0.44
+!>       rhog1 = 1e14
+!>       rsg1  = 0.14
+!>       rhost1 = 2e13
+!>       rst1 = 0.36
+!>       xlim = 1.0e-6
+!>       xsc = ScreenGen(xlim)
+!>       write(*,*) "Value of the screeining:", xsc
+!>       xscCH = xsc
+!>       write(*,*) "Value of the effective mass:", dphiGen(2.0d0)
+!>  \endcode       
+
+       implicit real*8 (a-h,o-z)
+       implicit integer*4 (i-n)
+       
+       !complex hfy
+       parameter (pig=3.1415926535897932d0, Grav=4.302e-9, cl=3e5)       
+    
+       include 'paramsoptS.i'  
+       
+       xlimit = 1e-6 !limiting value for the screening
+       
+       Facda = screen*(8*pig*Grav)/cl**2    
+       
+       !Define the central jaffe density
+       rhob = (xmstar*xlumbcg)/(4*pig*rjaf**3)
+
+       !Use A3 as gamma
+        dgami = dA3
+       
+       !Define the central gNFW density
+        Hz2=h0**2*(Omegam*(1+za)**3+Olam)
+        tm200=100*Hz2/Grav*r200**3
+
+        call hygfx ( 3-dgami, 3-dgami, 4-dgami, -r200/rs, hfy)
+
+        rhos=(r200/rs)**(dgami-3.0d0)*tm200/(4*pig*rs**3*hfy)*(3-dgami)
+       
+       
+       xsc = xscCH !Define the screening using the common parameter
+       
+       call hygfx ( 3-dgami, 3-dgami, 4-dgami, -x/rs, hfx)
+       call hygfx ( 3-dgami, 3-dgami, 4-dgami, -xsc/rs, h2sc)
+        
+        
+       !Integration constant   
+       duno = (rjaf**4*rhob)/(xsc+rjaf) 
+       ddue = (xsc**3*(xsc/rs)**(-dgami)*rhos*h2sc)/(-3.0d0 + dgami)
+       
+       dtrep1 = xsc/dsqrt(xsc**2+ rsga1**2)
+       dtrep2 = dlog(-xsc+ dsqrt(xsc**2 + rsga1**2))
+       dtre = rsga1**3*rhog1*(dtrep1+dtrep2)  
+       
+       dquat=-rst1**3*rhost1*(rst1/(xsc + rst1)+dlog(xsc + rst1))
+       
+       Ctot = Facda*(duno + ddue + dtre + dquat)
+       
+       if (xsc.gt.xlimit) then
+        if (x.lt.xsc) then
+            dout=0.0d0
+        else
+            dun1=x**(3.0-dgami)*(1.0d0+x/rs)**(-dgami)*(x+rs)**(dgami)
+            duno1 = dun1*rhos*hfx/(3.0d0-dgami) 
+            ddue2 = -((rjaf**4 *rhob)/(x + rjaf))
+            
+            dtrp13 = -(x/dsqrt(x**2 + rsga1**2)) 
+            dtrp23 = - dlog(-x + dsqrt(x**2 + rsga1**2))
+            dtre3 = rsga1**3*rhog1* ( dtrp13 + dtrp23)
+             
+            dquat4 = rst1**3*rhost1*(rst1/(x+rst1)+dlog(x + rst1) )
+            
+            dout= Ctot + Facda*(duno1 + ddue2 + dtre3 + dquat4)
+       
+        endif
+       else
+             Ctot=Facda*(2*rjaf**3*rhob+rsga1**3*rhog1*dlog(rsga1**2) - 
+     -         2*rst1**3*rhost1*(1.0d0+dlog(rst1)) )/2
+     
+            dun1=x**(3.0-dgami)*(1.0d0+x/rs)**(-dgami)*(x+rs)**(dgami)
+            duno1 = dun1*rhos*hfx/(3.0d0-dgami) 
+            ddue2 = -((rjaf**4 *rhob)/(x + rjaf))
+            
+            dtrp13 = -(x/dsqrt(x**2 + rsga1**2)) 
+            dtrp23 = - dlog(-x + dsqrt(x**2 + rsga1**2))
+            dtre3 = rsga1**3*rhog1* ( dtrp13 + dtrp23)
+             
+            dquat4 = rst1**3*rhost1*(rst1/(x+rst1)+dlog(x + rst1) )
+            
+            dout= Ctot + Facda*(duno1 + ddue2 + dtre3 + dquat4)            
+       
+       endif
+       !validated
+       dphiGen = dout*screen*cl**2/Grav 
+        
+      return 
+      end
+
+!     validated!!!  
+      double precision function tmass_Gen(x)     
+       implicit real*8 (a-h,o-z)
+       implicit integer*4 (i-n)
+       
+       !complex hfy
+       parameter (pig=3.1415926535897932d0, Grav=4.302e-9, cl=3e5)       
+    
+       include 'paramsoptS.i'  
+       
+       xlimit = 1e-6 !limiting value for the screening
+       
+       Facda = screen*(8*pig*Grav)/cl**2    
+       
+       !Define the central jaffe density
+       rhob = (xmstar*xlumbcg)/(4*pig*rjaf**3)
+
+       !Use A3 as gamma
+        dgami = dA3
+       
+       !Define the central gNFW density
+        Hz2=h0**2*(Omegam*(1+za)**3+Olam)
+        tm200=100*Hz2/Grav*r200**3
+
+        call hygfx ( 3-dgami, 3-dgami, 4-dgami, -r200/rs, hfy)
+
+        rhos=(r200/rs)**(dgami-3.0d0)*tm200/(4*pig*rs**3*hfy)*(3-dgami)
+       
+
+       xd = x/rs
+       xg =  x/rsga1
+       xstar = x/rst1
+       xj = x/rjaf
+        
+       xsc = xscCH !Define the screening using the common parameter
+       
+       call hygfx ( 3-dgami, 3-dgami, 4-dgami, -x/rs, h2x)
+       
+       tmg1 = rhob/(xj**2 + xj**3)-rhog1/(xg**2 * dsqrt(1.0d0+xg**2))
+       tmg2 = -rhost1/(xstar**2*(1.0d0+xstar))+(rhog1*dasinh(xg))/xg**3
+       tmg3 = ((xd)**(3.0d0-dgami)*rhos*h2x)/(xd**3*(3-dgami))
+       tmg4 = (rhost1*dlog( 1.0d0 + xstar) )/xstar**3
+       
+       tmgen = 4*pig*x**3*(tmg1 +tmg2 + tmg3 + tmg4)
+       if (screen.ne.0.and.tmass.ne.0) then  
+         dphir= dphiGen(x)
+       else
+         dphir=0.0
+       endif
+       tmass_Gen = tmgen + dphir
+      return         
+      end
+
+        
+!=======================================================================
+
+!> \ingroup MAM
+      double precision function rgmass(x)  
+!>  @author V. Broccolato, L. Pizzuti, F. Fantoccoli      
+!>  @details This function computes the analytic expression 
+!!  for the radial gravitational potential in Refracted Gravity (RG)
+!!  assuming a NFW profile for the gas and galaxy distribution with fixed 
+!!  parameters. The other mass component is given by the BCG with the free
+!!  parameters `rjaf`, `xmstar`.
+!>  It requires the inclusion of 'paramsoptS.i' and a definition of `rjaf`,
+!!  `xmstar`, `xlumbcg`, cosmology (`h0`, `Omegam`, `Olam`,`za`), as well as the
+!!  modified gravity parameters, expressed by `tmass` (epsilon 0), `screen`
+!!  (log10 of critical density) and `dA3` (steepness), as well as the  
+!!  baryonic profile parameters `rho0gas`, `rsgas`. 
+
+!>
+!>   @param[in] R radius in Mpc
+!>
+!>   Example of usage:
+!>
+!>   \code{.f}
+!>   rjaf=0.03d0
+!>   xlumbcg=492000000000.0d0
+!>   xmstar=4.3
+!>
+!>   !Cosmology
+!>   h0=70
+!>   Omegam=0.3
+!>   Olam=0.7
+!>   za=0.44
+!>   !RG
+!>   tmass=0.089d0
+!>   dA3=0.47d0
+!>   screen=14.6
+
+
+!>   write(*,*) rgmass(1.2d0)
+!>   \endcode
+      
+      
+      implicit real*8 (a-h,o-z)
+      implicit integer*4 (i-n)
+      parameter (pig=3.1415926535897932d0, Grav=4.302e-9, cl=3e5)       
+      parameter (dln10 = 2.3025850929940459d0)
+      include 'paramsoptS.i'
+      include 'barions.i'
+       
+      external fbars 
+      !r200gas=17.066 !Mpc
+      !baryonic mass fitted with a beta profile with exponent 2/3
+      
+      !included in the paramsoptS.i file
+      !rsgas= 0.12   !0.813 !Mpc
+      !rho0gas=89.08e13  
+      
+       if (srhoga.eq.0) rhog1 = rho0gas
+       if (srsga.eq.0)  rsga1 = rsgas
+       
+       
+       if (srhost.eq.0) rhost1 = rhostar
+       if (srstar.eq.0) rst1 = rstar
+      
+       !Test for using r200 as rhog1
+       !if (srhoga.eq.0) rhog1 = r200 * 1e13
+      
+      
+      !TO BE CHANGED IN THE NEW CONFIGURATION WITH THE TOTAL BARYIONIC MASS!
+      !xmbar= 4*pig*rhog1*rsga1**2*(x-rsga1*datan(x/rsga1))
+      xmbar = fbars(x)
+      
+      !Critical density
+      !arhoc=10**(screen)
+    
+      ! NFW gas
+      !c2gas=r200gas/rsgas
+      !fac200=dlog(1.d0+c2gas)-c2gas/(1.d0+c2gas)
+      !h2z=h0**2*((1+za)**3*Omegam+Olam)
+      !dm200=h2z*100/Grav*r200gas**3
+      !massa totale
+      !rho0gas=dm200/(4*pig*(rsgas**3)*fac200)
+      !xmbar=dm200/fac200*(dlog(1.d0+x/rsgas)-(x/rsgas)/(1.d0+x/rsgas))
+      
+      !total mass: bcg + gas + galaxies
+      
+      dmtot=xmstar*xlumbcg*x/rjaf/(1.+x/rjaf)+ xmbar 
+      
+      !now compute the effective permittivity
+      rbc= x/rjaf 
+      ! density of the BCG (jaffe profile)
+      rhobcg=xmstar*xlumbcg/(4.d0*pig*rjaf)/((rbc)**2*(1.d0+rbc)**2)
+      
+      !OLD ========================
+      !density baryons (beta model)
+      !rhobar  = rhog1/(1.d0+(x/rsga1)**2)     !rho0gas/((x/rsgas)*(1.d0+x/rsgas)**2)
+      ! ===========================
+      
+      !NEW! Density gas and galaxies:
+      if (kalpha.eq.1) then
+       rhogas = rhog1/(1.0d0 +(x/rsga1)**2)**(3.0d0/2)
+      else
+       rhogas = rhog1/(1.0d0 +(x/rsga1)**2)
+      endif
+      rhogal = rhost1/( x/rst1 * (1.0d0 + x/rst1)**2)
+      
+      rhotot=rhobcg + rhogas + rhogal  !rhobar
+      
+      dlrho = dlog(rhotot) - screen*dln10
+      
+      
+      
+      epsi=tmass+(1-tmass)*(1.d0/2)*(dtanh(dA3*dlrho)+1)
+      
+      
+      
+      !Effective mass 
+      rgmass= (dmtot) /(epsi) ! (Grav*dmtot) /(epsi*x**2) 
+      
+      return 
+
+      end
+      
+c      double precision function fgrt(x)
+c      implicit real*8 (a-h,o-z)
+c      implicit integer*4 (i-n)
+c      parameter (pig=3.1415926535897932d0, Grav=4.302e-9, cl=3e5)       
+c      external fbars
+c      include 'paramsoptS.i'
+c      include 'barions.i'
+
+c      !parametri su cui MAMPOSSt fitta:
+c      !r200, rs, rc, cbe, cbe0, tmass, screen, xmstar, rjaf
+
+c      !r200gas = valore trovato dal fit di massa barionica
+c      r200gas=17.066 !Mpc
+c      rsgas= 0.12   !0.813 !Mpc
+c      !rsgas = valore trovato dal fit di massa barionica
+      
+c      arhoc=10**(screen)
+    
+c      ! NFW gas
+c      c2gas=r200gas/rsgas
+c      fac200=dlog(1.d0+c2gas)-c2gas/(1.d0+c2gas)
+c      h2z=h0**2*((1+za)**3*Omegam+Olam)
+c      dm200=h2z*100/Grav*r200gas**3
+c      !massa totale
+c      rho0gas=89.08e13   !dm200/(4*pig*(rsgas**3)*fac200)
+c      !xmbar=dm200/fac200*(dlog(1.d0+x/rsgas)-(x/rsgas)/(1.d0+x/rsgas))
+      
+c      xmbar= 4*pig*rho0gas*rsgas**2*(x-rsgas*datan(x/rsgas))
+      
+      
+c      dmtot=xmstar*xlumbcg*x/rjaf/(1.+x/rjaf)+ xmbar!fbars(x)
+      
+c      !densità
+c      rbc= x/rjaf 
+c      ! density of the BCG
+c      rhobcg=xmstar*xlumbcg/(4.d0*pig*rjaf)/((rbc)**2*(1.d0+rbc)**2)
+c      !density baryons
+c      rhobar  = rho0gas/(1.d0+(x/rsgas)**2)       !rho0gas/((x/rsgas)*(1.d0+x/rsgas)**2)
+c      rhotot=rhobcg+rhobar
+c      epsi= 1.0d0 !tmass+(1-tmass)*(1.d0/2)*(dtanh(rs*dlog(rhotot/screen))+1)
+
+c      fgrt = (dmtot) /(epsi) ! (Grav*dmtot) /(epsi*x**2)   calcolo del gradiente del potenziale
+
+c      return 
+
 c      end
+
+
+
+c#Field derivative:
+cdef dphiJ(x,rs,rhos,Q,phinf):
+c    Facda=Q*rhos*rs**2/Mpl
+c    def fjaffe(y):
+c        return Facda*(y+1)*(np.log(y/(y+1)))+Facda+phinf*(y+1)
+c    xsc=limit
+c    x0=limit
+c    if fjaffe(limit)<0:    
+c        for i in range(0,4000):
+c            xx=x0+0.01*i
+c            if fjaffe(x0)*fjaffe(xx) < 0:
+c                sol=opt.root(fjaffe,xx)
+c                if sol.success:
+c                    xsc=sol.x[0]
+c                else:
+c                    xsc=xx                
+c                break
+c            x0=xx
+c        if (xsc==limit):
+c            xsc=xx
+
+c    CJ= phinf*xsc+Facda*(xsc*np.log(xsc/(1+xsc))+1)   
+c    if (xsc>limit):
+c        if (x<xsc):
+c            out=0
+c        else:
+c            out=CJ/(rs*x**2)-Facda/(rs*x**2*(x+1))
+c    else:
+c        out=Facda/(rs*x**2)-Facda/(rs*x**2*(x+1))
+c    return out    
+cdphiJ=np.vectorize(dphiJ,otypes=[float],excluded=[1,2,3,4])
+
+c#Field profile:
+cdef phiJ(x,rs,rhos,Q,phinf):
+c    Facda=Q*rhos*rs**2/Mpl
+c    def fjaffe(y):
+c        return Facda*(y+1)*(np.log(y/(y+1)))+Facda+phinf*(y+1)
+c    xsc=limit
+c    x0=limit
+c    if fjaffe(limit)<0:    
+c        for i in range(0,4000):
+c            xx=x0+0.01*i
+c            if fjaffe(x0)*fjaffe(xx) < 0:
+c                sol=opt.root(fjaffe,xx)
+c                if sol.success:
+c                    xsc=sol.x[0]
+c                else:
+c                    xsc=xx                
+c                break
+c            x0=xx
+c        if (xsc==limit):
+c            xsc=xx
+
+c    CJ= phinf*xsc+Facda*(xsc*np.log(xsc/(1+xsc))+1)   
+c    if (xsc>limit):
+c        if (x<xsc):
+c            out=0
+c        else:
+c            out=-CJ/(x)+Facda*(1/x+np.log(x/(1+x)))+phinf
+c    else:
+c        out=-Facda/(x)+Facda*(1/x+np.log(x/(1+x)))+phinf
+c    return out
+
+
+
+
+        
+

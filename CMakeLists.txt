@@ -10,6 +10,8 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
 #		set(dialect "-fallow-invalid-boz")
 #		add_compile_options("-fallow-invalid-boz")
     endif()
+    add_compile_options("-floop-parallelize-all")
+	add_compile_options("-ftree-parallelize-loops=16")
 endif()
 
 

@@ -1,9 +1,11 @@
-data/datphys_test.dat
-input_pars/pars_test.txt
+dataCLASH/datphys_A209.dat
+parsgT/parsgT_A209.txt
 Output/rnvn.dat
 Output/NRpar.dat
 Output/NRbin.dat
 Output/NRfit.dat
-Output/MaxLik.dat
+Output/A209_NFW.dat
 Output/svbin.dat
 Output/svfit.dat
+data/velBCG1.dat
+new_kde/A209_NFW.dat
