@@ -1,11 +1,11 @@
-dataCLASH/datphys_A209.dat
-parsgT/parsgT_A209.txt
+dataCLASH/data_DESI.dat
+parsgT/pars_test.txt
 Output/rnvn.dat
 Output/NRpar.dat
 Output/NRbin.dat
 Output/NRfit.dat
-Output/A209_NFW.dat
+Output/MaxLik.dat
 Output/svbin.dat
 Output/svfit.dat
-data/velBCG1.dat
+data/vel_bgc.dat
 new_kde/A209_NFW.dat
