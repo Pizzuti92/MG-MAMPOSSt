@@ -134,9 +134,9 @@ These control whether a parameter is fixed or explored.
 
 | Parameter | Meaning |
 |------------|----------|
-| `nr200` | Steps for virial radius `r200` |
-| `nrc` | Steps for tracer scale radius `r_c` |
-| `nrs` | Steps for mass scale radius `r_s` |
+| `nr200` | Steps for virial radius $r_{200}$ |
+| `nrc` | Steps for tracer scale radius $r_c$ |
+| `nrs` | Steps for mass scale radius $r_s$ |
 
 Special cases:
 
@@ -171,9 +171,9 @@ nbeta = -2   → Hansen–Moore relation
 
 | Parameter | Meaning |
 |------------|----------|
-| `nA1` | Steps for MG parameter A1 |
-| `nA2` | Steps for MG parameter A2 |
-| `nA3` | Steps for MG parameter A3 |
+| `nA1` | Steps for MG parameter $A_1$ |
+| `nA2` | Steps for MG parameter $A_2$ |
+| `nA3` | Steps for MG parameter $A_3$ |
 
 Special case:
 
@@ -219,12 +219,12 @@ If steps = 0 → guess remains fixed.
 | `rbetag` | Anisotropy scale radius (Mpc) |
 
 Note:
-- Some models use dimensionless form `(1 - β)^(-1/2)`
+- Some models use the scaled parameter $(1 - \beta)^(-1/2)$
 - ML/OM-like models use Mpc units for scale radius
 
 ---
 
-## Modified Gravity
+## Modified Gravity/ additional parameters
 
 | Parameter | Meaning |
 |------------|----------|
@@ -232,7 +232,15 @@ Note:
 | `A2g` | MG parameter A2 |
 | `A3g` | MG parameter A3 |
 
-Units depend on selected `M(r)` model.
+Units and meanings depend on selected `M(r)` model.
+- in General Chameleon: A1 is the background field $\phi_\infty$, A2 is the coupling constant $Q$, A3 is not used.
+if the model is ```mtotal_GC```, then A3 is the $\gamma$ inner slope of the gNFW density profile of DM.
+- if the model is ```gNFW``` A3 is the $\gamma$ inner slope of the gNFW density profile of DM.
+- if the model is Beyond-Horndeski/Vainsthein screening: A1 is the parameter $Y_1$ and A2 is the parameter $Y_2$ (used only if lensing distribution is included!). A3 is not used
+- if the model is Refracted gravity, A1 is the permittivity in vacuum $\epsilon_0$, A2 is the logarithm of the effective density in ($M_\odot/Mpc^3$) and A3 is the steepness of the transition $Q$.
+- in Clustering DE, A1 is the speed of sound, A2 the ratio between DE and DM perturbation, and A3 is the exponent of the gNFW model.
+
+
 
 ---
 
@@ -289,7 +297,7 @@ NFW, Her, PIEMD, Bur, SoftIS, Eis5, gNFW
 ### Modified gravity models
 
 ```
-mNFW_LH, mNFW_BH, mNFW_GC, mBur_GC,
+mNFW_BH, mNFW_GC, mBur_GC,
 mgNFW_GC, mIso_GC, mTotal_GC,
 RG, BS
 ```
@@ -299,7 +307,7 @@ Additional parameters:
 | Parameter | Meaning |
 |------------|----------|
 | `rcut` | Truncation radius (used only for PIEMD) |
-| `eim` | Einasto exponent (if selected) |
+| `eim` | Exponent of Einasto model (if selected), exponent of gNFW and Hernquist if mgNFW_GC or mNFW_GC are selected |
 
 ---
 
@@ -326,13 +334,6 @@ Additional option:
 | `FASTMODE` | 0/1 — likelihood interpolation mode |
 | `OPT` | Optimization algorithm: -1 (none), 0 (BOBYQA), 1 (NEWUOA), 2 (POWELL) |
 
----
-
-## Screening (linear Horndeski only)
-
-| Parameter | Meaning |
-|------------|----------|
-| `screen` | -1 general LH, 0 f(R), 1 sharp transition, 2 smooth transition |
 
 ---
 
@@ -404,7 +405,7 @@ Used when parameter limits are enabled in the run options.
 | `r200t`, `rst` | Peak values for lensing priors |
 | `delta1`, `delta2`, `delta3` | Lensing hyperparameters |
 | `lensing_file` | Include lensing chains from file |
-| `nLogP` | Explore φ in log-space (chameleon mode) |
+| `nLogP` | Explore $\phi$ in log-space (chameleon mode) |
 
 ---
 

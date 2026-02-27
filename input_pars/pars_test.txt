@@ -35,31 +35,31 @@ nxmas = 0    !  number of step in stellar M/L ratio for BCG profile
 ************************************************************************
 ************* free parameters initial guess values *********************
 
-r200g = 2.08 ! mass profile r200 initial guess (Mpc)
+r200g = 1.9 ! mass profile r200 initial guess (Mpc)
 
-rcg = 0.52  ! N(R) scale radius initial guess (Mpc) 
+rcg = 0.70  ! N(R) scale radius initial guess (Mpc)
 
-rsg = 0.5 ! mass profile scale radius initial guess (Mpc) !
+rsg = 0.53 ! mass profile scale radius initial guess (Mpc)
 
-betag = 1.47 ! Anisotropy initial guess,
+betag = 2.0 ! Anisotropy initial guess,
              ! beta_C, a_ML, a_OM, a_W, beta_inf
 
 A1g = 0.1  ! first MG parameter initial guess
 
-A2g = 10.1 ! second MG parameter initial guess
+A2g = 0.1 ! second MG parameter initial guess
 
 A3g = 1.0  ! third MG parameter initial guess
 
-beta2g = 1.16 ! Second Anisotropy parameter initial guess beta0 for
+beta2g = 1.0 ! Second Anisotropy parameter initial guess beta0 for
              ! gOM and gT models
 
 rbetag = 1.0 !rbeta for the velocity anisotropy
 
-
 rjafg = 0.039  !Jaffe radius for BCG mass profile in Mpc
 
 
-xmstarg = 0.00003  !Stellar Mass-to-light ratio for BCG  4.40
+xmstarg = 0.0046  !Stellar Mass-to-light ratio for BCG 
+
 
 
 ************************************************************************
@@ -106,7 +106,7 @@ M(r) = NFW
              ! mNFW_BH = mod_NFW beyond Horndeski/
              ! mNFW_GC= mod_NFW general chameleon (includes Hernquist for eim=3)/
              ! mBur_GC= mod_Burkert general chameleon/
-	     ! mTotal_GC = multi-component mass profile in general chameleon/
+	         ! mTotal_GC = multi-component mass profile in general chameleon/
              ! gNFW_GC = generalized NFW in general chameleon (fixed exponent eim)/
              ! gNFW = generalized NFW/
              ! RG = Refracted Gravity/
@@ -121,7 +121,7 @@ Beta(r) = gT
              ! T=simplified Tiret/ gT= generalized Tiret
              ! O= (Opposite) modified Tiret/
              ! gOM= generalized Osipkov-
-`	     ! BP = Pizzuti&Biviano model (see Pizzuti et al., 2026a)
+`	     	 ! BP = Pizzuti&Biviano model (see Pizzuti et al., 2026a)
 
 FreeBeta = 0 !rbeta free parameter for gT, gOM and BP  
 
@@ -134,11 +134,11 @@ FASTMODE= 0  ! Run MG-MAMPOSSt in fast mode interpolating over data points
 OPT= -1     	 ! optimization algorithm: 0/1/2=bobyqa/newuao/powell
              ! -1 skip optimization
 
-BCG = 1      !Do you want to consider the BCG?
+BCG = 0      !Do you want to consider the BCG?
 
 BCG_Data = 0 !Do you want to consider VDP data from the BCG as external file?
 
-Baryons = 1  !Do you want to include gas/galaxies separately?
+Baryons = 0  !Do you want to include gas/galaxies separately?
 
 ********* Baryons parameters values ***********************************
 
@@ -162,49 +162,50 @@ kbeta = 0       !for beta =1 or beta = 2/3 in the beta model of the gas
 ************************************************************************
 ********* parameter limits *********************************************
 
-r2low= 1.4   !r200 lower bound
+r2low= 1.0  !r200 lower bound
 
-r2up= 2.6    !r200 upper bound 
+r2up= 3.0   !r200 upper bound 
 
-rclow= 0.2  !rc lower bound !0.47
- 
-rcup= 0.8   !rc upper bound. !0.59
+rclow= 0.2  !rc lower bound
 
-rslow= 0.16  !rs lower bound
+rcup= 5.0 !rc upper bound
 
-rsup= 5.56   !rs upper bound
+rslow= 0.2  !rs lower bound
+
+rsup= 5.0   !rs upper bound
 
 blow= 0.5    !beta lower bound
 
 bup= 5.0   !beta upper bound
 
-A1low = -0.001 !first MG parameter lower bound
+A1low = -50.0005 !first MG parameter lower bound
 
-A1up =   0.993  !first MG parameter upper bound
+A1up =   50.40  !first MG parameter upper bound
 
-A2low=  -10.0001 !second MG parameter lower bound
+A2low= -50.0005  !second MG parameter lower bound 
 
-A2up= 20.0   !second MG parameter upper bound
+A2up= 50.0   !second MG parameter upper bound 
 
-A3low = -0.01 !third MG parameter lower bound
+A3low = 0.1 !third MG parameter lower bound 
 
-A3up = 10.99   !third MG parameter upper bound
+A3up = 1.9   !third MG parameter upper bound
 
-b2low = 0.4  !second beta' parameter lower bound
+b2low = 0.5  !second beta parameter lower bound
 
-b2up = 4.1   !second beta' parameter upper bound
+b2up = 5.0  !second beta parameter upper bound
 
 rbetalow = 0.03  !rbeta parameter lower bound
 
 rbetaup = 3.1   !rbeta parameter upper bound
 
-rjalow = 0.021 !rjaffe lower bounds
+rjalow = 0.017 !rjaffe lower bounds
 
 rjaup = 0.05   !rjaffe upper bounds
 
-xmalow = 0.00001 !M/L lower bounds 0.92
+xmalow = 0.00005 !M/L lower bounds
 
-xmaup= 6.0   !M/L upper bounds 3
+xmaup= 5.0   !M/L upper bounds
+
 
 ***** switches to control the parameter space exploration **************	
  
