@@ -433,36 +433,45 @@ In order to check that the installation process was successfull and to produce t
 ```bash
 $ ./script/script_runmam.sh  
 ```
-without changing any parameter in the input files. This way, the code should execute a 100000-points MCMC exploration of the parameter space in Vainsthein screening gravity  (**M(r)=mNFW_BH**) sampling the full kinematics+lensing likelihood by using the test data-set included in the data/ folder. The script runs in Fast Mode **FASTMODE=1** and should provide the complete output posterior in Output/MaxLik.dat within less than half an hour if the execution is performed over an average laptop. 
+without changing any parameter in the input files. This way, the code should execute a 110000-points MCMC exploration of the parameter space in standard gravity, sampling the full kinematics likelihood by using the test data-set included in the data/ folder. 
+The script should provide the complete output posterior in Output/MaxLik.dat within less than an hour if the execution is performed over an average laptop. 
 At the end of the run, if successufull the following text will be displayed:
 ```bash
- Best-fit from optimization
-   r_200    =  1.406
-   r_tracer =  0.330 (c_tracer=    4.26)
-   r_mass   =  0.369 (c_mass=      3.81)
-   Anisotropy parameter =   1.5691
-   First MG parameter =  0.0828
-   Second MG parameter =  0.0100
-   Second Anisotropy parameter =  1.0000
- Likelihood =   5911.38999
- 
-   After MG-MAMPOSSt:
+ Best-fit from optimization 
+   r_200    =  2.063
+   r_tracer =  0.700 (c_tracer=    2.95)
+   r_mass   =  0.523 (c_mass=      3.95)
+   Anisotropy parameter =   1.5267
+   First MG parameter =  0.1000
+   Second MG parameter =  0.1000
+   Third MG parameter =   1.0000
+   Second Anisotropy parameter =  0.9991
+   BCG Jaffe radius =  0.0390
+   BCG stellar M/L =  0.0046
+ Likelihood =  12261.63961
 
-     build output files of binned N(R), VDP
-     of best-fit N(R), VDP and of
-     input N(R), VDP solutions ('true' values)
-
+  
+  After MG-MAMPOSSt: 
+  
+     build output files of
+     - binned N(R), 
+     - VDP of best-fit N(R),
+     - VDP of input N(R),
+     - VDP solutions ('true' values)
+  
   Binned N(R) computed
-  Using           13  bins for the VDP(R)
-  Evaluating expected VDP for
-  Max Lik solution values:
-   r_200    =  1.390
-   r_tracer =  0.330 (c_tracer=    4.21)
-   r_mass   =  0.346 (c_mass=      4.01)
-   Anisotropy parameter =   1.5457
-   Second anisotropy parameter =   1.0000
-   First MG parameter =  -0.0991
-   Second MG parameter =  -0.0725
+  Using           18  bins for the VDP(R) 
+  Evaluating expected VDP for 
+  Max Lik solution values: 
+   r_200    =  2.063
+   r_tracer =  0.700 (c_tracer=    2.95)
+   r_mass   =  0.523 (c_mass=      3.95)
+   Anisotropy parameter =   1.5267
+   Second anisotropy parameter =   0.9991
+   BCG Jaffe radius =   0.0390
+   BCG star M/L =   0.0046
+   First MG parameter =   0.1000
+   Second MG parameter =   0.1000
 
   sigma_r evaluated
  ```

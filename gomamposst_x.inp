@@ -1,5 +1,5 @@
-dataCLASH/data_DESI.dat
-parsgT/pars_test.txt
+data/data_DESI.dat
+input_pars/pars_test.txt
 Output/rnvn.dat
 Output/NRpar.dat
 Output/NRbin.dat

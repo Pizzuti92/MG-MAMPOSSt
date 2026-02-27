@@ -1,1 +1,40 @@
  Information about the current run
+ 
+
+ Using  1352 galaxies in the fits
+ in the radial range:  0.051-- 2.298 Mpc
+
+ Switches selected for parameter exploration: 
+ grid or MCMC (0/1)=1
+ finer grid= 0
+ equal grid values = 0
+ stop if desired = 0
+ skip the optimization results =  0
+ add lensing probability distribution =  0
+ Number of halos in the analysis =   1
+ Number of sampling points in MCMC =  110000
+
+ Running MG-MAMPOSSt with the selected mass profile:
+ NFW mass model
+  
+
+ Number of free parameters = 5
+r200, r_tr, r_s, anis1, A1, A2, anis2, rjaf, M/L, A3, rbeta = 1 1 1 1 0 0 1 0 0 0 0
+ Initial guess values:  1.900  0.700  0.530  2.000  0.100  0.100  1.000  0.039  0.005  1.000  1.000
+ mass model=  1
+ anisotropy model= 41
+
+
+ Best-fit from optimization 
+   r_200    =  2.063
+   r_tracer =  0.700 (c_tracer=    2.95)
+   r_mass   =  0.523 (c_mass=      3.95)
+   Anisotropy parameter =   1.5267
+   First MG parameter =  0.1000
+   Second MG parameter =  0.1000
+   Third MG parameter =   1.0000
+   Second Anisotropy parameter =  0.9991
+   BCG Jaffe radius =  0.0390
+   BCG stellar M/L =  0.0046
+ Likelihood =  12261.63961
+
