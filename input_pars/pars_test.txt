@@ -73,7 +73,7 @@ Olam = 0.7   ! Omega lambda density parameter
 
 Omegam = 0.3  ! Omega matter density parameter
 
-Rlow = 0.05  ! Inner projected radius for sample selection (Mpc)
+Rlow = 0.1  ! Inner projected radius for sample selection (Mpc)
 
 Rup = 2.3   ! Outer projected radius for sample selection (Mpc)
 
@@ -129,9 +129,9 @@ rcut= 1.0    ! PIEMD model rcut in Mpc (only used if M(r)=PIEMD)
 
 eim=  2      ! Exponent of the Einasto profile
 
-FASTMODE= 0  ! Run MG-MAMPOSSt in fast mode interpolating over data points
+FASTMODE= 1  ! Run MG-MAMPOSSt in fast mode interpolating over data points
 
-OPT= -1     	 ! optimization algorithm: 0/1/2=bobyqa/newuao/powell
+OPT= 1     	 ! optimization algorithm: 0/1/2=bobyqa/newuao/powell
              ! -1 skip optimization
 
 BCG = 0      !Do you want to consider the BCG?
@@ -162,13 +162,13 @@ kbeta = 0       !for beta =1 or beta = 2/3 in the beta model of the gas
 ************************************************************************
 ********* parameter limits *********************************************
 
-r2low= 1.0  !r200 lower bound
+r2low= 1.0  !r200 lower bound (log10M200 for LogMCPrior = 1)
 
-r2up= 3.0   !r200 upper bound 
+r2up= 3.0   !r200 upper bound (log10c200 for LogMCPrior = 1)
 
-rclow= 0.2  !rc lower bound
+rclow= 0.58  !rc lower bound
 
-rcup= 5.0 !rc upper bound
+rcup= 0.85 !rc upper bound
 
 rslow= 0.2  !rs lower bound
 
@@ -218,6 +218,8 @@ GaussianPrior = 0  !kind of prior Flat/Gaussian 0/1
 FlatPriorBeta = 1 !Keep flat priors in beta? Y/N = 1/0
 
 FlatPriorBeta0 = 1 !Keep flat priors in beta0? Y/N = 1/0
+
+LogMCPrior = 0  !Use flat log prior in c200 and M200?
 #*************** LENSING PARAMETERS ************************************
 
 nlens = 0  !Forecasts with additional (lensing) information for rs and r200

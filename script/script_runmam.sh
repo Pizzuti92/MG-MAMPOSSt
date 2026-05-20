@@ -41,8 +41,7 @@ done
 
 
 start=`date +%s`
-gomamposstopt < $cartellacl\gomamposst_x.inp  
-#./gomamposstopt.e < $cartellacl\gomamposst_x.inp   
+./sw/bin/gomamposstopt < $cartellacl\gomamposst_x.inp   
 end=`date +%s`
 
 runtime=$((end-start))
@@ -52,5 +51,5 @@ if [ $printime -ge 1 ]; then
 	echo "time of execution: "  $runtime " seconds"
 	echo "******************************"
 fi	
-python3 plot.py               
+python3 plot.py --color blue              
 

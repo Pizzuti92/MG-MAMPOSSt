@@ -58,13 +58,23 @@ $ cmake --build .
 $ sudo cmake --install .
 $ cd ..
 ```
-To install it locally, type ```$ cmake ---DCMAKE_INSTALL_PREFIX:PATH=/Your/path_to/folder/MG_MAMPOSSt/sw ..````
+SUGGESTION: To install it locally, create a ```sw``` directory,
+```bash
+$ mkdir sw
+``` 
+
+and type ```$ cmake -DCMAKE_INSTALL_PREFIX:PATH=/Your/path_to/folder/MG_MAMPOSSt/sw ..```` instad of ```cmake ..```. 
+This way, the code will be installed in the local folder ```sw/bin/```
 
 To run and test the code, execute:
 ```bash
 $ gomamposstopt < gomamposst_x.inp
 ```
-which produces the main outputs, or
+or 
+```bash
+$ ./sw/bin/gomamposstopt < gomamposst_x.inp
+```
+, which produces the main outputs. If you have performed the local installation, try to run
 ```bash
 $ ./script/script_runmam.sh  
 ```
@@ -291,16 +301,20 @@ if the model is ```mtotal_GC```, then A3 is the $\gamma$ inner slope of the gNFW
 ### GR models
 
 ```
-NFW, Her, PIEMD, Bur, SoftIS, Eis5, gNFW
+NFW, Her, PIEMD, Bur, SoftIS, Eis, gNFW
 ```
 
-### Modified gravity models
+### Modified gravity/Dark Energy models
 
 ```
 mNFW_BH, mNFW_GC, mBur_GC,
 mgNFW_GC, mIso_GC, mTotal_GC,
-RG, BS
+RG, BS, gNFW_CDE
 ```
+Additional option:
+
+`nLogP` -> If equal to zero, explore the chameleon field $\phi$ in log-space (Only for chameleon mode)
+
 
 Additional parameters:
 
@@ -316,7 +330,7 @@ Additional parameters:
 Available models:
 
 ```
-C, ML, OM, WJ, T, O, gOM, gT
+C, ML, OM, WJ, T, O, gOM, gT, BP
 ```
 
 Additional option:
@@ -394,7 +408,7 @@ Used when parameter limits are enabled in the run options.
 | `GaussianPrior` | 0 flat prior, 1 Gaussian prior |
 | `FlatPriorBeta` | Keep flat prior for β |
 | `FlatPriorBeta0` | Keep flat prior for β₀ |
-
+| `LogMCPrior` | Priors (flat or Gaussian) are in log10(M200) and log10(c200) |   
 ---
 
 # 6. Lensing Options (optional)
@@ -405,7 +419,7 @@ Used when parameter limits are enabled in the run options.
 | `r200t`, `rst` | Peak values for lensing priors |
 | `delta1`, `delta2`, `delta3` | Lensing hyperparameters |
 | `lensing_file` | Include lensing chains from file |
-| `nLogP` | Explore $\phi$ in log-space (chameleon mode) |
+
 
 ---
 
@@ -431,7 +445,7 @@ which stores the tabulated ln(L) where L is the  likelihood/posterior, as a func
 ### Basic smoke test
 In order to check that the installation process was successfull and to produce the test example, type:
 ```bash
-$ ./script/script_runmam.sh  
+$ 
 ```
 without changing any parameter in the input files. This way, the code should execute a 110000-points MCMC exploration of the parameter space in standard gravity, sampling the full kinematics likelihood by using the test data-set included in the data/ folder. 
 The script should provide the complete output posterior in Output/MaxLik.dat within less than an hour if the execution is performed over an average laptop. 

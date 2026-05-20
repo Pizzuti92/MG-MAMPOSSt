@@ -116,10 +116,10 @@ c     Opening log file for keeping track of all the options
       
       
 c     Open files containing the gas and galaxy mass parameters      
-      if (kbary.eq.1) then
-       open(92, file="GasGal_mass.txt", status='unknown')
-       write(92,'(4(a13,2x))') 'rhogas', 'rsgas', 'rhostar', 'rstar'
-      endif
+      !if (kbary.eq.1) then
+      ! open(92, file="GasGal_mass2.txt", status='unknown')
+      ! write(92,'(4(a13,2x))') 'rhogas', 'rsgas', 'rhostar', 'rstar'
+      !endif
     
 c     Select only galaxy members within the requested radial range
 
@@ -1212,13 +1212,25 @@ c****** defines temporary variables ************************************
         rhosta = rhost1
         rsgnta = rsga1
         rstnta = rst1
-    
+        
+        
+        r2toput = r2t
+        rstoput = rsst
+        if (kprmas.eq.1) then
+        !TEST LOG PRIOR M2, C2
+            h2z=h0**2*((1+za)**3*Omegam+Olam)
+            dlogm2t = dlog10(h2z*100/Grav*r2t**3)
+            dlogc2t = dlog10(r2t/rsst)
+                
+            r2toput = dlogm2t
+            rstoput = dlogc2t
+        endif
         !add the initial prior to the likelihood
         if (ipriorGauss.ne.1) then
-          call priord(r2t,rct,rsst,cbt,tmt,scrt,dA3t,
+          call priord(r2toput,rct,rstoput,cbt,tmt,scrt,dA3t,
      &    cb0t,rbt,rjat,xmst,poini)
         else
-          call priorG(r2t,rct,rsst,cbt,tmt,scrt,dA3t,
+          call priorG(r2toput,rct,rstoput,cbt,tmt,scrt,dA3t,
      &    cb0t,rbt,rjat,xmst,poini) 
         endif 
         
@@ -1240,13 +1252,13 @@ c**********************************************************************
         write (*,428) r2t, rct, rsst, cbt,
      &       tmt, scrt, dA3t, cb0t,rbt, rjat,xmst,fml2, plen
      !always accept the first trial
-c          if (kbcg.eq.1.or.kmp.eq.13) then
-c           write(iu60,274) r2t,rct,rsst,cbt,tmt,scrt,dA3t,cb0t,rbt,rjat,
-c     &      xmst,fmlb,kani
-c          else 
-c            write(iu60,674) r2t,rct,rsst,cbt,tmt,scrt,dA3t,
-c     &       cb0t,rbt,fmlb,kani 
-c          endif
+          if (kbcg.eq.1.or.kmp.eq.13) then
+           write(iu60,274) r2t,rct,rsst,cbt,tmt,scrt,dA3t,cb0t,rbt,rjat,
+     &      xmst,fmlb,kani
+          else 
+            write(iu60,674) r2t,rct,rsst,cbt,tmt,scrt,dA3t,
+     &       cb0t,rbt,fmlb,kani 
+          endif
 
         do while (icount<Nsample)
 
@@ -1551,14 +1563,27 @@ c**************** compute the priors (flat prior) **********************
          !Baryons
          call baryon_prior_penalty(pbar) 
 
-!MCMC WP        
+!MCMC WP 
+        r2toput = r200n
+        rstoput = rsn
+        if (kprmas.eq.1) then
+        !TEST LOG PRIOR M2, C2
+            h2z=h0**2*((1+za)**3*Omegam+Olam)
+            dlogm2t = dlog10(h2z*100/Grav*r200n**3)
+            dlogc2t = dlog10(r200n/rsn)
+            r2toput = dlogm2t
+            rstoput = dlogc2t
+        endif
+
+       
          if (ipriorGauss.ne.1) then
-          call priord(r200n,rcn,rsn,cbn,tmassn,scrn,dA3n,
+          call priord(r2toput,rcn,rstoput,cbn,tmassn,scrn,dA3n,
      &    cb0n,rben,rjan,xmsn,pout1)
          else
-          call priorG(r200n,rcn,rsn,cbn,tmassn,scrn,dA3n,
+          call priorG(r2toput,rcn,rstoput,cbn,tmassn,scrn,dA3n,
      &    cb0n,rben,rjan,xmsn,pout1) 
-         endif        
+         endif   
+        
          !acceptance criterium:
          fml2 = fml2 - pout1 + pbar
          call acceptance(-fmlb,(-fml2),eval,nseed)
@@ -1650,7 +1675,7 @@ c******************* write on the file *********************************
          
 c***************** Baryons ********************************************* 
           if (kbary.eq.1) then
-           write(92,271) rhgta/1e13,rsgnta,rhosta/1e13,rstnta
+           write(iugas,271) rhgta/1e13,rsgnta,rhosta/1e13,rstnta
 271        format(4(f15.5,2x))
           endif
 c***********************************************************************              
@@ -1981,7 +2006,7 @@ c***********************************************************************
 c*********************************************************************** 
          if (kpro.eq.1.and.nhone.gt.1) then
           if (kmp.ne.8.or.klin.ne.1) then 
-         
+            
             call test_bound(screeg,scrlow,scrup)
             if (scrlow.le.0) then
              write(*,*) 'inconsistent negative parameter!'
@@ -2703,7 +2728,7 @@ c               if(kmp.eq.9.and.nhone.gt.0) scprova=screen/(1+screen)
       
       endif !END OF MCMC SAMPLING
       
-      if (kbary.eq.1) close(92)
+      !if (kbary.eq.1) close(92)
       
       call CPU_TIME(fine)
       
@@ -4704,7 +4729,7 @@ c
       external sigmarnorm
       external sdint
        
-       
+      
       !generate the value or rho0gas and rsgas
       !According to their uncertainties
       
@@ -8832,7 +8857,7 @@ C       TEST REFLECTION
             dfact = 0.02d0
             if (kmp.eq.18) dfact = 0.01d0
           endif
-          if (kmp.eq.13) then
+          if (kmp.eq.13.or.kmp.eq.18) then
            dfact = 0.005d0
            sigma(6)=((scrup)-(scrlow)) * dfact 
           else
@@ -8903,7 +8928,7 @@ c************* prior function for the mcmc run *************************
        if(kpro.eq.0) then
         if (x.lt.1.0d0.or.x.gt.3.9d0) then
           pout=rinf
-          return
+         return 
         endif
         
         if(y.lt.0.05.or.y.gt.3.9.or.z.lt.0.05.or.z.gt.3.9) then
@@ -8966,14 +8991,34 @@ c************* prior function for the mcmc run *************************
 c ======================================================================       
         !R200
         if (x.lt.r2low.or.x.gt.r2up) then
-         pout=rinf
-         return
+         !IF you are already using the lensing as a prior, there is no need 
+          !to compute the additional flat prior
+          if (naddlens.eq.0) then
+           pout=rinf
+           return
+          endif
         endif
-        !rc, rs
-        if(y.lt.rclow.or.y.gt.rcup.or.z.lt.rslow.or.z.gt.rsup) then
-         pout=rinf
-         return 
+        !rc
+        if(y.lt.rclow.or.y.gt.rcup) then
+         !IF you are already using the lensing as a prior, there is no need 
+          !to compute the additional flat prior
+          if (naddlens.eq.0) then
+           pout=rinf
+           return
+          endif
         endif
+        
+        !rs 
+        if(z.lt.rslow.or.z.gt.rsup) then
+         !IF you are already using the lensing as a prior, there is no need 
+          !to compute the additional flat prior
+          if (naddlens.eq.0) then
+           pout=rinf
+           return
+          endif
+        endif
+        
+        
         !Beta 
         if (q.lt.blow.or.q.gt.bup) then
          pout=rinf
@@ -9044,6 +9089,8 @@ c ======================================================================
         !endif
         return
        endif
+       
+       ! CHECK SOMETHING IS GOING ON HERE!!!! ==========================
        icoun=0
        if (kmp.eq.8) then
        !in this model masses can be negative. In this case the sample
@@ -9114,7 +9161,7 @@ c =========== GAUSSIAN PRIOR ===========================================
       rcmean = 0.5 * (rclow + rcup)
       rcsig = 0.5 * (rcup - rclow)
       if (rcsig.eq.0) then
-        dlogprc = 0.0
+        dlogprc = 0.0d0
       else
        dlogprc = -0.5 * ((y - rcmean) / rcsig) ** 2
      &           - dlog(rcsig) - 0.5 * dlog(2.0 * pig)
@@ -9130,7 +9177,15 @@ c =========== GAUSSIAN PRIOR ===========================================
        dlogprs = -0.5 * ((z - rsmean) / rssig) ** 2
      &           - dlog(rssig) - 0.5 * dlog(2.0 * pig)      
       endif
-
+        
+      !IF you are already using the lensing as a prior, there is no need 
+      !to compute the additional flat prior
+      if (naddlens.eq.1) then
+        dlogprs = 0.0d0
+        dlogpr2 = 0.0d0
+      endif
+        
+        
       !compute log prior for rbeta
       rbmean = 0.5 * (rbetalow + rbetaup)
       rbsig = 0.5 * (rbetalow - rbetaup)
@@ -11807,6 +11862,75 @@ c######=================================================================
       
       return 
 
+      end
+ 
+ 
+C ========================== I/O ROUTINES ==============================
+
+      subroutine read_phase_space_file(fname,nweigh,di,ve, eve, ww, npg)
+      implicit real*8 (a-h,o-z)
+      implicit integer*4 (i-n)
+
+      character*(*) fname
+      integer iga
+      parameter (iga=25000)
+
+      dimension di(iga), ve(iga), eve(iga), ww(iga)
+
+      character*300 line
+      real*8 dkpc, vkms, evkms, wei
+
+      open(10,file=fname,status='old')
+
+      read(10,'(A)') line
+      read(10,'(A)') line
+
+      j = 0
+ 100  continue
+      if (nweigh.eq.0) then
+         read(10,*,end=200) dkpc, vkms, evkms
+         wei = 1.d0
+      else
+         read(10,*,end=200) dkpc, vkms, evkms, wei
+      endif
+
+      j = j + 1
+      di(j)  = dkpc / 1.d3
+      ve(j)  = vkms
+      eve(j) = evkms
+      ww(j)  = wei
+      goto 100
+
+ 200  continue
+      npg = j
+      close(10)
+
+      return
+      end 
+ 
+ 
+!c =====================================================================
+
+      subroutine load_population(di, ve, eve, ww, npg)
+      implicit real*8 (a-h,o-z)
+      implicit integer*4 (i-n)
+
+      integer iga
+      parameter (iga=25000)
+
+      dimension di(iga), ve(iga), eve(iga), ww(iga)
+
+      include 'datarv.i'
+
+      nga = npg
+      do j = 1, npg
+         r(j) = di(j)
+         v(j) = ve(j)
+         e(j) = eve(j)
+         w(j) = ww(j)
+      enddo
+
+      return
       end
       
 c      double precision function fgrt(x)

@@ -1,6 +1,6 @@
       program gomamposstoptS
 
-c     Version of 23/12/2025 - main features:
+c     Version of 09/05/2026 - main features:
 c     - modified gravity/DE models: Chameleon screening, Vainsthein 
 c       screening, Refracted Gravity, Clustering Dark Energy
 c     - for CS, possibility to run with mass models: NFW, Einasto,
@@ -11,12 +11,16 @@ c     - flat prior and gaussian prior included, with the possibility of
 c       keeping flat priors on beta0 and betaInf while the others are
 c       Gaussian
 c    -  for gT, gOM, BP rbeta can be kept as a free parameter or fixed as
-c       the r-2 of the mass profile (or dark matter profile for multi-component
+c       the r-2 of the mass profile (or dark matter profile for multi-component)
 c
 c    - Gas and galaxies mass profiles can be passed in a parametric way,
 c      along with their (gaussian) uncertainties. The parameters are treated 
 c      as nuisance parameters in the MCMC module and optimized. They are saved
-c      in an additional file called GasGal_mass.txt
+c      in an additional file called (default) GasGal_mass.txt. The name of the file
+c      can be customised in the last line of gomamposst_x.inp file
+
+c      >>>NEW!!!<<< a new option in the input_pars.txt file allows to select
+c      a flat (or Gaussian prior) in log10 M200 and log10 c200.
 
 c    - The Options file is deprecated. The grid/mcmc controls, as well as the
 c      number of steps and lensing swithces are all in the input_pars.txt file
@@ -114,7 +118,7 @@ c     Execute as ./script/script_runmam.sh
      &     xx(iga),yy(iga),yboo(iga),wboo(iga),ww(iga),
      &     iw(iga), sigma(npar)
       character*75 fgroup,frnvn,fbfn,fbn,ffn,fmlv,fprop,line,
-     &     fsb,fsf,fsft,fkb,fkf,fkft,fparmam, fbcg, fUme
+     &     fsb,fsf,fsft,fkb,fkf,fkft,fparmam, fbcg, fUme, fbary
       real*8 rjl(1), yrjl(1)
 c   input files      
       character(len = 13) :: filename
@@ -930,6 +934,12 @@ c   ******** now we read the prior type (flat or Gaussian) ************
                     ios=0
                     ipriorBeta0=0
                 endif
+            case ('LogMCPrior')
+                read(buffer, *, iostat=ios) kprmas
+                if (ios.eq.-1) then
+                    ios=0
+                    kprmas=0
+                endif
 c***********************************************************************
 c*********** parameter limits ******************************************
             case ('r2low')  !r200 lower bound 
@@ -1152,10 +1162,22 @@ c*********** parameter limits ******************************************
 c************************************************************************
 
       
-      if(r200g.gt.r2up.or.r200g.lt.r2low) then
+      r2toput = r200g
+      rstoput = rsg
+      if (kprmas.eq.1) then
+        !TEST LOG PRIOR M2, C2
+            h2z=h0**2*((1+za)**3*Omegam+Olam)
+            dlogm2t = dlog10(h2z*100/Grav*r200g**3)
+            dlogc2t = dlog10(r200g/rsg)
+                
+            r2toput = dlogm2t
+            rstoput = dlogc2t
+      endif
+      
+      if(r2toput.gt.r2up.or.r2toput.lt.r2low) then
          Stop('ERROR: GUESS VALUE r200 EXCEEDES PARAMETER LIMITS')
       endif 
-      if(rsg.gt.rsup.or.rsg.lt.rslow) then
+      if(rstoput.gt.rsup.or.rstoput.lt.rslow) then
          Stop('ERROR: GUESS VALUE rs EXCEEDES PARAMETER LIMITS')
       endif 
       if(rcg.gt.rcup.or.rcg.lt.rclow) then
@@ -1226,7 +1248,7 @@ c***********************************************************************
      &         ' You selected the mass  model ',A8,/,
      &     ' corresponding to the parameter kmp= ',i2,/)
    
-      if (kmody.eq.1.or.kmp.gt.10) then
+      if (kmody.eq.1.or.kmp.gt.10.and.kmp.ne.18) then
           if (tmassg.le.0) then
             stop('ERROR: inconsitent negative MG parameter')
           endif
@@ -1271,6 +1293,7 @@ c
       read(*,9) fsf
       read(*,9) fbcg !BCG file
       read(*,9) fUme !File from Keiichi
+      read(*,9) fbary !Baryons
       
       open(20,file=frnvn,status='unknown')
       open(30,file=fbfn,status='unknown')
@@ -1280,11 +1303,16 @@ c
       open(70,file=fsb,status='unknown')
       open(80,file=fsf,status='unknown')
       
+      
       if (kbcg.eq.1.and.kbdt.eq.1) then
        
        open(81,file=fbcg,status='old') 
       endif
-    
+      
+      if (kbcg.eq.1.and.kbary.eq.1) then
+       open(83,file=fbary,status='unknown')
+       write(83,'(4(a13,2x))') 'rhogas', 'rsgas', 'rhostar', 'rstar'
+      endif
       !TEST 
       
      
@@ -1293,6 +1321,7 @@ c
        write(*,*) 'Reading lensing from ', fUme
        open(82,file=fUme,status='old') 
       endif
+      
 
 !Information about the output files ************************************
 !(Metadata
@@ -1321,37 +1350,43 @@ c     read radial positions, velocities and velocity errors;
 c     positions are in kpc, vels are in km/s, assumed rest-frame
 c     errors are in km/s
      
-      read(10,9) line
-      read(10,9) line
-      j=0
-      j0=-1
-      dimin=1.e12
- 222  continue
-!if weights are not given, read three columns in the data file 
-      if (nweigh.eq.0) then
-       read(10,*,end=111) dkpc,vkms,evkms 
+c      read(10,9) line
+c      read(10,9) line
+c      j=0
+c      j0=-1
+c      dimin=1.e12
+c 222  continue
+c!if weights are not given, read three columns in the data file 
+c      if (nweigh.eq.0) then
+c       read(10,*,end=111) dkpc,vkms,evkms 
        
-      else
-!Read four columns (weights is the last) 
-       read(10,*,end=111) dkpc,vkms,evkms,wei
-      endif
-      j=j+1
-      di(j)=dkpc/1.e3
-      ve(j)=vkms
-      eve(j)=evkms
-      w(j)=1.0
-      if (nweigh.ne.0) w(j)=wei
+c      else
+c!Read four columns (weights is the last) 
+c       read(10,*,end=111) dkpc,vkms,evkms,wei
+c      endif
+c      j=j+1
+c      di(j)=dkpc/1.e3
+c      ve(j)=vkms
+c      eve(j)=evkms
+c      w(j)=1.0
+c      if (nweigh.ne.0) w(j)=wei
       
-      if (di(j).lt.dimin) then
-         dimin=di(j)
-         j0=j
-      endif
-      iw(j)=j
-      goto 222
- 111  continue
-      npg=j
+c      if (di(j).lt.dimin) then
+c         dimin=di(j)
+c         j0=j
+c      endif
+c      iw(j)=j
+c      goto 222
+c 111  continue
+c      npg=j
       close(10)
+      
+      
+      CALL read_phase_space_file(fgroup,nweigh,di,ve, eve, w, npg)
+      
       write(*,*) npg,' galaxies in the sample'
+      
+
       
 
 c     get an estimate of the velocity dispersion
@@ -1388,6 +1423,7 @@ c     call the mamposst procedure subroutine
       iu20=20
       iu30=30
       iu60=60
+      iugas=83
 
 c     MAMPOSSt subroutine
 
@@ -1395,6 +1431,7 @@ c     MAMPOSSt subroutine
 
       close(30)
       close(60)
+      close(83)
 
       if (r200.ne.r200) r200=r200g
       
