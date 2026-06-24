@@ -525,6 +525,15 @@ elif (mass_string=='BS'):
     Plabelm2=r"$P(\delta)$"
     labelm3 = r"\kappa"
     Plabelm3 = r"$P(\kappa)$"
+    
+
+elif (mass_string=='Galileon_VS'):
+    labelm1=r"\log_{10}(\alpha)"
+    labelm2=r"\log_{10}(r_v)"
+    Plabelm1=r"P[Log$(\alpha)$]"
+    Plabelm2=r"$P(r_v)$"
+    labelm3 = r"\log_{10}(\kappa)"
+    Plabelm3 = r"$P(\kappa)$"
 
 # =============================================================================
        

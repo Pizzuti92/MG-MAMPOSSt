@@ -1,8 +1,9 @@
       program gomamposstoptS
 
-c     Version of 09/05/2026 - main features:
+c     Version of 29/05/2026 - main features:
 c     - modified gravity/DE models: Chameleon screening, Vainsthein 
 c       screening, Refracted Gravity, Clustering Dark Energy
+c     - ADDED a phenomenological model for Galileon VS screening (by Orlando Luongo)
 c     - for CS, possibility to run with mass models: NFW, Einasto,
 c       Burkert, bNFW (it includes Hernquist), Isothermal and multi-component
 c     - BCG dataset added. Maximum of 11 free parameters 
@@ -321,6 +322,9 @@ c     Free rbeta for gT or gOM models
      
       nLogP=0 !Set equal to 0 to explore the phi space using the logarithm
                ! of the parameter. 
+     
+      noPrior = 0 !Set equal to 1 if you want to store all the MCMC values
+                 !when reading a lensing chain
      
   ! ios is negative if an end of record condition is encountered or if
   ! an endfile condition was detected.  It is positive if an error was
@@ -702,6 +706,10 @@ c                write(*,*) 'psdfopsodfpsodfpsdop', xlumbcg, rabcg
                       kmp = 17
                     case('gNFW_CDE') !gNFW clustering DE
                       kmp = 18
+                    case('NL') !Non Local potential of the form dphi/dr = dphi_N/dr + A/r
+                      kmp = 19 !To be implemented
+                    case('Galileon_VS') !Galileon Vainsthein model
+                      kmp = 20
                     case default
                       print *, 'Invalid mass mod, switching to default'
                       kmp=1
@@ -1111,6 +1119,13 @@ c*********** parameter limits ******************************************
                     ios=0
                     nLogP=1
                 endif
+             case ('AcceptAll')    
+                read(buffer, *, iostat=ios) noPrior
+                if (ios.eq.-1) then
+                    ios=0
+                    noPrior=0
+                endif   
+                
             case default
             end select
          end if
@@ -1134,6 +1149,8 @@ c*********** parameter limits ******************************************
       
       if (nrs.gt.-2) kfs2 = 0 !this is to avoid problems when not running over
       !Euclid mock data
+      
+      if (naddlens.eq.0) noPrior = 0
        
       kmody=0 !modified gravity models that do not support bcg  
       if(kmp.eq.9) kmody=1
@@ -1249,13 +1266,15 @@ c***********************************************************************
      &     ' corresponding to the parameter kmp= ',i2,/)
    
       if (kmody.eq.1.or.kmp.gt.10.and.kmp.ne.18) then
-          if (tmassg.le.0) then
+        if (kmp.ne.20) then
+           if (tmassg.le.0) then
             stop('ERROR: inconsitent negative MG parameter')
-          endif
-          if (ipriorGauss.eq.0) then
-           if (tmlow.le.0) tmlow=1.0e-4
-           if (tmup.le.0) tmup=1.0e-4  
-          endif
+           endif
+           if (ipriorGauss.eq.0) then
+            if (tmlow.le.0) tmlow=1.0e-4
+            if (tmup.le.0) tmup=1.0e-4  
+           endif
+        endif
       endif
 c exponent for f(R) Hu&Sawicki model (to be set manually)
       nhs=1

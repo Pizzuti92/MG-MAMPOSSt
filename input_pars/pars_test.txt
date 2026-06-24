@@ -17,13 +17,13 @@ nbeta = 1   ! number of steps for anisotropy parameter
                             !   [if = -1 forces a_ML=r_s]
                             !   [if = -2 forces Hansen+Moore]
 
-nA1 = 0     ! number of steps in the first MG parameter
+nA1 = 1     ! number of steps in the first MG parameter
 
 
-nA2 = 0     ! number of steps in the second MG parameter
+nA2 = 1     ! number of steps in the second MG parameter
 			 ! If equal to -1 force the case of chameleon f(R) gravity
 			 
-nA3 = 0		     ! number of steps in the third MG parameter
+nA3 = 1		     ! number of steps in the third MG parameter
 
 nbeta2 = 1   ! number of steps for the second anisotropy parameter
 
@@ -44,11 +44,11 @@ rsg = 0.53 ! mass profile scale radius initial guess (Mpc)
 betag = 2.0 ! Anisotropy initial guess,
              ! beta_C, a_ML, a_OM, a_W, beta_inf
 
-A1g = 0.1  ! first MG parameter initial guess
+A1g = 0.10  ! first MG parameter initial guess
 
-A2g = 0.1 ! second MG parameter initial guess
+A2g = -0.2 ! second MG parameter initial guess
 
-A3g = 1.0  ! third MG parameter initial guess
+A3g = 0.10  ! third MG parameter initial guess
 
 beta2g = 1.0 ! Second Anisotropy parameter initial guess beta0 for
              ! gOM and gT models
@@ -97,7 +97,7 @@ xlumbcg= 0.000049 !Luminosity of the BCG (10^11 Lsol)
 
 weights = 0  ! weights are given in the dataset? Y/N=1/0
 
-M(r) = NFW
+M(r) = Galileon_VS
              ! mass profile model.
              ! Here we list the labels for M(r) and
              ! then the corresponding profile:
@@ -111,6 +111,8 @@ M(r) = NFW
              ! gNFW = generalized NFW/
              ! RG = Refracted Gravity/
              ! gNFW_CDE = Clustering Dark Energy
+             ! Galileon_VS = Galileon Vainsthein NFW with three free parameters 
+             ! (A1 is log10alpha, A2 the log10 screening radius and A3 log10 of the transition exponent)
 
 Beta(r) = gT
              ! Anisotropy model.
@@ -129,9 +131,9 @@ rcut= 1.0    ! PIEMD model rcut in Mpc (only used if M(r)=PIEMD)
 
 eim=  2      ! Exponent of the Einasto profile
 
-FASTMODE= 1  ! Run MG-MAMPOSSt in fast mode interpolating over data points
+FASTMODE= 0  ! Run MG-MAMPOSSt in fast mode interpolating over data points
 
-OPT= 1     	 ! optimization algorithm: 0/1/2=bobyqa/newuao/powell
+OPT= -1     	 ! optimization algorithm: 0/1/2=bobyqa/newuao/powell
              ! -1 skip optimization
 
 BCG = 0      !Do you want to consider the BCG?
@@ -162,15 +164,15 @@ kbeta = 0       !for beta =1 or beta = 2/3 in the beta model of the gas
 ************************************************************************
 ********* parameter limits *********************************************
 
-r2low= 1.0  !r200 lower bound (log10M200 for LogMCPrior = 1)
+r2low= 0.10  !r200 lower bound (log10M200 for LogMCPrior = 1)
 
-r2up= 3.0   !r200 upper bound (log10c200 for LogMCPrior = 1)
+r2up= 5.0   !r200 upper bound (log10c200 for LogMCPrior = 1)
 
 rclow= 0.58  !rc lower bound
 
 rcup= 0.85 !rc upper bound
 
-rslow= 0.2  !rs lower bound
+rslow= 0.01  !rs lower bound
 
 rsup= 5.0   !rs upper bound
 
@@ -178,17 +180,17 @@ blow= 0.5    !beta lower bound
 
 bup= 5.0   !beta upper bound
 
-A1low = -50.0005 !first MG parameter lower bound
+A1low =  -3.0005 !first MG parameter lower bound
 
-A1up =   50.40  !first MG parameter upper bound
+A1up =   1.80  !first MG parameter upper bound
 
-A2low= -50.0005  !second MG parameter lower bound 
+A2low= -3.0005  !second MG parameter lower bound 
 
-A2up= 50.0   !second MG parameter upper bound 
+A2up= 3.0   !second MG parameter upper bound 
 
-A3low = 0.1 !third MG parameter lower bound 
+A3low = -3.0 !third MG parameter lower bound 
 
-A3up = 1.9   !third MG parameter upper bound
+A3up = 1.8   !third MG parameter upper bound
 
 b2low = 0.5  !second beta parameter lower bound
 
@@ -245,3 +247,4 @@ lensing_file = 0 !add lensing chains from file
 
 nLogP = 1 !Explore phi NOT in log (1/0) for general chameleon
 
+AcceptAll = 0 !Save all the points of the MCMC (if inside the priors)

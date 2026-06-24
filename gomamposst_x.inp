@@ -4,11 +4,11 @@ Output/rnvn.dat
 Output/NRpar.dat
 Output/NRbin.dat
 Output/NRfit.dat
-Output/PosteriorTest_COMA.dat
+Output/Test_COMA_VSGal.dat
 Output/svbin.dat
 Output/svfit.dat
 data/vel_bgc.dat
-new_kde/A209_NFW.dat
+lensing/macsj1931_Her.dat
 Output/GasGal_mass.txt
 
 

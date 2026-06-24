@@ -15,7 +15,7 @@
      &     nscr,kgas,kmp,kbcg,kani,nb2,nhone1,nhone2,Nsample,nexpo,kfs2,
      &     nhs,ipar(11),njaf,nxmas,nbs,nhone,knfit,nrs,nrc,kintd,kbdt,
      &     kbary,kopt,kpro,kanbcg,ncutof,kscr,kintrv,krunits,kdbcg,nA3,
-     &     kalpha,naddlens, nLogP, kprmas
+     &     kalpha,naddlens, nLogP, kprmas, noPrior
 
 
 

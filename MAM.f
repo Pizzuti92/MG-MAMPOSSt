@@ -102,7 +102,9 @@
       include 'free.i'
       include 'probs.i'
       include 'barions.i'
-
+    
+      !USE ieee_arithmetic
+      
       external fcn1,fcn2,fcn3,fa
       external Plens
       external sr2int,sr2out,sigmar1,sigmar2,sigmar3,gwenu
@@ -984,7 +986,6 @@ c   if the best fit are out of the range, stop the code
          write(*,*) 'Warning: best fit "rc" outside the prior range'
         write(*,*) 'redefine the best fit "rc" as the average value'
         rcnew=(rcup+rclow)/2
-        
       endif 
       if(cbnew.gt.bup.or.cbnew.lt.blow) then
         write(*,*) 'Warning: best fit "beta" outside the prior range'
@@ -1349,6 +1350,7 @@ c ==================================================
               scrn  =  dA2_f
               
            case default
+              !noPrior = 1 !To accept all the points. Test ongoing
               read(82,*, iostat=ios) r200_f, rs_f, dlp 
               if(ios < 0) then
                 close(82)
@@ -1584,9 +1586,66 @@ c**************** compute the priors (flat prior) **********************
      &    cb0n,rben,rjan,xmsn,pout1) 
          endif   
         
-         !acceptance criterium:
-         fml2 = fml2 - pout1 + pbar
-         call acceptance(-fmlb,(-fml2),eval,nseed)
+         !acceptance criterium: we have two cases. One is the standard
+         !MCMC Metropolis-Hastings acceptance, the other is accepting every point
+         !if (is inside the kinematic prior)
+         !write(*,*) "before", r200n, rsn, noPrior
+         
+         if (noPrior.eq.1.and.ipriorGauss.ne.1) then
+         !In this case, write all the trials, just storing the kinematic likelihood as weight
+         !Do anyway a flat random search of the other parameters 
+            if (pout1.ne.0.0) then 
+             do while (pout1.ne.0.0)
+              
+              rctest = rcn
+              cbtest = cbn
+              cb0test = cb0n
+              tmasstest = tmassn
+              scrtest = scrn
+              dA3test = dA3n
+              rbtest = rben
+              rjtest= rjan
+              xmtest = xmsn
+              
+              
+              call tranmod(r200n,rctest,rsn,cbtest,tmasstest,scrtest,
+     &         dA3test,cb0test,rbtest,rjtest,xmtest,sigma,npar,nseed)
+              r200n = r200_f
+              rsn = rs_f
+              
+              r2toput = r200n
+              rstoput = rsn
+              if (kprmas.eq.1) then
+              !TEST LOG PRIOR M2, C2
+               h2z=h0**2*((1+za)**3*Omegam+Olam)
+               dlogm2t = dlog10(h2z*100/Grav*r200n**3)
+               dlogc2t = dlog10(r200n/rsn)
+               r2toput = dlogm2t
+               rstoput = dlogc2t
+              endif
+              !write(*,*) pout1, rctest, cbtest,cb0test
+              call priord(r2toput,rctest,rstoput,cbtest,tmasstest,
+     &    scrtest,dA3test,cb0test,rbtest,rjtest,xmtest,pout1)
+             enddo
+              rcn = rctest
+              cbn = cbtest
+              cb0n = cb0test
+              tmassn = tmasstest
+              scrn = scrtest
+              dA3n = dA3test
+              rben = rbtest
+              rjan = rjtest
+              xmsn = xmtest     
+             !write(*,*) "after", r200n, rsn
+             eval=.True. 
+            else
+             eval=.True.
+            endif
+           !fml2 = fml2 + pbar
+          else
+           !Normal acceptance 
+           fml2 = fml2 - pout1 + pbar
+           call acceptance(-fmlb,(-fml2),eval,nseed)
 c ======== Check =======================================================
 C ========= DEBUG ==================================
         
@@ -1608,6 +1667,8 @@ c            write (*,987) tmassn, scrn, dA3n, fml2, pout1
 c        endif
 c 987     format(3(f7.5,2x),f15.3,2x, f15.3)           
 c =================================================
+         endif
+        
          itotal=itotal+1
             
          ! make sigma smaller if you are not finding a new point
@@ -3732,7 +3793,15 @@ c
          xm =  dtanh((2.0d0)**tmass) + 1.0e-3*dA3*(2.0d0)**screen
         endif 
         xm = xm + grav*fbarr/gm200
-      
+
+      elseif (kmp.eq.20) then
+        !NFW Galileon Vainsthein screening
+        fac200=1./(dlog(1.d0+r200/rs)-(r200/rs)/(1.d0+r200/rs))
+        xmnfw =(dlog(1.d0+t/rs)-t/rs/(1.d0+t/rs))*fac200
+        xal = 10**tmass
+        xrv = 10**screen
+        xrp = 10**dA3
+        xm = xmnfw * ( 1.0d0 + xal/(1.0d0 + (xrv/t)**xrp) )
       else
 c
 c     M(r) is Einasto ; no gas contribution allowed for the time begin
@@ -3769,7 +3838,13 @@ c  test
        if(kmp.eq.10.or.kmp.eq.18.or.kmp.le.6) then !attempt to add clustering DE
         fjaffe=grav*(xmstar*xlumbcg*t/rjaf/(1.+t/rjaf)+fbarr)/gm200
         xm=xm+fjaffe !inclusion of gas,galaxies and bcg
-        
+       elseif (kmp.eq.20) then
+        !Vainsthein Galileon
+        fjaffe=grav*(xmstar*xlumbcg*t/rjaf/(1.+t/rjaf)+fbarr)/gm200
+        xal = 10**tmass
+        xrv = 10**screen
+        xrp = 10**dA3
+        xm=xm+fjaffe*( 1.0d0 + xal/(1.0d0 + (xrv/t)**xrp) )
         
         !Chameleon setup
        !elseif (kmody.eq.1) then 
@@ -3802,7 +3877,6 @@ c  test
         
        endif 
        
-        
         
       endif
 c***********************************************************************
@@ -6135,6 +6209,15 @@ c
         endif 
          xm = xm + grav*fbarr/gm200
       
+      elseif (kmp.eq.20) then
+        !NFW Galileon Vainsthein screening
+        fac200=1./(dlog(1.d0+r200/rs)-(r200/rs)/(1.d0+r200/rs))
+        xmnfw =(dlog(1.d0+t/rs)-t/rs/(1.d0+t/rs))*fac200
+        xal = 10**tmass
+        xrv = 10**screen
+        xrp = 10**dA3
+        xm = xmnfw * ( 1.0d0 + xal/(1.0d0 + (xrv/t)**xrp) )
+      
       elseif (kmp.eq.5) then
 c
 c     M(r) is Soft Isoth Sph; no gas contribution allowed for the time begin
@@ -6169,6 +6252,13 @@ c
         
         fjaffe=grav*(xmstar*xlumbcg*t/rjaf/(1.+t/rjaf)+fbarr)/gm200
         xm=xm+fjaffe !inclusion of gas,galaxies and bcg
+       elseif (kmp.eq.20) then
+        !Vainsthein Galileon
+        fjaffe=grav*(xmstar*xlumbcg*t/rjaf/(1.+t/rjaf)+fbarr)/gm200
+        xal = 10**tmass
+        xrv = 10**screen
+        xrp = 10**dA3
+        xm=xm+fjaffe*( 1.0d0 + xal/(1.0d0 + (xrv/t)**xrp) )
         
         !INCLUDED IN THE GENERAL CHAMELEON
         !Chameleon setup
@@ -8473,6 +8563,8 @@ c     a MCMC using a gaussian distribution with std sigma(nfreepar)
         
         else if (kmp.eq.13) then
             dA3new = dabs(r_normal_ab((dA3new), sigma(10), neseed))
+        else if (kmp.eq.20) then !linear exploration of log(p) in Galileon Veinsthein screening
+            dA3new = r_normal_ab((dA3new), sigma(10), neseed)
         else
             dla3 = r_normal_ab(dlog(dA3new), sigma(10), neseed)
             dA3new = dexp(dla3)
@@ -8544,7 +8636,7 @@ c  ======================OLD ==========================================
         select case (kmp)
 
         !--------------------------------
-         case (8)  ! DHOST: può essere negativo
+         case (8,20)  ! DHOST o VS Galileon: può essere negativo
          tmassnew = r_normal_ab(tmassnew, sigma(5), neseed)
 
         !--------------------------------
@@ -8614,7 +8706,7 @@ c           if ( tmassnew.le.(0.002d0)) goto 13
 
        if (sigma(6) > 0.0d0) then
         select case (kmp)
-        case(8,18,13)
+        case(8,18,13,20)
          scrnew = r_normal_ab(scrnew, sigma(6), neseed)
         case default
         ! Chameleon 
@@ -8766,11 +8858,13 @@ C       TEST REFLECTION
       if (ipar(10).eq.0) then
          sigma(10)=0.0
       else
-         sigma(10)=0.05
+         sigma(10)=0.05d0
          if (kpro.eq.1) then
            sigma(10)=(dlog(dA3up)-dlog(dA3low))*0.04d0
            if (kbdt.eq.1) sigma(10)=(dlog(dA3up)-dlog(dA3low))*0.01d0
-           if (kmp.eq.13) sigma(10)=((dA3up)-(dA3low))*0.04d0
+           if (kmp.eq.13.or.kmp.eq.20) then
+            sigma(10)=((dA3up)-(dA3low))*0.04d0
+           endif
          endif
          
       endif      
@@ -8826,8 +8920,8 @@ C       TEST REFLECTION
             if (kmp.eq.13) dfact = 0.01d0
           endif
           sigma(5)=(dlog(tmup)-dlog(tmlow))*dfact
-          !In the case of RG, explore in linear space
-          if (kmp.eq.13) then
+          !In the case of RG or Galileon VS (which is already log), explore in linear space
+          if (kmp.eq.13.or.kmp.eq.20) then
              dfact = 0.01d0
              sigma(5)=((tmup)-(tmlow))*dfact
           endif
@@ -8857,7 +8951,7 @@ C       TEST REFLECTION
             dfact = 0.02d0
             if (kmp.eq.18) dfact = 0.01d0
           endif
-          if (kmp.eq.13.or.kmp.eq.18) then
+          if (kmp.eq.13.or.kmp.eq.18.or.kmp.eq.20) then
            dfact = 0.005d0
            sigma(6)=((scrup)-(scrlow)) * dfact 
           else
@@ -9002,10 +9096,8 @@ c ======================================================================
         if(y.lt.rclow.or.y.gt.rcup) then
          !IF you are already using the lensing as a prior, there is no need 
           !to compute the additional flat prior
-          if (naddlens.eq.0) then
            pout=rinf
            return
-          endif
         endif
         
         !rs 
@@ -9052,7 +9144,6 @@ c ======================================================================
             endif
         end select
           
-                
         if (rj.lt.rjalow.or.rj.gt.rjaup) then
           pout=rinf
           return
@@ -10210,6 +10301,17 @@ c     Normalisation set to 1 at r/r200=1
 c
          fac200=1./(r200-rs*datan(r200/rs))
          xm=fac200*(t-rs*datan(t/rs))
+      
+      elseif (kmp.eq.20) then
+        !NFW Galileon Vainsthein screening
+        fac200=1./(dlog(1.d0+r200/rs)-(r200/rs)/(1.d0+r200/rs))
+        xmnfw =(dlog(1.d0+t/rs)-t/rs/(1.d0+t/rs))*fac200
+        
+        xal = 10**tmass
+        xrv = 10**screen
+        xrp = 10**dA3
+        xm = xmnfw * ( 1.0d0 + xal/(1.0d0 + (xrv/t)**xrp) )
+
       else
 c
 c     M(r) is Einasto m=eim; no gas contribution allowed for the time begin
@@ -10247,7 +10349,13 @@ cc         xm=fac200*dgammp(3.*eim,2.*eim*(t/rs)**(1./eim))
 
        !else
         fmass=fjaffe+xm*gm200/grav   !+fmassgal+fmassgas+fjaffeicl
-
+        if (kmp.eq.20) then
+        !Vainsthein Galileon
+        xal = 10**tmass
+        xrv = 10**screen
+        xrp = 10**dA3
+        fmass=xm*gm200/grav+fjaffe*( 1.0d0 + xal/(1.0d0 + (xrv/t)**xrp))
+        endif
 ! Diaferio's model of refracted gravity: *******************************       
         if (kmp.eq.13) then 
         
