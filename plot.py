@@ -44,7 +44,7 @@ dnamefold = 'MassProfiles'
 
 
 #Input mg-mamposst file
-titfile = 'gomamposst_x.inp' #'gomamposst_x.inp' #'mamComa.inp' 
+titfile = 'gomamposst_x.inp'
 
 #Default options file
 optFile = 'Options.txt'
@@ -81,7 +81,7 @@ namegas = "data/massgas.dat"
 
 
 #Default name for the gas-galaxies chain file
-nameGasGal = "GasGal_mass.txt"
+nameGasGal = np.loadtxt(titfile,dtype=str)[11]  #"GasGal_mass.txt"
 
 #Plot fonts (Customize here, no input arguments)
 fontlabel=22

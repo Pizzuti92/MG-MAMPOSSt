@@ -205,27 +205,29 @@ C******************
         nbcg=jj
         
        endif
-       
-       
-      if(kbary.eq.1) then
-      write(*,*) 'inclusion of gas and galaxies from a separate file'
-      open(12,file='data/massbar.dat',status='old')
-      i=0
- 717  continue
-      read(12,*,end=999) rgasr,xmgasr
-      i=i+1
-      rgas(i)=rgasr
-      xmgas(i)=xmgasr*1.e+13
 
-      goto 717
- 999  continue
-      close(12)
-      ngas=i
-!      do k = 1, 10000
-!       x = 0.001+0.01*k
-!       write(*,*) fbars(x), fbars2(x)
-!      enddo
-      endif
+
+C ===== OLD! GAS AND GALAXIES READ FROM EXTERNAL FILE ==================       
+       
+c      if(kbary.eq.1) then
+c      write(*,*) 'inclusion of gas and galaxies from a separate file'
+c      open(12,file='data/massbar.dat',status='old')
+c      i=0
+c 717  continue
+c      read(12,*,end=999) rgasr,xmgasr
+c      i=i+1
+c      rgas(i)=rgasr
+c      xmgas(i)=xmgasr*1.e+13
+
+c      goto 717
+c 999  continue
+c      close(12)
+c      ngas=i
+c!      do k = 1, 10000
+c!       x = 0.001+0.01*k
+c!       write(*,*) fbars(x), fbars2(x)
+c!      enddo
+c      endif
 
 c     switches to control the grid search *****************	            
       open(fh, file='Options.txt')
